@@ -1,0 +1,90 @@
+/* artificialevolution.org */
+
+:root {
+  --color-bg: #faf8f4;
+  --color-text: #2c2c2c;
+  --color-text-muted: #6b6560;
+  --color-accent: #8b7355;
+  --color-rule: #d8d2c8;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 18px;
+}
+
+body {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.7;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+main {
+  max-width: 640px;
+  width: 100%;
+  text-align: center;
+}
+
+h1 {
+  font-family: 'Helvetica Neue', 'Arial', sans-serif;
+  font-weight: 300;
+  font-size: 2.4rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text);
+  margin-bottom: 1.5rem;
+}
+
+.tagline {
+  font-size: 1.05rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+  margin-bottom: 2.5rem;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid var(--color-rule);
+  width: 80px;
+  margin: 0 auto 2.5rem;
+}
+
+.description {
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+  line-height: 1.8;
+}
+
+footer {
+  margin-top: 4rem;
+  font-family: 'Helvetica Neue', 'Arial', sans-serif;
+  font-size: 0.75rem;
+  color: var(--color-rule);
+  letter-spacing: 0.05em;
+}
+
+@media (max-width: 480px) {
+  html {
+    font-size: 16px;
+  }
+
+  h1 {
+    font-size: 1.8rem;
+  }
+
+  body {
+    padding: 1.5rem;
+  }
+}
