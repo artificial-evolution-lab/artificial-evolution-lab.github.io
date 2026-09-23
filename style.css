@@ -88,3 +88,59 @@ footer {
     padding: 1.5rem;
   }
 }
+
+/* volumes */
+.volumes {
+  text-align: left;
+  margin-top: 0.5rem;
+}
+
+.volume + .volume {
+  margin-top: 2rem;
+}
+
+.volume-title {
+  display: block;
+  font-family: 'Helvetica Neue', 'Arial', sans-serif;
+  font-weight: 300;
+  font-size: 1.35rem;
+  letter-spacing: 0.01em;
+  color: var(--color-text);
+  text-decoration: none;
+  line-height: 1.35;
+}
+
+.volume-title:hover {
+  color: var(--color-accent);
+}
+
+.volume-no {
+  display: inline-block;
+  min-width: 4.2rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  vertical-align: 0.15em;
+}
+
+.volume-meta {
+  margin: 0.35rem 0 0.7rem 4.2rem;
+  font-family: 'Helvetica Neue', 'Arial', sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.volume-excerpt {
+  margin-left: 4.2rem;
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+  line-height: 1.75;
+}
+
+@media (max-width: 480px) {
+  .volume-meta, .volume-excerpt { margin-left: 0; }
+  .volume-no { display: block; min-width: 0; margin-bottom: 0.2rem; }
+}
