@@ -6078,11 +6078,11 @@ const EX=['jax-speedrun-gpu','llm-rl-importance-sampling','ai_rd_optimize_llm_fo
 let exSel=EX[0];
 function renderChips(){ const row=$('#ex-chips'); row.replaceChildren(); for(const id of EX){ const t=TASK[id]; row.append(h('button',{class:'chipbtn'+(id===exSel?' sel':''),type:'button',onclick:()=>{ exSel=id; renderChips(); renderExample(); }}, t.title, h('small',{text:BM[t.benchmark].short}))); } }
 function miniGrid(t){
-  const CW=74, CH=22, X0=118, Y0=44, Wm=X0+CW*STAGES.length+4, Hm=Y0+CH*LAYERS.length+6;
+  const CW=84, CH=22, X0=168, Y0=46, Wm=X0+CW*STAGES.length+4, Hm=Y0+CH*LAYERS.length+6;
   const hit={}; for(const m of t.mappings){ const k=m.stage+'|'+m.layer; if(!hit[k]||KIND[m.kind].rank>KIND[hit[k]].rank) hit[k]=m.kind; }
   let s=`<svg viewBox="0 0 ${Wm} ${Hm}" role="img" aria-label="Cells this task reaches">`;
-  STAGES.forEach((st,si)=>{ const x=X0+si*CW+CW/2; s+=`<text x="${x}" y="${Y0-26}" text-anchor="middle" class="sm" style="font-weight:600">${esc(st.name)}</text><text x="${x}" y="${Y0-13}" text-anchor="middle" class="sm mono mut" style="font-size:8.5px">${esc(SUB[st.id])}</text>`; });
-  LAYERS.forEach((ly,li)=>{ const y=Y0+li*CH; s+=`<use href="#ic-${ly.id}" x="0" y="${y+4}" width="14" height="14" class="hic"/><text x="20" y="${y+15}" class="sm" style="font-size:10.5px">${esc(ly.name.replace(' & ',' &amp; '))}</text>`;
+  STAGES.forEach((st,si)=>{ const x=X0+si*CW+CW/2; s+=`<text x="${x}" y="${Y0-28}" text-anchor="middle" class="sm" style="font-weight:600;font-size:9.5px">${esc(st.name)}</text><text x="${x}" y="${Y0-15}" text-anchor="middle" class="sm mono mut" style="font-size:7.5px">${esc(SUB[st.id])}</text>`; });
+  LAYERS.forEach((ly,li)=>{ const y=Y0+li*CH; s+=`<use href="#ic-${ly.id}" x="0" y="${y+4}" width="14" height="14" class="hic"/><text x="20" y="${y+15}" class="sm" style="font-size:10px">${esc(ly.name)}</text>`;
     STAGES.forEach((st,si)=>{ const k=hit[st.id+'|'+ly.id]; const x=X0+si*CW; s+=`<rect x="${x+2}" y="${y+3}" width="${CW-4}" height="${CH-6}" rx="3" class="${k?KIND[k].cls:'ev0'}" ${k?'':'opacity=".7"'}/>`; if(k) s+=`<text x="${x+CW/2}" y="${y+14.5}" text-anchor="middle" class="sm mono" style="font-size:9px;fill:${KIND[k].rank>=2?'var(--surface)':'var(--ink)'}">${k==='measured'?'executed':k==='bounded'?'bounded':'related'}</text>`; }); });
   s+='</svg>'; return s;
 }
