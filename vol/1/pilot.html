@@ -6361,7 +6361,7 @@ function iconEl(lid){ const s=document.createElementNS('http://www.w3.org/2000/s
 
 // ---------- 01 definition block
 (function(){ const k=$('#layer-key'); for(const l of LAYERS){ k.append(h('div',{class:'lk'}, iconEl(l.id), h('div',null, h('b',{text:l.name}), h('span',{text:l.subtitle+' · '+l.examples})))); } })();
-const EX=['jax-speedrun-gpu','llm-rl-importance-sampling','ai_rd_optimize_llm_foundry','paged_ragged_gqa_decode_speedup','infbench-family','tb21-torch-tensor-parallelism','pretrain-shard-corruption','arcane-drift-detection-baselines','agent-tool-reasoning'].filter(id=>TASK[id]);
+const EX=['jax-speedrun-gpu','tb21-torch-tensor-parallelism','llm-rl-importance-sampling','ai_rd_optimize_llm_foundry','paged_ragged_gqa_decode_speedup'].filter(id=>TASK[id]);
 let exSel=EX[0];
 function renderChips(){ const row=$('#ex-chips'); row.replaceChildren(); for(const id of EX){ const t=TASK[id]; row.append(h('button',{class:'chipbtn'+(id===exSel?' sel':''),type:'button',onclick:()=>{ exSel=id; renderChips(); renderExample(); }}, t.title, h('small',{text:BM[t.benchmark].short}))); } }
 function miniGrid(t){
@@ -6377,7 +6377,6 @@ function renderExample(){
   const t=TASK[exSel], b=BM[t.benchmark], X=(window.PILOT_EX||{})[exSel];
   const right=$('#ex-right'); right.replaceChildren();
   const head=h('div',{class:'ex-head'}); head.append(h('div',{class:'lab',style:'margin-top:0',text:'Stages × layers'}));
-  const mini=h('div',{class:'mini'}); mini.innerHTML=miniGrid(t); head.append(mini);
   const ul=h('ul',{class:'maplist'});
   for(const m of t.mappings){ const ly=LAYERS[LIDX[m.layer]], st=STAGES[SIDX[m.stage]];
     ul.append(h('li',null, iconEl(ly.id), h('div',{class:'what'}, h('b',{text:`${st.name} × ${ly.name}`}), h('span',{text:m.relation})), h('span',{class:'depth'}, h('i',{class:'dot '+KIND[m.kind].cls}), KLAB[m.kind]))); }
