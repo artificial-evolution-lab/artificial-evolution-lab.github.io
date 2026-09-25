@@ -4112,38 +4112,10 @@
      "group": "Engines"
     },
     {
-     "name": "DeepEP",
-     "org": "DeepSeek",
-     "url": "https://github.com/deepseek-ai/DeepEP",
-     "what": "Expert-parallel communication library: MoE dispatch and combine kernels.",
-     "group": "Kernels"
-    },
-    {
-     "name": "DeepGEMM",
-     "org": "DeepSeek",
-     "url": "https://github.com/deepseek-ai/DeepGEMM",
-     "what": "GEMM kernel library, including FP8 and grouped GEMMs for MoE.",
-     "group": "Kernels"
-    },
-    {
-     "name": "EPLB",
-     "org": "DeepSeek",
-     "url": "https://github.com/deepseek-ai/EPLB",
-     "what": "Expert-parallelism load balancer.",
-     "group": "Kernels"
-    },
-    {
      "name": "FlashMLA",
      "org": "DeepSeek",
      "url": "https://github.com/deepseek-ai/FlashMLA",
      "what": "Multi-head latent attention decoding kernels.",
-     "group": "Kernels"
-    },
-    {
-     "name": "FlashKDA",
-     "org": "Moonshot",
-     "url": "https://github.com/MoonshotAI/FlashKDA",
-     "what": "Kimi Delta Attention kernels.",
      "group": "Kernels"
     },
     {
