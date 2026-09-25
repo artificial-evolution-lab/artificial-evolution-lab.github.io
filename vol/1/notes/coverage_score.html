@@ -99,7 +99,7 @@
 <li><strong>EdgeBench</strong>: the 51 public tasks in the README table are Scientific &amp; ML (4: bipedal-walker RL, gravity inversion, GNN node classification, source inversion), Systems &amp; SE (12: ANN vector search, VLIW kernel optimization, ffmpeg swscale, git in Zig, and others), Optimization (15), Knowledge (4), Formal (8) and Games (8). None trains, serves or checkpoints an LLM or writes a GPU kernel.</li>
 </ul>
 <h2>The 35 cells and the 10 that no task reaches</h2>
-<p>A cell is one life-cycle stage (data; pretrain &amp; midtrain; post-train; agentic RL; serve &amp; operate) crossed with one infrastructure layer (methods &amp; agent logic; data &amp; evaluation; training &amp; rollout engines; distributed coordination; memory, state &amp; recovery; kernels &amp; device execution; cluster &amp; isolation). Each layer carries a contract stating what a test there has to do; a task lands in a cell when its verifier reaches that stage and exercises code at that layer. Fifteen of the 52 entries sit in two stages.</p>
+<p>A cell is one life-cycle stage (data; pretrain &amp; midtrain; post-train; agentic RL; serve &amp; operate) crossed with one infrastructure layer (methods &amp; logic; data &amp; evaluation; training &amp; inference engines; distributed coordination; memory, state &amp; recovery; kernels &amp; device execution; cluster &amp; isolation). Each layer carries a contract stating what a test there has to do; a task lands in a cell when its verifier reaches that stage and exercises code at that layer. Fifteen of the 52 entries sit in two stages.</p>
 <table>
 <thead>
 <tr>

@@ -27,7 +27,7 @@ The overview's lead figure scores each primary benchmark by the number of distin
 
 ## The 35 cells and the 10 that no task reaches
 
-A cell is one life-cycle stage (data; pretrain & midtrain; post-train; agentic RL; serve & operate) crossed with one infrastructure layer (methods & agent logic; data & evaluation; training & rollout engines; distributed coordination; memory, state & recovery; kernels & device execution; cluster & isolation). Each layer carries a contract stating what a test there has to do; a task lands in a cell when its verifier reaches that stage and exercises code at that layer. Fifteen of the 52 entries sit in two stages.
+A cell is one life-cycle stage (data; pretrain & midtrain; post-train; agentic RL; serve & operate) crossed with one infrastructure layer (methods & logic; data & evaluation; training & inference engines; distributed coordination; memory, state & recovery; kernels & device execution; cluster & isolation). Each layer carries a contract stating what a test there has to do; a task lands in a cell when its verifier reaches that stage and exercises code at that layer. Fifteen of the 52 entries sit in two stages.
 
 | Empty cell | What documented production systems do there |
 |---|---|

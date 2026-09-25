@@ -4664,8 +4664,8 @@
    },
    {
     "id": "engines",
-    "name": "Training & rollout engines",
-    "subtitle": "Execution loops and inference",
+    "name": "Training & inference engines",
+    "subtitle": "Execution loops and inference, including RL rollouts",
     "examples": "PyTorch · Foundry · vLLM · SGLang",
     "contract": "Exercise the actual runtime with representative workloads, memory limits and correctness/performance gates."
    },
