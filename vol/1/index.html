@@ -278,12 +278,6 @@ svg .namebtn{cursor:default} svg .namebtn:hover text{fill:var(--accent)}
     <li><b>Stages:</b> Data, Pretrain &amp; midtrain, Post-train, Agentic RL, Serve &amp; operate, drawn from <a href="#lifecycle">eighteen documented model-development pipelines</a>.</li>
     <li><b>Layers:</b> Methods &amp; logic, Data &amp; evaluation, Training &amp; rollout engines, Distributed coordination, Memory, state &amp; recovery, Kernels &amp; device execution, and Cluster &amp; isolation (<a href="#surface">defined below</a>).</li>
   </ul>
-  <p class="lede">We screened all 537 public task environments in ten agentic benchmarks and audited the 97 that touch the LLM life cycle (<a href="notes/task_census.html">task census</a>). We find that:</p>
-  <ol class="lede-list">
-    <li>Across the general-purpose coding benchmarks, only a small fraction of tasks test an agent's ability to work on LLM training itself: 9 of 66 tasks in Terminal-Bench 4.0, 9 of 89 in Terminal-Bench 2.1 and 3 of 113 in DeepSWE. Across all ten suites, 97 of 537 public tasks (18%) touch any part of the LLM life cycle.</li>
-    <li>Across the whole LLM training life cycle, only a small part of the infrastructure knowledge is exercised by any benchmark task: the ten suites together run a real LLM workload in 12 of the 35 stage × layer cells, no single suite does so in more than 10, and the data and agentic RL stages and the cluster layer have no task that runs the real system at all.</li>
-    <li>The specialized benchmarks provide substantial training and inference coverage, but the audited tasks largely test individual components or bounded experiments, leaving gaps in coordinated, end-to-end workflows.</li>
-  </ol>
 </section>
 
 <section class="block" id="surface">
@@ -308,6 +302,12 @@ svg .namebtn{cursor:default} svg .namebtn:hover text{fill:var(--accent)}
     <div class="scroll"><div id="joint-svg"></div></div>
     <figcaption id="joint-cap"></figcaption>
   </figure>
+  <p class="lede" style="margin-top:22px">We screened all 537 public task environments in ten agentic benchmarks and audited the 97 that touch the LLM life cycle (<a href="notes/task_census.html">task census</a>). We find that:</p>
+  <ol class="lede-list">
+    <li>Across the general-purpose coding benchmarks, only a small fraction of tasks test an agent's ability to work on LLM training itself: 9 of 66 tasks in Terminal-Bench 4.0, 9 of 89 in Terminal-Bench 2.1 and 3 of 113 in DeepSWE. Across all ten suites, 97 of 537 public tasks (18%) touch any part of the LLM life cycle.</li>
+    <li>Across the whole LLM training life cycle, only a small part of the infrastructure knowledge is exercised by any benchmark task: the ten suites together run a real LLM workload in 12 of the 35 stage × layer cells, no single suite does so in more than 10, and the data and agentic RL stages and the cluster layer have no task that runs the real system at all.</li>
+    <li>The specialized benchmarks provide substantial training and inference coverage, but the audited tasks largely test individual components or bounded experiments, leaving gaps in coordinated, end-to-end workflows.</li>
+  </ol>
 </section>
 
 <section class="block" id="lifecycle">
