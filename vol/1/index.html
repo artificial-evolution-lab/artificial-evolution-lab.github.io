@@ -202,7 +202,12 @@ svg .cellmark{cursor:default; stroke:var(--surface); stroke-width:.6} svg .cellm
 </style>
 <style>
 .pilot-tag{font:11px var(--mono); color:var(--warm); border:1px solid var(--warm-line); background:var(--warm-bg); border-radius:999px; padding:1px 8px; margin-left:10px; align-self:center}
-.layer-key{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px 16px; margin:14px 0 4px; font-size:13px}
+.stage-row{display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:10px; margin:8px 0 18px}
+@media (max-width:760px){.stage-row{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stage-box{border:1px solid var(--line-2); border-radius:8px; background:var(--surface); padding:9px 11px; font-size:13px; line-height:1.35}
+.stage-box b{display:block; font-weight:600; margin-bottom:3px}
+.stage-box span{font:11.5px var(--mono); color:var(--muted)}
+.layer-key{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px 16px; margin:8px 0 4px; font-size:13px}
 @media (max-width:760px){.layer-key{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .layer-key .lk{display:flex; gap:9px; align-items:flex-start}
 .layer-key .lk b{display:block; font-weight:600; line-height:1.3}
@@ -271,25 +276,25 @@ svg .namebtn{cursor:default} svg .namebtn:hover text{fill:var(--accent)}
 <section class="intro" id="intro">
   <h1>How to benchmark RSI</h1>
   <p class="subtitle">How much of realistic LLM training do today's benchmark environments cover?</p>
-  <p class="lede">Recursive self-improvement (RSI) could have major consequences for AI development, yet its definition, its possible forms and its measurement remain open questions. Recent reports from <a href="https://www.anthropic.com/institute/measuring-pace-of-ai-development" target="_blank" rel="noreferrer">Anthropic</a>, <a href="https://openai.com/index/research-acceleration-view-inside-openai/" target="_blank" rel="noreferrer">OpenAI</a> and <a href="https://z.ai/blog/glm-built-its-inference-infrastructure" target="_blank" rel="noreferrer">Z.ai</a> describe AI systems taking on parts of model research and infrastructure engineering, which makes these questions increasingly practical. Whatever definition settles, the ability to <b>end-to-end train and improve AI models</b> is a core capability, and it is necessary, though not sufficient, for RSI. One way to evaluate progress toward RSI is to ask an AI system to develop and train a model end to end and deliver it ready for real-world use. At production scale, such an evaluation would be expensive in both compute and time. We therefore examine whether existing coding-agent benchmarks provide practical tests of the capabilities this process requires, and which capabilities their environments leave untested.</p>
-  <p class="lede">Meanwhile, coding benchmarks such as <a href="https://arxiv.org/abs/2509.16941" target="_blank" rel="noreferrer">SWE-Bench Pro</a>, <a href="https://www.tbench.ai/" target="_blank" rel="noreferrer">Terminal-Bench</a>, <a href="https://deepswe.datacurve.ai/blog/deepswe" target="_blank" rel="noreferrer">DeepSWE</a> and <a href="https://arxiv.org/abs/2605.03546" target="_blank" rel="noreferrer">ProgramBench</a> assess progress in coding agents, and executable task environments of the same kind also support <a href="https://docs.harborframework.com/core-concepts/datasets/datasets" target="_blank" rel="noreferrer">agent training</a>. These benchmarks cover important software-engineering and general machine-learning problems; how well their environments represent the work of developing production LLMs is a separate question, and it has not been checked.</p>
+  <p class="lede">Recursive self-improvement (RSI) could have major consequences for AI development, yet its definition, its possible forms and its measurement remain open questions. Recent reports from <a href="https://www.anthropic.com/institute/measuring-pace-of-ai-development" target="_blank" rel="noreferrer">Anthropic</a>, <a href="https://openai.com/index/research-acceleration-view-inside-openai/" target="_blank" rel="noreferrer">OpenAI</a> and <a href="https://z.ai/blog/glm-built-its-inference-infrastructure" target="_blank" rel="noreferrer">Z.ai</a> describe AI systems taking on parts of model research and infrastructure engineering, which makes these questions increasingly practical. Whatever definition settles, the ability to <b>end-to-end train and improve AI models</b> is a core capability, and it is necessary, though not sufficient, for RSI. One way to evaluate progress toward RSI is to ask an AI system to develop and train a model end to end and deliver it ready for real-world use. At production scale, such an evaluation would be expensive in both compute and time.</p>
+  <p class="lede">Meanwhile, coding benchmarks such as <a href="https://arxiv.org/abs/2509.16941" target="_blank" rel="noreferrer">SWE-Bench Pro</a>, <a href="https://www.tbench.ai/" target="_blank" rel="noreferrer">Terminal-Bench</a>, <a href="https://deepswe.datacurve.ai/blog/deepswe" target="_blank" rel="noreferrer">DeepSWE</a> and <a href="https://arxiv.org/abs/2605.03546" target="_blank" rel="noreferrer">ProgramBench</a> assess progress in coding agents, and executable task environments of the same kind also support <a href="https://docs.harborframework.com/core-concepts/datasets/datasets" target="_blank" rel="noreferrer">agent training</a>. A task environment is a containerized snapshot of a server, a developer machine or a simulated world, prepared with an initial state, the required artifacts and, usually, a verifiable goal, so that an agent can be rolled out in it repeatedly against a realistic problem without leaving its box. These benchmarks cover important software-engineering and general machine-learning problems; how well their environments represent the work of developing production LLMs is a separate question, and it has not been checked. Such environments could, in principle, test the capabilities an end-to-end training run requires, one at a time.</p>
   <p class="lede">In this post, we investigate <b>how much production-level infrastructure knowledge for LLM training is covered by existing public benchmark tasks.</b> We divide the LLM training cycle into five stages and the infrastructure that runs it into seven layers (<a href="#surface">section 01</a>).</p>
 </section>
 
 <section class="block" id="surface">
   <span class="section-no">01</span>
-  <h2>Five stages, seven layers</h2>
+  <h2>What is needed for end-to-end LLM training</h2>
   <p>We organize the audit along two dimensions: five stages of the LLM development and deployment life cycle, and seven infrastructure layers. The classification synthesizes documented model-development pipelines and the architectures of production frameworks. The categories overlap: data and evaluation recur throughout development, agentic RL is a specialized part of post-training, and infrastructure responsibilities span several components. We assign coverage by what each task's verifier exercises, and grade each cell by how deeply: the real LLM workload executed, bounded unit or artifact tests, or related and simulated evidence.</p>
-  <ul class="lede-list" style="margin-top:-4px;font-size:15.5px">
-    <li><b>Stages:</b> Data, Pretrain &amp; midtrain, Post-train, Agentic RL, Serve &amp; operate, drawn from <a href="#lifecycle">eighteen documented model-development pipelines</a>.</li>
-    <li><b>Layers:</b> Methods &amp; logic, Data &amp; evaluation, Training &amp; inference engines, Distributed coordination, Memory, state &amp; recovery, Kernels &amp; device execution, and Cluster &amp; isolation.</li>
-  </ul>
+  <div class="lab" style="margin-top:14px">Five stages of LLM training · <a href="#lifecycle">drawn from eighteen documented pipelines</a></div>
+  <div class="stage-row" id="stage-row"></div>
+  <div class="lab">Seven infrastructure layers</div>
   <div class="layer-key" id="layer-key"></div>
-  <div class="fig-title" style="margin-top:20px"><strong>Where a task lands</strong><span>select a task</span></div>
-  <div class="def-grid">
+  <details class="fold" id="ex-fold" style="margin-top:18px"><summary>Check a few examples</summary>
+  <div class="def-grid" style="margin-top:10px">
     <div class="chipcol" id="ex-chips"></div>
     <div class="card" id="ex-right"></div>
   </div>
+  </details>
 </section>
 
 <section class="block" id="coverage">
@@ -696,6 +701,7 @@ function icon(lid, cls){ return `<svg class="${cls||'ic'}" aria-hidden="true"><u
 function iconEl(lid){ const s=document.createElementNS('http://www.w3.org/2000/svg','svg'); s.setAttribute('class','ic'); const u=document.createElementNS('http://www.w3.org/2000/svg','use'); u.setAttribute('href','#ic-'+lid); s.append(u); return s; }
 
 // ---------- 01 definition block
+(function(){ const r=$('#stage-row'); if(r) for(const st of STAGES){ r.append(h('div',{class:'stage-box'}, h('b',{text:st.name}), h('span',{text:st.sub}))); } })();
 (function(){ const k=$('#layer-key'); for(const l of LAYERS){ k.append(h('div',{class:'lk'}, iconEl(l.id), h('div',null, h('b',{text:l.name}), h('span',{text:l.subtitle+' · '+l.examples})))); } })();
 const EX=['jax-speedrun-gpu','tb21-torch-tensor-parallelism','llm-rl-importance-sampling','ai_rd_optimize_llm_foundry','paged_ragged_gqa_decode_speedup'].filter(id=>TASK[id]);
 let exSel=EX[0];
