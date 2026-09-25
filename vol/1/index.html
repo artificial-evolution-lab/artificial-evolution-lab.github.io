@@ -202,6 +202,20 @@ svg .cellmark{cursor:default; stroke:var(--surface); stroke-width:.6} svg .cellm
 </style>
 <style>
 .pilot-tag{font:11px var(--mono); color:var(--warm); border:1px solid var(--warm-line); background:var(--warm-bg); border-radius:999px; padding:1px 8px; margin-left:10px; align-self:center}
+@media (min-width:1180px){ body{display:grid; grid-template-columns:200px minmax(0,1200px); column-gap:32px; justify-content:center; align-items:start} body>.top{grid-column:1 / -1} body>.toc{grid-column:1; position:sticky; top:92px} body>main{grid-column:2; margin:0; min-width:0} }
+.toc{font:13px/1.45 var(--sans); color:var(--muted); padding-top:36px}
+.toc[hidden]{display:none}
+.toc-list{list-style:none; margin:0; padding:0}
+.toc-list.toc-level-2{margin:2px 0 4px 12px; display:none}
+.toc-item.is-active > .toc-list.toc-level-2{display:block}
+.toc-item{margin:0 0 6px}
+.toc-item a{display:block; color:var(--muted); text-decoration:none; padding-left:12px; border-left:2px solid transparent; transition:color .12s}
+.toc-item a:hover{color:var(--ink)}
+.toc-item.is-active > a{color:var(--ink); border-left-color:var(--ink-2)}
+.toc-level-2 .toc-item{margin:0 0 4px} .toc-level-2 .toc-item a{font-size:12.5px; padding-left:10px}
+.toc-level-2 .toc-item.is-active > a{border-left-color:var(--line-2)}
+.sub-h{font:600 17px/1.3 var(--sans); margin:18px 0 8px; color:var(--ink)}
+.sub-h small{font:400 12.5px var(--mono); color:var(--muted); margin-left:8px}
 .stage-row{display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:10px; margin:8px 0 18px}
 @media (max-width:760px){.stage-row{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .stage-box{border:1px solid var(--line-2); border-radius:8px; background:var(--surface); padding:9px 11px; font-size:13px; line-height:1.35}
@@ -272,22 +286,23 @@ svg .namebtn{cursor:default} svg .namebtn:hover text{fill:var(--accent)}
   <button class="theme" id="themeBtn" type="button" aria-label="Switch color theme">theme: system</button>
 </header>
 
+<nav class="toc" id="toc" aria-label="Contents" hidden><ul class="toc-list" id="toc-list"></ul></nav>
 <main>
 <section class="intro" id="intro">
   <h1>How to benchmark RSI</h1>
   <p class="subtitle">How much of realistic LLM training do today's benchmark environments cover?</p>
   <p class="lede">Recursive self-improvement (RSI) could have major consequences for AI development, yet its definition, its possible forms and its measurement remain open questions. Recent reports from <a href="https://www.anthropic.com/institute/measuring-pace-of-ai-development" target="_blank" rel="noreferrer">Anthropic</a>, <a href="https://openai.com/index/research-acceleration-view-inside-openai/" target="_blank" rel="noreferrer">OpenAI</a> and <a href="https://z.ai/blog/glm-built-its-inference-infrastructure" target="_blank" rel="noreferrer">Z.ai</a> describe AI systems taking on parts of model research and infrastructure engineering, which makes these questions increasingly practical. Whatever definition settles, the ability to <b>end-to-end train and improve AI models</b> is a core capability, and it is necessary, though not sufficient, for RSI. One way to evaluate progress toward RSI is to ask an AI system to develop and train a model end to end and deliver it ready for real-world use. At production scale, such an evaluation would be expensive in both compute and time.</p>
-  <p class="lede">Meanwhile, coding benchmarks such as <a href="https://arxiv.org/abs/2509.16941" target="_blank" rel="noreferrer">SWE-Bench Pro</a>, <a href="https://www.tbench.ai/" target="_blank" rel="noreferrer">Terminal-Bench</a>, <a href="https://deepswe.datacurve.ai/blog/deepswe" target="_blank" rel="noreferrer">DeepSWE</a> and <a href="https://arxiv.org/abs/2605.03546" target="_blank" rel="noreferrer">ProgramBench</a> assess progress in coding agents, and executable task environments of the same kind also support <a href="https://docs.harborframework.com/core-concepts/datasets/datasets" target="_blank" rel="noreferrer">agent training</a>. A task environment is a containerized snapshot of a server, a developer machine or a simulated world, prepared with an initial state, the required artifacts and, usually, a verifiable goal, so that an agent can be rolled out in it repeatedly against a realistic problem without leaving its box. These benchmarks cover important software-engineering and general machine-learning problems; how well their environments represent the work of developing production LLMs is a separate question, and it has not been checked. Such environments could, in principle, test the capabilities an end-to-end training run requires, one at a time.</p>
-  <p class="lede">In this post, we investigate <b>how much production-level infrastructure knowledge for LLM training is covered by existing public benchmark tasks.</b> We divide the LLM training cycle into five stages and the infrastructure that runs it into seven layers (<a href="#surface">section 01</a>).</p>
+  <p class="lede">Meanwhile, coding benchmarks such as <a href="https://arxiv.org/abs/2509.16941" target="_blank" rel="noreferrer">SWE-Bench Pro</a>, <a href="https://www.tbench.ai/" target="_blank" rel="noreferrer">Terminal-Bench</a>, <a href="https://deepswe.datacurve.ai/blog/deepswe" target="_blank" rel="noreferrer">DeepSWE</a> and <a href="https://arxiv.org/abs/2605.03546" target="_blank" rel="noreferrer">ProgramBench</a> assess progress in coding agents, and executable task environments of the same kind also support <a href="https://docs.harborframework.com/core-concepts/datasets/datasets" target="_blank" rel="noreferrer">agent training</a>. A task environment is a <b>containerized snapshot of a server, a developer machine or a simulated world, prepared with an initial state, the required artifacts and, usually, a verifiable goal</b>, so that an agent can be rolled out in it repeatedly against a realistic problem without leaving its box. These benchmarks cover important software-engineering and general machine-learning problems; how well their environments represent the work of developing production LLMs is a separate question, and it has not been checked. Such environments could, in principle, test the capabilities an end-to-end training run requires, one at a time.</p>
+  <p class="lede">In this post, we investigate <b>how much production-level infrastructure knowledge for LLM training is covered by existing public benchmark tasks.</b></p>
 </section>
 
 <section class="block" id="surface">
   <span class="section-no">01</span>
   <h2>What is needed for end-to-end LLM training</h2>
   <p>We organize the audit along two dimensions: five stages of the LLM development and deployment life cycle, and seven infrastructure layers. The classification synthesizes documented model-development pipelines and the architectures of production frameworks. The categories overlap: data and evaluation recur throughout development, agentic RL is a specialized part of post-training, and infrastructure responsibilities span several components. We assign coverage by what each task's verifier exercises, and grade each cell by how deeply: the real LLM workload executed, bounded unit or artifact tests, or related and simulated evidence.</p>
-  <div class="lab" style="margin-top:14px">Five stages of LLM training · <a href="#lifecycle">drawn from eighteen documented pipelines</a></div>
+  <h3 class="sub-h">Five stages of LLM training <small><a href="#lifecycle">drawn from eighteen documented pipelines</a></small></h3>
   <div class="stage-row" id="stage-row"></div>
-  <div class="lab">Seven infrastructure layers</div>
+  <h3 class="sub-h">Seven infrastructure layers</h3>
   <div class="layer-key" id="layer-key"></div>
   <details class="fold" id="ex-fold" style="margin-top:18px"><summary>Check a few examples</summary>
   <div class="def-grid" style="margin-top:10px">
@@ -831,6 +846,18 @@ function openCode(c, st, btn){ document.querySelectorAll('.chipbtn.sel').forEach
   ['Unchanged conclusions.', 'Real GPU pretraining and RL-method tasks exist (MLS-Bench, RE-Bench, RSI-Exam); serving repairs are CPU-verified slices; no audited task trains a policy through tools or exercises weight publication, staleness control or recovery inside an RL loop.']
  ]; for(const [b,t] of items) ul.append(h('li',null,h('b',{text:b+' '}),t)); })();
 renderLife(); renderCode();
+// ---------- side index
+(function(){ const nav=$('#toc'), list=$('#toc-list'); if(!nav||!list) return;
+  const main=document.querySelector('main'); const secs=[...main.querySelectorAll('section')].filter(s=>s.id && !s.hasAttribute('data-internal') && !s.hidden);
+  const entries=[]; for(const s of secs){ const hh=s.querySelector('h1, h2'); if(!hh) continue; const title=s.id==='intro'?'Introduction':hh.textContent; const subs=[...s.querySelectorAll('h3')].filter(x=>x.textContent.trim() && !x.closest('.card, details, figure')).map((x,i)=>{ if(!x.id) x.id=s.id+'-h3-'+i; const tn=[...x.childNodes].filter(n=>n.nodeType===3).map(n=>n.textContent).join('').trim(); return {id:x.id, title:tn||x.textContent.trim()}; }); entries.push({id:s.id, title, subs}); }
+  if(entries.length<3) return;
+  for(const e of entries){ const li=h('li',{class:'toc-item'+(e.subs.length?' has-children':''),'data-sec':e.id}, h('a',{href:'#'+e.id,text:e.title})); if(e.subs.length){ const ul=h('ul',{class:'toc-list toc-level-2'}); for(const s of e.subs) ul.append(h('li',{class:'toc-item','data-sec':s.id}, h('a',{href:'#'+s.id,text:s.title}))); li.append(ul); } list.append(li); }
+  function place(){ nav.hidden = innerWidth<1180; }
+  place(); addEventListener('resize', place);
+  const items=[...list.querySelectorAll('.toc-item[data-sec]')];
+  function activate(){ const y=scrollY+120; let cur=entries[0].id, sub=null; for(const e of entries){ const el=document.getElementById(e.id); if(el && el.offsetTop<=y) cur=e.id; } const e=entries.find(x=>x.id===cur); if(e) for(const s of e.subs){ const el=document.getElementById(s.id); if(el && el.offsetTop<=y) sub=s.id; } for(const it of items){ const id=it.dataset.sec; it.classList.toggle('is-active', id===cur || id===sub); } }
+  activate(); addEventListener('scroll', activate, {passive:true}); addEventListener('resize', activate);
+})();
 })();
 
 </script>
