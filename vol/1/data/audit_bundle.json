@@ -2712,7 +2712,7 @@
     "id": "pretrain",
     "name": "Pretrain & midtrain",
     "sub": "arch design · scaling law · base model · continued pretraining · long context · annealing",
-    "short": "arch · scaling law · base · continue"
+    "short": "arch · scaling · base"
    },
    {
     "id": "posttrain",
@@ -2730,7 +2730,7 @@
     "id": "serve",
     "name": "Serve & deployment",
     "sub": "inference · KV cache management · routing · autoscaling",
-    "short": "inference · KV cache · autoscaling"
+    "short": "infer · KV · autoscale"
    }
   ],
   "models": [
@@ -4650,52 +4650,52 @@
   "layers": [
    {
     "id": "methods",
-    "name": "Methods & logic",
-    "subtitle": "Objectives, architectures, policies",
-    "examples": "nanoGPT · verl · agent controllers",
+    "name": "Model & algorithm",
+    "subtitle": "",
+    "examples": "model arch · optimizer · LR scheduler · advantage estimation · reward design · async RL stabilization",
     "contract": "Improve the method while preserving held-out quality, reproducibility and the task contract."
    },
    {
     "id": "dataeval",
-    "name": "Data & evaluation",
-    "subtitle": "Sampling, tokens, metrics",
-    "examples": "litdata · tokenizers · eval harnesses",
+    "name": "Data pipeline & evaluation",
+    "subtitle": "",
+    "examples": "dedup · classifiers · decontamination · quality control · tokenizers · eval suites / harnesses",
     "contract": "Preserve example identity, token/mask semantics, split isolation and metric correctness across batching and retries."
    },
    {
     "id": "engines",
     "name": "Training & inference engines",
-    "subtitle": "Execution loops and inference, including RL rollouts",
-    "examples": "PyTorch · Foundry · vLLM · SGLang",
+    "subtitle": "",
+    "examples": "PyTorch · vLLM · SGLang · Miles · TensorRT-LLM · Megatron · TorchTitan",
     "contract": "Exercise the actual runtime with representative workloads, memory limits and correctness/performance gates."
    },
    {
     "id": "distributed",
-    "name": "Distributed coordination",
-    "subtitle": "Parallelism, placement, versions",
-    "examples": "FSDP · Megatron · Ray · NCCL",
+    "name": "Parallelism & communication",
+    "subtitle": "",
+    "examples": "FSDP · TP · EP · PP · CP · SP · sharding · NCCL · RDMA QP",
     "contract": "Test communication and synchronization across the intended topology, including delayed workers and numerical parity."
    },
    {
-    "id": "state",
-    "name": "Memory, state & recovery",
-    "subtitle": "KV, checkpoints, optimizer state",
-    "examples": "KV managers · distributed checkpoints",
-    "contract": "Preserve all relevant state through interruption, movement and recovery; compare against an uninterrupted reference."
-   },
-   {
     "id": "kernels",
-    "name": "Kernels & device execution",
-    "subtitle": "Layouts, fusion, low precision",
-    "examples": "Triton · CUDA · Pallas · collectives",
+    "name": "Kernels & compilers",
+    "subtitle": "",
+    "examples": "CUDA · Triton · CUTLASS · Pallas · FlashAttention · kernel fusion · FP8 / FP4 · torch.compile",
     "contract": "Measure numerical correctness and device performance on the declared hardware and realistic shapes."
    },
    {
     "id": "cluster",
-    "name": "Cluster & isolation",
-    "subtitle": "Provisioning, scheduling, sandboxes",
-    "examples": "Ray · Kubernetes · E2B · containerd",
+    "name": "Cluster orchestration & sandboxing",
+    "subtitle": "",
+    "examples": "K8s · Slurm · Ray · scheduling · provisioning · E2B · Docker",
     "contract": "Test real resource provisioning, isolation and lifecycle behavior under concurrency, overload and failures."
+   },
+   {
+    "id": "state",
+    "name": "Memory & state management",
+    "subtitle": "",
+    "examples": "KV cache management · hierarchical KV · distributed checkpoints · RAG",
+    "contract": "Preserve all relevant state through interruption, movement and recovery; compare against an uninterrupted reference."
    }
   ],
   "stages_v1": [
