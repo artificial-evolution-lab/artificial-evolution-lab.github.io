@@ -1,6 +1,6 @@
 {
  "meta": {
-  "built": "2026-09-24",
+  "built": "2026-09-25",
   "snapshot_v1": "2026-09-05",
   "snapshot_v2": "2026-09-22",
   "task_entries": 74,
@@ -2717,14 +2717,14 @@
    {
     "id": "posttrain",
     "name": "Post-train",
-    "sub": "SFT · preference · on-policy distillation",
-    "short": "SFT · pref · OPD"
+    "sub": "SFT · preference · reasoning RL · on-policy distillation",
+    "short": "SFT · pref · RL · OPD"
    },
    {
     "id": "agentic",
-    "name": "Agentic RL",
-    "sub": "multi-turn tools · sandboxes · async loops",
-    "short": "tools · sandboxes · async"
+    "name": "Agent post-training",
+    "sub": "agentic RL · multi-turn tools · sandboxes · async and off-policy loops",
+    "short": "agentic RL · sandboxes · async"
    },
    {
     "id": "serve",
@@ -4653,7 +4653,7 @@
     "name": "Model & algorithm",
     "subtitle": "",
     "examples": "model arch · optimizer · LR scheduler · advantage estimation · reward design · async RL stabilization",
-    "contract": "Improve the method while preserving held-out quality, reproducibility and the task contract."
+    "contract": "Improve the model or algorithm while preserving held-out quality, reproducibility and the task contract."
    },
    {
     "id": "dataeval",
@@ -4666,36 +4666,36 @@
     "id": "engines",
     "name": "Training & inference engines",
     "subtitle": "",
-    "examples": "PyTorch · vLLM · SGLang · Miles · TensorRT-LLM · Megatron · TorchTitan",
+    "examples": "PyTorch · vLLM · SGLang · Miles · TensorRT-LLM · Megatron · TorchTitan · RL rollouts",
     "contract": "Exercise the actual runtime with representative workloads, memory limits and correctness/performance gates."
    },
    {
     "id": "distributed",
     "name": "Parallelism & communication",
     "subtitle": "",
-    "examples": "FSDP · TP · EP · PP · CP · SP · sharding · NCCL · RDMA QP",
-    "contract": "Test communication and synchronization across the intended topology, including delayed workers and numerical parity."
+    "examples": "FSDP · TP · EP · PP · CP · SP · sharding · NCCL · RDMA QP · weight sync · policy versions",
+    "contract": "Test communication, sharding and weight synchronization across the intended topology, including delayed workers and numerical parity."
    },
    {
     "id": "kernels",
     "name": "Kernels & compilers",
     "subtitle": "",
     "examples": "CUDA · Triton · CUTLASS · Pallas · FlashAttention · kernel fusion · FP8 / FP4 · torch.compile",
-    "contract": "Measure numerical correctness and device performance on the declared hardware and realistic shapes."
+    "contract": "Measure numerical correctness and device performance of kernels and compiled graphs on the declared hardware and realistic shapes."
    },
    {
     "id": "cluster",
     "name": "Cluster orchestration & sandboxing",
     "subtitle": "",
     "examples": "K8s · Slurm · Ray · scheduling · provisioning · E2B · Docker",
-    "contract": "Test real resource provisioning, isolation and lifecycle behavior under concurrency, overload and failures."
+    "contract": "Test real provisioning, scheduling, isolation and lifecycle behavior under concurrency, overload and failures."
    },
    {
     "id": "state",
     "name": "Memory & state management",
     "subtitle": "",
-    "examples": "KV cache management · hierarchical KV · distributed checkpoints · RAG",
-    "contract": "Preserve all relevant state through interruption, movement and recovery; compare against an uninterrupted reference."
+    "examples": "KV cache management · hierarchical KV · distributed checkpoints · checkpoint recovery · RAG",
+    "contract": "Preserve KV, checkpoint and optimizer state through interruption, movement and recovery; compare against an uninterrupted reference."
    }
   ],
   "stages_v1": [

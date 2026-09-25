@@ -27,7 +27,7 @@ The overview's lead figure scores each primary benchmark by the number of distin
 
 ## The 35 cells and the 10 that no task reaches
 
-A cell is one life-cycle stage (data; pretrain & midtrain; post-train; agentic RL; serve & operate) crossed with one infrastructure layer (methods & logic; data & evaluation; training & inference engines; distributed coordination; memory, state & recovery; kernels & device execution; cluster & isolation). Each layer carries a contract stating what a test there has to do; a task lands in a cell when its verifier reaches that stage and exercises code at that layer. Fifteen of the 52 entries sit in two stages.
+A cell is one life-cycle stage (data; pretrain & midtrain; post-train; agent post-training; serve & deployment) crossed with one infrastructure layer (model & algorithm; data pipeline & evaluation; training & inference engines; parallelism & communication; kernels & compilers; cluster orchestration & sandboxing; memory & state management). Each layer carries a contract stating what a test there has to do; a task lands in a cell when its verifier reaches that stage and exercises code at that layer. Fifteen of the 52 entries sit in two stages.
 
 | Empty cell | What documented production systems do there |
 |---|---|
@@ -36,10 +36,10 @@ A cell is one life-cycle stage (data; pretrain & midtrain; post-train; agentic R
 | Data × kernels | GPU dedup and tokenization kernels (NeMo Curator style pipelines) |
 | Data × cluster | Corpus builds on Slurm or Ray clusters (Dolma 3, Datatrove) |
 | Pretrain × cluster | Node health checks and cordoning; 419 unexpected interruptions in Llama 3; OLMo 2 host failures |
-| Post-train × data & evaluation | Sample mixing and mask semantics (MiMo Sample Mixer; tool-token masking in slime) |
+| Post-train × data pipeline & evaluation | Sample mixing and mask semantics (MiMo Sample Mixer; tool-token masking in slime) |
 | Post-train × cluster | Trainer and sampler job placement (colocated verl; disaggregated GLM-5) |
-| Agentic RL × distributed | Weight publication to rollout replicas (checkpoint-engine; slime delta sync) |
-| Agentic RL × kernels | Trainer/sampler numeric parity (MiMo MXFP4 QDQ; R3 routing replay) |
-| Agentic RL × cluster | Sandbox fleets (MiMo Harness Pool; Mercor MCP fleets; SkyRL on Modal) |
+| Agent post-training × distributed | Weight publication to rollout replicas (checkpoint-engine; slime delta sync) |
+| Agent post-training × kernels | Trainer/sampler numeric parity (MiMo MXFP4 QDQ; R3 routing replay) |
+| Agent post-training × cluster | Sandbox fleets (MiMo Harness Pool; Mercor MCP fleets; SkyRL on Modal) |
 
 Sources for the production examples are the pipeline, RL-loop and agentic tables of the overview and deep-dive pages.
