@@ -2711,14 +2711,14 @@
    {
     "id": "pretrain",
     "name": "Pretrain & midtrain",
-    "sub": "base model · continued pretraining · long context · annealing",
-    "short": "base · continue · long context"
+    "sub": "arch design · scaling law · base model · continued pretraining · long context · annealing",
+    "short": "arch · scaling law · base · continue"
    },
    {
     "id": "posttrain",
     "name": "Post-train",
-    "sub": "SFT · preference · RL · on-policy distillation",
-    "short": "SFT · pref · RL · OPD"
+    "sub": "SFT · preference · on-policy distillation",
+    "short": "SFT · pref · OPD"
    },
    {
     "id": "agentic",
@@ -2728,9 +2728,9 @@
    },
    {
     "id": "serve",
-    "name": "Serve & operate",
-    "sub": "inference · KV · routing · recovery",
-    "short": "inference · KV · ops"
+    "name": "Serve & deployment",
+    "sub": "inference · KV cache management · routing · autoscaling",
+    "short": "inference · KV cache · autoscaling"
    }
   ],
   "models": [
