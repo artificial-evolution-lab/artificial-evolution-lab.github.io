@@ -2705,7 +2705,7 @@
    {
     "id": "data",
     "name": "Data",
-    "sub": "curate · dedup · mix · tokenize",
+    "sub": "crawl · parse · dedup · mix · synthesize · tokenize",
     "short": "curate · tokenize"
    },
    {
@@ -3830,48 +3830,81 @@
   "code_by_stage": {
    "data": [
     {
-     "name": "DataTrove / FineWeb",
+     "group": "Datasets",
+     "name": "FineWeb",
+     "org": "Hugging Face · 2024",
+     "url": "https://huggingface.co/datasets/HuggingFaceFW/fineweb",
+     "what": "15T-token English web corpus from 96 Common Crawl snapshots, built with DataTrove."
+    },
+    {
+     "group": "Datasets",
+     "name": "FineWeb-Edu",
+     "org": "Hugging Face · 2024",
+     "url": "https://huggingface.co/datasets/HuggingFaceFW/fineweb-edu",
+     "what": "FineWeb filtered by an educational-quality classifier; 1.3T tokens."
+    },
+    {
+     "group": "Datasets",
+     "name": "Nemotron-CC",
+     "org": "NVIDIA · 2024",
+     "url": "https://data.commoncrawl.org/contrib/Nemotron/Nemotron-CC/index.html",
+     "what": "6.3T-token Common Crawl corpus; classifier ensembling plus synthetic rephrasing."
+    },
+    {
+     "group": "Datasets",
+     "name": "Dolma",
+     "org": "Ai2 · 2024",
+     "url": "https://huggingface.co/datasets/allenai/dolma",
+     "what": "3T-token open corpus behind OLMo."
+    },
+    {
+     "group": "Datasets",
+     "name": "DCLM",
+     "org": "DataComp-LM · 2024",
+     "url": "https://github.com/mlfoundations/dclm",
+     "what": "DCLM-Baseline, about 4T tokens selected by a fastText quality classifier; the pipeline is public."
+    },
+    {
+     "group": "Tooling",
+     "name": "DataTrove",
      "org": "Hugging Face",
      "url": "https://github.com/huggingface/datatrove",
-     "what": "Slurm-chained extraction, filtering and MinHash deduplication over object storage; produced the 15T-token FineWeb.",
-     "tag": "note-2026-09-21"
+     "what": "Extraction, filtering and MinHash deduplication pipelines at scale; produced FineWeb."
     },
     {
-     "name": "Dolma 3 tools",
-     "org": "Ai2",
-     "url": "https://github.com/allenai/dolma",
-     "what": "datamap-rs cleaning, duplodocus trillion-token fuzzy dedup, decon test-set removal.",
-     "tag": "spot-checked"
+     "group": "Tooling",
+     "name": "NeMo Curator",
+     "org": "NVIDIA",
+     "url": "https://github.com/NVIDIA-NeMo/Curator",
+     "what": "GPU-accelerated curation: deduplication, quality classifiers and synthetic data generation."
     },
     {
-     "name": "TxT360",
-     "org": "LLM360",
-     "url": "https://huggingface.co/datasets/LLM360/TxT360",
-     "what": "Released pretraining and mid-training corpora behind K2-V2.",
-     "tag": "agent-reported"
+     "group": "Parsers",
+     "name": "trafilatura",
+     "org": "HTML → text",
+     "url": "https://github.com/adbar/trafilatura",
+     "what": "Main-text extraction from HTML; the extractor used for FineWeb."
+    },
+    {
+     "group": "Parsers",
+     "name": "Resiliparse",
+     "org": "HTML → text",
+     "url": "https://github.com/chatnoir-eu/chatnoir-resiliparse",
+     "what": "Fast HTML-to-text extraction; the extractor used for DCLM."
     }
    ],
    "pretrain": [
     {
-     "name": "Megatron-LM / Core",
-     "org": "NVIDIA",
-     "url": "https://github.com/NVIDIA/Megatron-LM",
-     "what": "TP/PP/DP/EP/CP training core; trainer inside slime, NeMo-RL and Apertus.",
-     "tag": "prior-note"
+     "name": "LM Engine",
+     "org": "open-lm-engine",
+     "url": "https://github.com/open-lm-engine/lm-engine",
+     "what": "Library for pretraining and finetuning LLMs."
     },
     {
-     "name": "TorchTitan",
+     "name": "PyTorch Distributed",
      "org": "PyTorch",
-     "url": "https://github.com/pytorch/torchtitan",
-     "what": "PyTorch-native N-D parallel pretraining; benchmarked at 8–512 H100; TitanRL work shares model definitions with vLLM.",
-     "tag": "note-2026-09-21"
-    },
-    {
-     "name": "nanotron",
-     "org": "Hugging Face",
-     "url": "https://github.com/huggingface/nanotron",
-     "what": "Production training codebase behind SmolLM3 and the Ultra-Scale Playbook.",
-     "tag": "agent-reported"
+     "url": "https://docs.pytorch.org/docs/stable/distributed.html",
+     "what": "torch.distributed: process groups, collectives, FSDP, DTensor and distributed checkpointing."
     },
     {
      "name": "OLMo-core",
@@ -3881,25 +3914,24 @@
      "tag": "spot-checked"
     },
     {
+     "name": "Megatron-Core",
+     "org": "NVIDIA",
+     "url": "https://github.com/NVIDIA/Megatron-LM/tree/main/megatron/core",
+     "what": "TP/PP/DP/EP/CP training core; trainer inside slime, NeMo-RL and Apertus.",
+     "tag": "prior-note"
+    },
+    {
+     "name": "NeMo AutoModel",
+     "org": "NVIDIA NeMo",
+     "url": "https://github.com/NVIDIA-NeMo/Automodel",
+     "what": "PyTorch Distributed-native training library for LLMs and VLMs with Hugging Face model support."
+    },
+    {
      "name": "Levanter",
      "org": "Marin",
      "url": "https://github.com/marin-community/levanter",
      "what": "JAX/Haliax trainer on TPUs with bitwise-deterministic runs and TensorStore checkpoints.",
      "tag": "agent-reported"
-    },
-    {
-     "name": "Megatron-Bridge",
-     "org": "NVIDIA NeMo",
-     "url": "https://github.com/NVIDIA-NeMo/Megatron-Bridge",
-     "what": "Pretraining and SFT recipes in the Nemotron 3 pipeline.",
-     "tag": "agent-reported"
-    },
-    {
-     "name": "continuation = same trainers",
-     "org": "—",
-     "url": "https://allenai.org/blog/olmo3",
-     "what": "Mid-training, annealing and long-context extension reuse the pretraining trainer and objective with a new mixture and context length: OLMo-core (Dolmino, Longmino), nanotron (SmolLM3), Megatron-Bridge (Nemotron LC-phase), Megatron-Core (K2-V2), MiMo (agent-centric mid-training).",
-     "tag": "spot-checked"
     }
    ],
    "posttrain": [
@@ -3909,6 +3941,12 @@
      "url": "https://github.com/THUDM/slime",
      "what": "Megatron training + SGLang rollout + Data Buffer; behind GLM-4.5 through GLM-5.3.",
      "tag": "spot-checked"
+    },
+    {
+     "name": "Miles",
+     "org": "RadixArk",
+     "url": "https://github.com/radixark/miles",
+     "what": "Enterprise-facing RL framework for LLM and VLM post-training, forked from and co-evolving with slime."
     },
     {
      "name": "verl",
@@ -3986,27 +4024,6 @@
      "url": "https://github.com/NVIDIA-NeMo/RL",
      "what": "The README lists on-policy distillation (the student generates on-policy sequences and aligns logits to a larger teacher via KL) and an X-token off-policy distillation recipe; Nemotron 3 Ultra's stage 2 is MOPD on NeMo-RL.",
      "tag": "spot-checked"
-    },
-    {
-     "name": "TRL GKDTrainer",
-     "org": "Hugging Face",
-     "url": "https://huggingface.co/docs/trl/main/en/gkd_trainer",
-     "what": "Generalized knowledge distillation: the student trains on its own generations with token-level teacher feedback; lmbda sets the on-policy fraction and beta interpolates forward and reverse KL (Agarwal et al. 2023).",
-     "tag": "spot-checked"
-    },
-    {
-     "name": "Tinker on-policy distillation",
-     "org": "Thinking Machines",
-     "url": "https://thinkingmachines.ai/blog/on-policy-distillation/",
-     "what": "Student samples, teacher scores each token with reverse KL; the October 2025 post reports 9–30× less compute than SFT and 7–10× fewer gradient steps than RL to matched performance, on the Tinker API.",
-     "tag": "spot-checked"
-    },
-    {
-     "name": "MOPD / MOPD2",
-     "org": "Xiaomi MiMo",
-     "url": "https://arxiv.org/abs/2606.30406",
-     "what": "Multi-teacher on-policy distillation: domain-specialized RL teachers supervise student rollouts token by token; MOPD2 (MiMo-V2.6) adds prefix-conditioned single-turn rollouts from teacher trajectories and SFT data. Deployed in MiMo-V2-Flash and V2.6; the paper is open, the training code is in-house.",
-     "tag": "spot-checked"
     }
    ],
    "agentic": [
@@ -4051,27 +4068,6 @@
      "url": "https://github.com/kvcache-ai/AgentENV",
      "what": "Firecracker microVM sandboxes with 133 ms checkpoint and 49 ms resume; used for Kimi K3.",
      "tag": "agent-reported"
-    },
-    {
-     "name": "checkpoint-engine",
-     "org": "Moonshot",
-     "url": "https://github.com/MoonshotAI/checkpoint-engine",
-     "what": "Weight-update middleware for vLLM/SGLang: about 20 s for a 1T model across thousands of GPUs.",
-     "tag": "spot-checked"
-    },
-    {
-     "name": "vLLM native RL APIs",
-     "org": "vllm-project",
-     "url": "https://vllm.ai/blog/",
-     "what": "Four-phase weight transfer (NCCL or IPC) and pause_generation with abort / wait / keep modes (May 2026 blog).",
-     "tag": "agent-reported"
-    },
-    {
-     "name": "verl mimo-oss · uni-agent · MiMoAgent",
-     "org": "Xiaomi (forks)",
-     "url": "https://github.com/XiaomiMiMo/verl/tree/mimo-oss",
-     "what": "The RL suite released with MiMo-V2.6: multi-harness agentic recipes and tool-call credit assignment on verl v0.9.0.dev; a Responses-API gateway with session hardening on uni-agent; MiMoAgent, a mini-swe-agent-derived rollout framework with Docker, Kubernetes and Modal backends and DeepSWE, TerminalBench and ProgramBench adapters. The 7k+ environments were announced but not yet published on 2026-09-21.",
-     "tag": "spot-checked"
     }
    ],
    "serve": [
@@ -4080,56 +4076,82 @@
      "org": "vllm-project",
      "url": "https://github.com/vllm-project/vllm",
      "what": "Continuous batching, paged KV, prefix caching, TP/PP/EP, PD disaggregation; also the rollout engine inside many RL stacks.",
-     "tag": "prior-note"
+     "tag": "prior-note",
+     "group": "Engines"
     },
     {
      "name": "SGLang",
      "org": "sgl-project",
      "url": "https://github.com/sgl-project/sglang",
      "what": "Radix cache, scheduler, large-scale EP and PD disaggregation; 96-H100 DeepSeek deployment report; rollout backend for slime and AReaL.",
-     "tag": "note-2026-09-21"
+     "tag": "note-2026-09-21",
+     "group": "Engines"
     },
     {
      "name": "TensorRT-LLM",
      "org": "NVIDIA",
      "url": "https://github.com/NVIDIA/TensorRT-LLM",
      "what": "Pre-installed engine option in InferenceBench; AReaL added TensorRT-LLM scaffolding in 2026.",
-     "tag": "agent-reported"
+     "tag": "agent-reported",
+     "group": "Engines"
     },
     {
      "name": "NVIDIA Dynamo",
      "org": "NVIDIA",
      "url": "https://github.com/ai-dynamo/dynamo",
      "what": "Frontend, KV-aware router, PD workers with NIXL transport, Planner autoscaling, fault-tolerance tests.",
-     "tag": "note-2026-09-21"
+     "tag": "note-2026-09-21",
+     "group": "Engines"
     },
     {
      "name": "llm-d",
      "org": "Red Hat, Google, IBM, CoreWeave, NVIDIA",
      "url": "https://github.com/llm-d/llm-d",
      "what": "Kubernetes-native inference: prefix-cache-aware routing, PD disaggregation over NIXL, tiered KV offload, SLO autoscaler; CNCF sandbox (2026-03).",
-     "tag": "agent-reported"
+     "tag": "agent-reported",
+     "group": "Engines"
     },
     {
-     "name": "vLLM production-stack",
-     "org": "vllm-project",
-     "url": "https://github.com/vllm-project/production-stack",
-     "what": "Helm/Kubernetes deployment with a router, LMCache KV offloading and Prometheus/Grafana metrics.",
-     "tag": "agent-reported"
-    },
-    {
-     "name": "DeepEP · DeepGEMM · EPLB",
+     "name": "DeepEP",
      "org": "DeepSeek",
      "url": "https://github.com/deepseek-ai/DeepEP",
-     "what": "Open communication, GEMM and expert-balancing components behind the V3/R1 serving system.",
-     "tag": "prior-note"
+     "what": "Expert-parallel communication library: MoE dispatch and combine kernels.",
+     "group": "Kernels"
     },
     {
-     "name": "Humming (MXFP4 GEMM)",
-     "org": "vllm-project",
-     "url": "https://github.com/vllm-project/humming",
-     "what": "JIT GEMM kernels for sub-8-bit weights across FP16/BF16/FP8/FP4/INT8/INT4 activations; MiMo-V2.6 rollouts use its MXFP4 numerics and the trainer quantize-dequantizes expert weights to match.",
-     "tag": "spot-checked"
+     "name": "DeepGEMM",
+     "org": "DeepSeek",
+     "url": "https://github.com/deepseek-ai/DeepGEMM",
+     "what": "GEMM kernel library, including FP8 and grouped GEMMs for MoE.",
+     "group": "Kernels"
+    },
+    {
+     "name": "EPLB",
+     "org": "DeepSeek",
+     "url": "https://github.com/deepseek-ai/EPLB",
+     "what": "Expert-parallelism load balancer.",
+     "group": "Kernels"
+    },
+    {
+     "name": "FlashMLA",
+     "org": "DeepSeek",
+     "url": "https://github.com/deepseek-ai/FlashMLA",
+     "what": "Multi-head latent attention decoding kernels.",
+     "group": "Kernels"
+    },
+    {
+     "name": "FlashKDA",
+     "org": "Moonshot",
+     "url": "https://github.com/MoonshotAI/FlashKDA",
+     "what": "Kimi Delta Attention kernels.",
+     "group": "Kernels"
+    },
+    {
+     "name": "FlashInfer",
+     "org": "flashinfer-ai",
+     "url": "https://github.com/flashinfer-ai/flashinfer",
+     "what": "Attention, sampling and MoE kernel library for LLM serving.",
+     "group": "Kernels"
     }
    ]
   }
