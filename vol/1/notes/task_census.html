@@ -135,7 +135,7 @@
 <td>L</td>
 <td>JAX LM pretraining speedrun</td>
 <td>Write a from-scratch decoder LM training recipe in JAX; the grader retrains it on an H100 under a time budget and checks losses.</td>
-<td>Pretrain &amp; midtrain / Methods &amp; agent logic (measured); Pretrain &amp; midtrain / Training &amp; rollout engines (measured)</td>
+<td>Pretrain &amp; midtrain / Methods &amp; logic (measured); Pretrain &amp; midtrain / Training &amp; rollout engines (measured)</td>
 </tr>
 <tr>
 <td><code>math-eval-grader</code></td>
@@ -1236,7 +1236,7 @@
 <td>L</td>
 <td>Recursive delegation between LLM agents</td>
 <td>Multi-agent orchestrator around Claude Code must run delegated sub-agents and return their tool results; rule 5 surrounding agent logic, with model SDKs mocked.</td>
-<td>Agentic RL / Methods &amp; agent logic (adjacent)</td>
+<td>Agentic RL / Methods &amp; logic (adjacent)</td>
 </tr>
 <tr>
 <td><code>go-genai-streamed-function-args</code></td>
@@ -2042,7 +2042,7 @@
 <td>L</td>
 <td>Tool-use agent search policy</td>
 <td>Agent rewrites tree-search logic around fixed API LLMs (DeepSeek, Qwen) on StableToolBench; the LLM is a component and the work is agent logic (rule 5).</td>
-<td>Agentic RL / Methods &amp; agent logic (adjacent)</td>
+<td>Agentic RL / Methods &amp; logic (adjacent)</td>
 </tr>
 <tr>
 <td><code>dlm-dkv-policy</code></td>
@@ -2056,7 +2056,7 @@
 <td>L</td>
 <td>Diffusion-LM demasking decoder</td>
 <td>Scorer decodes with LLaDA-8B and Dream-7B using the submitted demasking strategy, scoring MATH and HumanEval accuracy, text quality and reported step counts.</td>
-<td>Serve &amp; operate / Methods &amp; agent logic (measured)</td>
+<td>Serve &amp; operate / Methods &amp; logic (measured)</td>
 </tr>
 <tr>
 <td><code>llm-kv-adaptive-quantization</code></td>
@@ -2077,140 +2077,140 @@
 <td>L</td>
 <td>KV-efficient attention in pretraining</td>
 <td>Scorer pretrains a 345M GPT with the submitted KV structure on two GPUs; loss, held-out loss, lm-eval accuracy and analytic KV bytes.</td>
-<td>Pretrain &amp; midtrain / Methods &amp; agent logic (measured); Pretrain &amp; midtrain / Training &amp; rollout engines (adjacent)</td>
+<td>Pretrain &amp; midtrain / Methods &amp; logic (measured); Pretrain &amp; midtrain / Training &amp; rollout engines (adjacent)</td>
 </tr>
 <tr>
 <td><code>llm-pretrain-attention</code></td>
 <td>L</td>
 <td>Attention for nanoGPT pretraining</td>
 <td>Scorer pretrains a 345M GPT with the submitted attention module, then scores validation loss, perplexity and zero-shot lm-eval accuracy.</td>
-<td>Pretrain &amp; midtrain / Methods &amp; agent logic (measured); Pretrain &amp; midtrain / Training &amp; rollout engines (adjacent)</td>
+<td>Pretrain &amp; midtrain / Methods &amp; logic (measured); Pretrain &amp; midtrain / Training &amp; rollout engines (adjacent)</td>
 </tr>
 <tr>
 <td><code>llm-pretrain-bitlinear</code></td>
 <td>L</td>
 <td>Native low-bit linear pretraining</td>
 <td>Scorer pretrains a 345M GPT with the submitted BitLinear quantizers on ClimbMix, then scores loss, perplexity and zero-shot lm-eval accuracy.</td>
-<td>Pretrain &amp; midtrain / Methods &amp; agent logic (measured); Pretrain &amp; midtrain / Training &amp; rollout engines (adjacent)</td>
+<td>Pretrain &amp; midtrain / Methods &amp; logic (measured); Pretrain &amp; midtrain / Training &amp; rollout engines (adjacent)</td>
 </tr>
 <tr>
 <td><code>llm-pretrain-embedding</code></td>
 <td>L</td>
 <td>Embedding design for LM pretraining</td>
 <td>Scorer pretrains a 345M GPT with the submitted token-embedding module under a parameter cap; loss, perplexity and lm-eval accuracy.</td>
-<td>Pretrain &amp; midtrain / Methods &amp; agent logic (measured); Pretrain &amp; midtrain / Training &amp; rollout engines (adjacent)</td>
+<td>Pretrain &amp; midtrain / Methods &amp; logic (measured); Pretrain &amp; midtrain / Training &amp; rollout engines (adjacent)</td>
 </tr>
 <tr>
 <td><code>llm-pretrain-kernel</code></td>
 <td>L</td>
 <td>Custom MLP kernel in pretraining</td>
 <td>Scorer pretrains a 345M GPT using the submitted fused MLP function; loss, perplexity and lm-eval accuracy; kernel speed is not scored.</td>
-<td>Pretrain &amp; midtrain / Methods &amp; agent logic (measured); Pretrain &amp; midtrain / Training &amp; rollout engines (adjacent); Pretrain &amp; midtrain / Kernels &amp; device execution (measured)</td>
+<td>Pretrain &amp; midtrain / Methods &amp; logic (measured); Pretrain &amp; midtrain / Training &amp; rollout engines (adjacent); Pretrain &amp; midtrain / Kernels &amp; device execution (measured)</td>
 </tr>
 <tr>
 <td><code>llm-pretrain-linear-attention</code></td>
 <td>L</td>
 <td>Subquadratic attention for pretraining</td>
 <td>Scorer pretrains a 345M GPT with the submitted linear-attention and block code; loss, perplexity and zero-shot lm-eval accuracy.</td>
-<td>Pretrain &amp; midtrain / Methods &amp; agent logic (measured); Pretrain &amp; midtrain / Training &amp; rollout engines (adjacent)</td>
+<td>Pretrain &amp; midtrain / Methods &amp; logic (measured); Pretrain &amp; midtrain / Training &amp; rollout engines (adjacent)</td>
 </tr>
 <tr>
 <td><code>llm-pretrain-loss</code></td>
 <td>L</td>
 <td>Pretraining loss function</td>
 <td>Scorer pretrains a 345M GPT with the submitted training loss; validation loss, perplexity and zero-shot lm-eval accuracy.</td>
-<td>Pretrain &amp; midtrain / Methods &amp; agent logic (measured); Pretrain &amp; midtrain / Training &amp; rollout engines (adjacent)</td>
+<td>Pretrain &amp; midtrain / Methods &amp; logic (measured); Pretrain &amp; midtrain / Training &amp; rollout engines (adjacent)</td>
 </tr>
 <tr>
 <td><code>llm-pretrain-lr-schedule</code></td>
 <td>L</td>
 <td>Pretraining learning-rate schedule</td>
 <td>Scorer pretrains a 345M GPT with the submitted learning-rate schedule; validation loss, perplexity and zero-shot lm-eval accuracy.</td>
-<td>Pretrain &amp; midtrain / Methods &amp; agent logic (measured); Pretrain &amp; midtrain / Training &amp; rollout engines (adjacent)</td>
+<td>Pretrain &amp; midtrain / Methods &amp; logic (measured); Pretrain &amp; midtrain / Training &amp; rollout engines (adjacent)</td>
 </tr>
 <tr>
 <td><code>llm-pretrain-mlp</code></td>
 <td>L</td>
 <td>Transformer feed-forward block design</td>
 <td>Scorer pretrains a 345M GPT with the submitted MLP block under a parameter cap; loss, perplexity and zero-shot lm-eval accuracy.</td>
-<td>Pretrain &amp; midtrain / Methods &amp; agent logic (measured); Pretrain &amp; midtrain / Training &amp; rollout engines (adjacent)</td>
+<td>Pretrain &amp; midtrain / Methods &amp; logic (measured); Pretrain &amp; midtrain / Training &amp; rollout engines (adjacent)</td>
 </tr>
 <tr>
 <td><code>llm-pretrain-normalization</code></td>
 <td>L</td>
 <td>Normalization and block layout</td>
 <td>Scorer pretrains a 345M GPT with the submitted normalization and block composition; loss, perplexity and zero-shot lm-eval accuracy.</td>
-<td>Pretrain &amp; midtrain / Methods &amp; agent logic (measured); Pretrain &amp; midtrain / Training &amp; rollout engines (adjacent)</td>
+<td>Pretrain &amp; midtrain / Methods &amp; logic (measured); Pretrain &amp; midtrain / Training &amp; rollout engines (adjacent)</td>
 </tr>
 <tr>
 <td><code>llm-pretrain-optimizer</code></td>
 <td>L</td>
 <td>Pretraining optimizer and schedule</td>
 <td>Scorer pretrains a 345M GPT with the submitted optimizer and schedule; validation loss, perplexity and zero-shot lm-eval accuracy.</td>
-<td>Pretrain &amp; midtrain / Methods &amp; agent logic (measured); Pretrain &amp; midtrain / Training &amp; rollout engines (adjacent); Pretrain &amp; midtrain / Distributed coordination (adjacent)</td>
+<td>Pretrain &amp; midtrain / Methods &amp; logic (measured); Pretrain &amp; midtrain / Training &amp; rollout engines (adjacent); Pretrain &amp; midtrain / Distributed coordination (adjacent)</td>
 </tr>
 <tr>
 <td><code>llm-pretrain-residual</code></td>
 <td>L</td>
 <td>Residual stream design</td>
 <td>Scorer pretrains a 345M GPT with the submitted residual-stream wiring under a parameter cap; loss, perplexity and zero-shot lm-eval accuracy.</td>
-<td>Pretrain &amp; midtrain / Methods &amp; agent logic (measured); Pretrain &amp; midtrain / Training &amp; rollout engines (adjacent)</td>
+<td>Pretrain &amp; midtrain / Methods &amp; logic (measured); Pretrain &amp; midtrain / Training &amp; rollout engines (adjacent)</td>
 </tr>
 <tr>
 <td><code>llm-ptq-algorithm</code></td>
 <td>L</td>
 <td>Post-training quantization of Mistral-7B</td>
 <td>Scorer quantizes real Mistral-7B linear layers with the submitted algorithm using WikiText-2 calibration, then measures WikiText-2 perplexity at INT4 and INT3.</td>
-<td>Serve &amp; operate / Methods &amp; agent logic (measured)</td>
+<td>Serve &amp; operate / Methods &amp; logic (measured)</td>
 </tr>
 <tr>
 <td><code>llm-qat-algorithm</code></td>
 <td>L</td>
 <td>Quantization-aware finetuning of Pythia</td>
 <td>Scorer finetunes Pythia-1.4B with the submitted fake-quant wrapper, applies quantize-dequantize, and scores WikiText-2 perplexity at INT4, INT3 and INT2.</td>
-<td>Serve &amp; operate / Methods &amp; agent logic (measured); Post-train / Methods &amp; agent logic (adjacent)</td>
+<td>Serve &amp; operate / Methods &amp; logic (measured); Post-train / Methods &amp; logic (adjacent)</td>
 </tr>
 <tr>
 <td><code>llm-rl-advantage</code></td>
 <td>L</td>
 <td>GRPO advantage estimator</td>
 <td>Scorer runs verl RL on Qwen2.5-0.5B with the submitted advantage function, then scores GSM8K, MATH-500 and AMC accuracy.</td>
-<td>Post-train / Methods &amp; agent logic (measured); Post-train / Training &amp; rollout engines (adjacent)</td>
+<td>Post-train / Methods &amp; logic (measured); Post-train / Training &amp; rollout engines (adjacent)</td>
 </tr>
 <tr>
 <td><code>llm-rl-importance-sampling</code></td>
 <td>L</td>
 <td>Policy-loss importance sampling</td>
 <td>Scorer runs verl RL on Qwen2.5-0.5B with the submitted clipped policy loss; GSM8K, MATH-500 and AMC accuracy.</td>
-<td>Post-train / Methods &amp; agent logic (measured); Post-train / Training &amp; rollout engines (adjacent); Post-train / Distributed coordination (adjacent)</td>
+<td>Post-train / Methods &amp; logic (measured); Post-train / Training &amp; rollout engines (adjacent); Post-train / Distributed coordination (adjacent)</td>
 </tr>
 <tr>
 <td><code>llm-rl-kl-estimator</code></td>
 <td>L</td>
 <td>Actor KL penalty estimator</td>
 <td>Scorer runs verl RL on Qwen2.5-0.5B with the submitted per-token KL estimator; GSM8K, MATH-500 and AMC accuracy.</td>
-<td>Post-train / Methods &amp; agent logic (measured); Post-train / Training &amp; rollout engines (adjacent)</td>
+<td>Post-train / Methods &amp; logic (measured); Post-train / Training &amp; rollout engines (adjacent)</td>
 </tr>
 <tr>
 <td><code>llm-rl-reward-normalization</code></td>
 <td>L</td>
 <td>Reward normalization before GRPO</td>
 <td>Scorer runs verl RL on Qwen2.5-0.5B with the submitted reward normalization; GSM8K, MATH-500 and AMC accuracy.</td>
-<td>Post-train / Methods &amp; agent logic (measured); Post-train / Training &amp; rollout engines (adjacent)</td>
+<td>Post-train / Methods &amp; logic (measured); Post-train / Training &amp; rollout engines (adjacent)</td>
 </tr>
 <tr>
 <td><code>llm-scaling-law-discovery</code></td>
 <td>L</td>
 <td>Scaling-law fitting for LM training</td>
 <td>Fits submitted symbolic laws to recorded LM training runs (vocabulary, LR/batch size, data-constrained) on CPU, scoring held-out loss prediction; no model is trained.</td>
-<td>Pretrain &amp; midtrain / Methods &amp; agent logic (adjacent)</td>
+<td>Pretrain &amp; midtrain / Methods &amp; logic (adjacent)</td>
 </tr>
 <tr>
 <td><code>mas-topology</code></td>
 <td>L</td>
 <td>Multi-agent LLM collaboration topology</td>
 <td>Agent writes a DAG topology for a fixed MacNet multi-agent coder using DeepSeek and Qwen APIs; HumanEval pass@1 and SRDD execution rate (rule 5).</td>
-<td>Agentic RL / Methods &amp; agent logic (adjacent)</td>
+<td>Agentic RL / Methods &amp; logic (adjacent)</td>
 </tr>
 <tr>
 <td><code>mlsys-fused-attention</code></td>
@@ -2231,7 +2231,7 @@
 <td>L</td>
 <td>Inference-time sparse attention</td>
 <td>Scorer patches the submitted sparse attention into Qwen2.5-1.5B-Instruct and scores needle retrieval and LongBench QA quality plus reported attention density.</td>
-<td>Serve &amp; operate / Methods &amp; agent logic (measured); Serve &amp; operate / Training &amp; rollout engines (adjacent)</td>
+<td>Serve &amp; operate / Methods &amp; logic (measured); Serve &amp; operate / Training &amp; rollout engines (adjacent)</td>
 </tr>
 <tr>
 <td><code>ai4bio-mutation-effect-prediction</code></td>
@@ -3044,7 +3044,7 @@
 <td>L</td>
 <td>LM chat RL</td>
 <td>Improves a GPT-2 chatbot through RL finetuning; scored by an LLM judge on held-out prompts.</td>
-<td>Post-train / Methods &amp; agent logic (measured); Post-train / Training &amp; rollout engines (measured)</td>
+<td>Post-train / Methods &amp; logic (measured); Post-train / Training &amp; rollout engines (measured)</td>
 </tr>
 <tr>
 <td><code>ai_rd_optimize_llm_foundry</code></td>
@@ -3058,21 +3058,21 @@
 <td>L</td>
 <td>LM architecture under constraints</td>
 <td>Trains a masked language model under restricted primitives; scored by loss.</td>
-<td>Pretrain &amp; midtrain / Methods &amp; agent logic (measured); Pretrain &amp; midtrain / Training &amp; rollout engines (measured)</td>
+<td>Pretrain &amp; midtrain / Methods &amp; logic (measured); Pretrain &amp; midtrain / Training &amp; rollout engines (measured)</td>
 </tr>
 <tr>
 <td><code>ai_rd_rust_codecontests_inference</code></td>
 <td>L</td>
 <td>LLM scaffold, fixed model</td>
 <td>Builds a prompting scaffold around a fixed API model for Rust contest problems; the model itself is untouched.</td>
-<td>Serve &amp; operate / Methods &amp; agent logic (measured); Agentic RL / Methods &amp; agent logic (adjacent)</td>
+<td>Serve &amp; operate / Methods &amp; logic (measured); Agentic RL / Methods &amp; logic (adjacent)</td>
 </tr>
 <tr>
 <td><code>ai_rd_small_scaling_law</code></td>
 <td>L</td>
 <td>LM scaling-law prediction</td>
 <td>Predicts compute-optimal settings from small nanoGPT runs; scored against a reference.</td>
-<td>Pretrain &amp; midtrain / Methods &amp; agent logic (bounded)</td>
+<td>Pretrain &amp; midtrain / Methods &amp; logic (bounded)</td>
 </tr>
 <tr>
 <td><code>ai_rd_triton_cumsum</code></td>
@@ -3101,14 +3101,14 @@
 <td>L</td>
 <td>GRPO post-training of Qwen2-VL-2B</td>
 <td>Agent runs RL post-training of a 2B vision-language model; verifier loads the merged weights and scores greedy counting accuracy on two held-out sets.</td>
-<td>Post-train / Methods &amp; agent logic (measured); Post-train / Training &amp; rollout engines (adjacent)</td>
+<td>Post-train / Methods &amp; logic (measured); Post-train / Training &amp; rollout engines (adjacent)</td>
 </tr>
 <tr>
 <td><code>discoveryworld_agent_harness_low2</code></td>
 <td>L</td>
 <td>Scientific-discovery agent harness</td>
 <td>Improve a ReAct harness around a fixed API model; verifier reruns it on sealed simulated worlds and scores progress, completion and stated knowledge.</td>
-<td>Serve &amp; operate / Methods &amp; agent logic (measured); Agentic RL / Methods &amp; agent logic (adjacent); Agentic RL / Data &amp; evaluation (adjacent)</td>
+<td>Serve &amp; operate / Methods &amp; logic (measured); Agentic RL / Methods &amp; logic (adjacent); Agentic RL / Data &amp; evaluation (adjacent)</td>
 </tr>
 <tr>
 <td><code>flashattention_varlen_feature_full_vjp_speedup</code></td>
@@ -3129,14 +3129,14 @@
 <td>L</td>
 <td>LLM Lean proof workflow</td>
 <td>Design a compiler-guided proving workflow around a pinned API model; verifier reruns it on held-out theorems under call, token and check budgets.</td>
-<td>Serve &amp; operate / Methods &amp; agent logic (measured); Agentic RL / Methods &amp; agent logic (adjacent)</td>
+<td>Serve &amp; operate / Methods &amp; logic (measured); Agentic RL / Methods &amp; logic (adjacent)</td>
 </tr>
 <tr>
 <td><code>locomo_longterm_memory</code></td>
 <td>L</td>
 <td>Conversational memory for LLM agents</td>
 <td>Redesign extraction, storage and retrieval around a pinned small API model; verifier rebuilds memory on unseen conversations and scores answer token F1.</td>
-<td>Serve &amp; operate / Methods &amp; agent logic (measured); Agentic RL / Methods &amp; agent logic (adjacent); Agentic RL / Memory, state &amp; recovery (adjacent)</td>
+<td>Serve &amp; operate / Methods &amp; logic (measured); Agentic RL / Methods &amp; logic (adjacent); Agentic RL / Memory, state &amp; recovery (adjacent)</td>
 </tr>
 <tr>
 <td><code>paged_ragged_gqa_decode_speedup</code></td>
@@ -3157,7 +3157,7 @@
 <td>L</td>
 <td>Teacher-student maths post-training</td>
 <td>LoRA post-training of a 1.7B base LM with a fixed 8B teacher; verifier validates merged weights and scores vLLM-sampled exact-answer maths accuracy.</td>
-<td>Post-train / Methods &amp; agent logic (measured); Post-train / Training &amp; rollout engines (adjacent)</td>
+<td>Post-train / Methods &amp; logic (measured); Post-train / Training &amp; rollout engines (adjacent)</td>
 </tr>
 <tr>
 <td><code>bigann_filtered_vector_search</code></td>
@@ -3361,7 +3361,7 @@
 <td>L</td>
 <td>LM post-training, 28 instances</td>
 <td>Every instance post-trains a small base LM toward a target benchmark in 10 H100-hours; weights are evaluated.</td>
-<td>Post-train / Methods &amp; agent logic (measured); Data / Methods &amp; agent logic (adjacent); Post-train / Training &amp; rollout engines (adjacent); Post-train / Memory, state &amp; recovery (adjacent)</td>
+<td>Post-train / Methods &amp; logic (measured); Data / Methods &amp; logic (adjacent); Post-train / Training &amp; rollout engines (adjacent); Post-train / Memory, state &amp; recovery (adjacent)</td>
 </tr>
 </tbody>
 </table>
@@ -3383,7 +3383,7 @@
 <td>L</td>
 <td>LM serving, 4 scenarios</td>
 <td>Every scenario stands up and tunes an OpenAI-compatible inference server on one H100; scored by latency or throughput.</td>
-<td>Serve &amp; operate / Training &amp; rollout engines (measured); Serve &amp; operate / Memory, state &amp; recovery (adjacent); Serve &amp; operate / Methods &amp; agent logic (adjacent); Serve &amp; operate / Cluster &amp; isolation (adjacent)</td>
+<td>Serve &amp; operate / Training &amp; rollout engines (measured); Serve &amp; operate / Memory, state &amp; recovery (adjacent); Serve &amp; operate / Methods &amp; logic (adjacent); Serve &amp; operate / Cluster &amp; isolation (adjacent)</td>
 </tr>
 </tbody>
 </table>

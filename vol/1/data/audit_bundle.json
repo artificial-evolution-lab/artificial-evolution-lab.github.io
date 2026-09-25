@@ -4650,7 +4650,7 @@
   "layers": [
    {
     "id": "methods",
-    "name": "Methods & agent logic",
+    "name": "Methods & logic",
     "subtitle": "Objectives, architectures, policies",
     "examples": "nanoGPT · verl · agent controllers",
     "contract": "Improve the method while preserving held-out quality, reproducibility and the task contract."
