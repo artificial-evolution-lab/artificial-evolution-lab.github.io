@@ -809,9 +809,9 @@ bindTips($('#joint-svg'), el=>{
 
 // ---------- figure 1: life cycles
 let selModel=null, showStageSubs=false;
-const LL=280, COLW2=(W-LL-(U.RPAD||14))/STAGES.length, cx2=i=>LL+COLW2*i+COLW2/2;
+const LL=312, COLW2=(W-LL-(U.RPAD||14))/STAGES.length, cx2=i=>LL+COLW2*i+COLW2/2;
 function wrapSub(sub, maxChars){ const parts=String(sub||'').split(' · '); const lines=[]; let cur=''; for(const p of parts){ const cand=cur?cur+' · '+p:p; if(cand.length>maxChars && cur){ lines.push(cur); cur=p; } else cur=cand; } if(cur) lines.push(cur); return lines.slice(0,3); }
-function lifeHeader(y){ let s=''; STAGES.forEach((st,i)=>{ const lines=showStageSubs?wrapSub(st.sub,26):[]; s+=`<g class="hdrbtn" tabindex="0" role="button" data-hdr="1" aria-label="${esc(st.name)}: ${showStageSubs?'hide':'show'} what this stage covers"><rect x="${cx2(i)-COLW2/2}" y="${y-14}" width="${COLW2}" height="${18+lines.length*11}" fill="transparent"/><text x="${cx2(i)}" y="${y}" text-anchor="middle" class="lg">${esc(st.name)}</text>${lines.map((ln,k)=>`<text x="${cx2(i)}" y="${y+13+k*11}" text-anchor="middle" class="sm mono mut" style="font-size:8.5px">${esc(ln)}</text>`).join('')}</g>`; }); return s; }
+function lifeHeader(y){ let s=''; STAGES.forEach((st,i)=>{ const lines=showStageSubs?wrapSub(st.sub,24):[]; s+=`<g class="hdrbtn" tabindex="0" role="button" data-hdr="1" aria-label="${esc(st.name)}: ${showStageSubs?'hide':'show'} what this stage covers"><rect x="${cx2(i)-COLW2/2}" y="${y-14}" width="${COLW2}" height="${18+lines.length*11}" fill="transparent"/><text x="${cx2(i)}" y="${y}" text-anchor="middle" class="lg">${esc(st.name)}</text>${lines.map((ln,k)=>`<text x="${cx2(i)}" y="${y+13+k*11}" text-anchor="middle" class="sm mono mut" style="font-size:8.5px">${esc(ln)}</text>`).join('')}</g>`; }); return s; }
 function colLines2(y0,y1){ let s=''; for(let i=0;i<=STAGES.length;i++){ const x=LL+COLW2*i; s+=`<line x1="${x}" y1="${y0}" x2="${x}" y2="${y1}" class="hair"/>`; } return s; }
 function renderLife(){
   const all=A.pipelines.models.filter(m=>!m.dim); const models=all; const groups=A.pipelines.model_groups;
