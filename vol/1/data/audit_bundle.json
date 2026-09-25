@@ -3,9 +3,9 @@
   "built": "2026-09-25",
   "snapshot_v1": "2026-09-05",
   "snapshot_v2": "2026-09-22",
-  "task_entries": 74,
-  "task_instances": 164,
-  "mappings": 141,
+  "task_entries": 127,
+  "task_instances": 217,
+  "mappings": 245,
   "by_benchmark": {
    "tb4": 9,
    "deepswe": 8,
@@ -16,14 +16,15 @@
    "infbench": 1,
    "weirdml": 1,
    "edgebench": 1,
-   "tb21": 9
+   "tb21": 9,
+   "sweserve": 53
   },
   "census": {
-   "screened": 537,
-   "L": 97,
+   "screened": 590,
+   "L": 150,
    "A": 161,
    "O": 279,
-   "public": 537
+   "public": 590
   }
  },
  "tasks": [
@@ -2397,6 +2398,1796 @@
    "count": 1,
    "census_evidence": "tests/grade.py; tests/child_eval.py; tests/protocol.py",
    "census_confidence": "high"
+  },
+  {
+   "id": "sweserve-ss-sgl-cluster-adaptive-spec-origin",
+   "benchmark": "sweserve",
+   "title": "Add EMA-driven adaptive speculative step control to SGLang EAGLE",
+   "format": "Harbor",
+   "hardware": "CPU only; 8 CPUs, 64 GiB RAM",
+   "edit": "Add a new module sglang.srt.speculative.adaptive_spec_params (AdaptiveSpeculativeParams: an EMA-of-accepted-length policy that picks among sorted candidate step counts with warmup, update-interval and up/down hysteresis rules;",
+   "verify": "tests/test.sh overlays tests/postmerge_tests into /code and runs two separate CPU pytest invocations: the 13 F2P node ids in test/registered/unit/spec/test_adaptive_spec_params.py (pure-Python calls to AdaptiveSpeculativeParams(...).update() with hand-written accept-length int lists, asserting current_steps/ema_accept_len, plus adaptive_unsupported_reason() called on a types.SimpleNamespace that stands in for ServerArgs) and the 6 P2P node ids in test_adaptive_spec_params_p2p.py (SpeculativeAlgorithm.from_string ba…",
+   "boundary": "CPU-only unit and regression tests; no engine or model runs.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-adaptive-spec-origin",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-adaptive-spec-origin/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-adaptive-spec-origin/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-adaptive-spec-origin/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "methods",
+     "kind": "bounded",
+     "relation": "The verified artifact is a speculative-decoding policy (EMA of accepted draft length with warmup/interval/hysteresis choosing the next step count), exercised by 13 CPU unit tests that call the policy…"
+    },
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "bounded",
+     "relation": "F2P adaptive_unsupported_reason gates the feature on server-arg compatibility (via a SimpleNamespace stand-in), and the 6 P2P tests execute real SGLang runtime config/API code on CPU: ServerArgs.add_c…"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": false,
+   "family": "Speculative and advanced decoding"
+  },
+  {
+   "id": "sweserve-ss-sgl-cluster-dsv32-nvfp4-perf",
+   "benchmark": "sweserve",
+   "title": "Alias NVFP4 scales, gate hidden-state D2H, defer shared experts",
+   "format": "Harbor",
+   "hardware": "CPU only; 8 CPUs, 64 GiB RAM",
+   "edit": "Add `alias_or_bind_derived_param` to `python/sglang/srt/layers/utils/common.py` (write a dtype-matched, broadcast-compatible derived scale into the source Parameter's storage and bind the derived name to the same Parameter, else fall back to `copy_or_rebind_param`) and use it in `modelopt_quant.py` for ModelOptFp4LinearMethod (`weight_scale` -> `weight_scale_interleaved`) and ModelOptNvFp4FusedMoEMethod (`w13/w2_weig…",
+   "verify": "`tests/test.sh` sources `prep.sh` (PYTHONPATH=/code/python, installs a vendored `distro` wheel), overlays `tests/postmerge_tests/` into /code, then runs `pytest -v` on the 11 F2P node ids from `fail_to_pass.txt` (8 in `test/registered/unit/layers/utils/test_nvfp4_hot_reload.py`, 2 in `test/registered/unit/managers/test_copy_to_cpu_hidden_states.py`, 1 in `test/registered/unit/models/test_deepseek_v2_defer_shared.py::TestDeepseekV2DeferSharedExperts`) plus 47 P2P ids (`test/srt/quant/test_p2p_modelopt_quant.py`, `te…",
+   "boundary": "CPU-only unit and regression tests; no engine or model runs.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-dsv32-nvfp4-perf",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-dsv32-nvfp4-perf/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-dsv32-nvfp4-perf/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-dsv32-nvfp4-perf/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "bounded",
+     "relation": "Runtime/model-support code paths (GenerationBatchResult.copy_to_cpu hidden-state gating in overlap scheduling, DeepseekV2MoE.forward_normal shared/routed ordering, ModelOpt NVFP4 process_weights_after…"
+    },
+    {
+     "stage": "serve",
+     "layer": "state",
+     "kind": "bounded",
+     "relation": "GPU weight-buffer memory reclaim and hot-reload (update_weights_from_disk) safety: the verifier asserts on CPU tensors that source and derived scale names share one storage/data_ptr, that dtype/shape…"
+    },
+    {
+     "stage": "serve",
+     "layer": "kernels",
+     "kind": "adjacent",
+     "relation": "The work targets NVFP4/FP4 weight-scale layouts consumed by CUTLASS/TRTLLM/FlashInfer MoE and GEMM kernels, but no NVFP4 kernel runs and no numerics are checked;"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": false,
+   "family": "Kernels, quantization, and performance"
+  },
+  {
+   "id": "sweserve-ss-sgl-cluster-gemma4-fused-ops",
+   "benchmark": "sweserve",
+   "title": "Add fused Triton dual-RMSNorm and MoE routing kernels for Gemma4",
+   "format": "Harbor",
+   "hardware": "1 × H100 80 GB; 8 CPUs, 64 GiB RAM",
+   "edit": "Add two Triton-fused ops to the existing module python/sglang/srt/layers/gemma4_fused_ops.py in SGLang (base commit 1be3163): gemma_dual_rmsnorm_residual_scalar (RMSNorm(x1,w1)+RMSNorm(x2,w2) -> RMSNorm(.,w3) + residual, times a scalar, all in fp32 with a single bf16 cast at store) and gemma4_fused_routing (top-k over expert logits, softmax over only the k logits, times per-expert scale;",
+   "verify": "tests/test.sh overlays tests/postmerge_tests into /code and runs pytest on 51 F2P node ids from test/registered/kernels/test_gemma4_fused_routing.py (45 parametrized test_matches_reference cases over dtype {bf16,fp16,fp32} x T {1,7,64,128,1024} x (E,K) {(128,8),(64,4),(256,8)}, plus test_zero_tokens and test_scale_applied) and test/registered/kernels/test_gemma_dual_rmsnorm_residual.py (3 parity shapes plus a default-eps case), plus one P2P node test/manual/layers/test_layernorm.py::TestGemmaRMSNorm::test_gemma_rms…",
+   "boundary": "GPU tests on one H100 without a full serving run.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-gemma4-fused-ops",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-gemma4-fused-ops/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-gemma4-fused-ops/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-gemma4-fused-ops/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "kernels",
+     "kind": "measured",
+     "relation": "Verifier compiles and executes the two new Triton kernels (plus the existing GemmaRMSNorm kernel for P2P) on a real CUDA GPU with random bf16/fp16/fp32 tensors and checks numerics against eager torch…"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": false,
+   "family": "Kernels, quantization, and performance"
+  },
+  {
+   "id": "sweserve-ss-sgl-cluster-gpu-fused-kernels",
+   "benchmark": "sweserve",
+   "title": "Add fused Triton masked-SiLU and GDN QKV-split kernels",
+   "format": "Harbor",
+   "hardware": "1 × H100 80 GB; 8 CPUs, 64 GiB RAM",
+   "edit": "Implement two Triton GPU kernels plus Python launchers in SGLang: `silu_and_mul_masked_fwd` in `sglang.srt.layers.moe.ep_moe.kernels` (per-expert masked SiLU(gate)*up over a padded [E, T_pad, 2N] bf16 buffer, fp32 activation cast back to bf16, padding rows untouched) for the expert-parallel MoE path, and `fused_qkv_split_gdn_prefill` in `sglang.jit_kernel.triton.gdn_fused_proj` (one-pass, stride-honoring scatter of p…",
+   "verify": "tests/test.sh overlays four NVIDIA-authored test files into /code/test/registered/kernels/ and runs pytest -v on 8 fail-to-pass node IDs (test_silu_and_mul_masked.py: test_masked_parity x3 parametrizations + test_full_mask; test_gdn_fused_qkv_split.py: test_qkv_split_contiguous x2 + test_qkv_split_strided x2) and 4 pass-to-pass IDs (test_silu_and_mul_masked_post_quant_p2p.py x2 guarding the pre-existing fp8 `silu_and_mul_masked_post_quant_fwd`;",
+   "boundary": "GPU tests on one H100 without a full serving run.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-gpu-fused-kernels",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-gpu-fused-kernels/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-gpu-fused-kernels/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-gpu-fused-kernels/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "kernels",
+     "kind": "measured",
+     "relation": "Verifier launches the two new Triton kernels (and two pre-existing sibling Triton kernels as P2P guards) on a real CUDA GPU with synthetic bf16 tensors and checks numerics against eager torch referenc…"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": false,
+   "family": "Kernels, quantization, and performance"
+  },
+  {
+   "id": "sweserve-ss-sgl-cluster-hicache-evict-tombstone-4pr",
+   "benchmark": "sweserve",
+   "title": "Fix four HiCache radix-cache match, lock and eviction bugs",
+   "format": "Harbor",
+   "hardware": "1 × H100 80 GB; 8 CPUs, 64 GiB RAM",
+   "edit": "Modify SGLang's UnifiedRadixCache / HiCache prefix tree (python/sglang/srt/mem_cache/unified_radix_cache.py, unified_cache_components/{full,mamba,swa}_component.py, base_prefix_cache.py) so that (a) a key that becomes empty after MTP/EAGLE bigram conversion plus page alignment returns a clean empty MatchResult, (b) inc_lock_ref records which SWA/Mamba tombstone nodes it skipped so result.to_dec_params() lets dec_lock…",
+   "verify": "tests/test.sh overlays one postmerge file, test/registered/unit/mem_cache/test_unified_radix_cache_unittest.py, into /code and runs pytest -v on 45 fail-to-pass node IDs (test_match_sub_page_size_key_returns_empty_match, test_hicache_swa/mamba_temp_lock_does_not_release_restored_tombstone, test_aux_evict_full_locked_leaf_tombstones_aux_only, test_hicache_partial_match_splits_evicted_backed_up_node, each across Test_FULL_MAMBA_ps{1,4,64,128} and Test_FULL_SWA_* config classes) plus 14 pass-to-pass node IDs in Test_F…",
+   "boundary": "GPU tests on one H100 without a full serving run.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-hicache-evict-tombstone-4pr",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-hicache-evict-tombstone-4pr/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-hicache-evict-tombstone-4pr/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-hicache-evict-tombstone-4pr/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "state",
+     "kind": "bounded",
+     "relation": "Core of the task: radix prefix-tree matching, node splitting, device/host tombstones, cascading eviction and lock-ref accounting in UnifiedRadixCache and its FULL/SWA/Mamba components;"
+    },
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "adjacent",
+     "relation": "Instruction and oracle patch require the scheduler's PrefillAdder._lock_node (schedule_policy.py) to release temporary admission locks via IncLockRefResult.to_dec_params();"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": false,
+   "family": "Caching and runtime state"
+  },
+  {
+   "id": "sweserve-ss-sgl-cluster-hicache-framework-swa",
+   "benchmark": "sweserve",
+   "title": "Add host-tier HiCache to SGLang unified radix cache for SWA",
+   "format": "Harbor",
+   "hardware": "1 × H100 80 GB; 8 CPUs, 64 GiB RAM",
+   "edit": "Extend SGLang's UnifiedRadixCache (python/sglang/srt/mem_cache/unified_radix_cache.py and unified_cache_components/{tree,full,swa,mamba}_component.py, plus hicache_storage.py, hybrid_cache/hybrid_cache_controller.py, hybrid_pool_assembler.py, memory_pool_host.py, swa_memory_pool.py, base_prefix_cache.py) with a hierarchical device-to-host KV tier: fix eviction so freeing a leaf cascades parent promotion and tombstone…",
+   "verify": "tests/test.sh overlays one postmerge file, test/registered/unit/mem_cache/test_unified_radix_cache_unittest.py, into /code and runs pytest on 35 F2P node IDs (test_evict_cascade_parent_becomes_d_leaf x19 configs, test_hicache_swa_load_back_min_suffix x8, test_hicache_swa_commit_load_back_rebuilds_mapping x8) plus 66 P2P node IDs (insert/match/split/evict basics x5, test_hicache_swa_finalize_match_result x8, test_evict_iterative_tombstone_cleanup x19, test_evict_locked_subtree_skipped x19);",
+   "boundary": "GPU tests on one H100 without a full serving run.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-hicache-framework-swa",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-hicache-framework-swa/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-hicache-framework-swa/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-hicache-framework-swa/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "state",
+     "kind": "bounded",
+     "relation": "Primary cell: the graded pytest suite exercises UnifiedRadixCache device/host tiering directly (eviction cascade, tombstone cleanup, locked-subtree skip, SWA LOAD_BACK suffix selection, host_value boo…"
+    },
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "adjacent",
+     "relation": "The oracle patch rewires Scheduler tree-cache selection (moves the SGLANG_ENABLE_UNIFIED_RADIX_TREE branch ahead of the hierarchical-cache branch, calls init_hicache and registers the hicache layer-tr…"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": false,
+   "family": "Caching and runtime state"
+  },
+  {
+   "id": "sweserve-ss-sgl-cluster-spec-v2-maturation",
+   "benchmark": "sweserve",
+   "title": "Add spec-decoding plugin registry, fix ngram accept length",
+   "format": "Harbor",
+   "hardware": "1 × H100 80 GB; 8 CPUs, 64 GiB RAM",
+   "edit": "Create python/sglang/srt/speculative/spec_registry.py (CustomSpecAlgo duck-type, case-insensitive registry, reserved builtin names), add SpeculativeAlgorithm.register and make from_string fall through to the registry in spec_info.py, wire the validate_server_args hook and drop the hard-coded --speculative-algorithm choices in server_args.py, and change one line in ngram_worker.py so GenerationBatchResult.accept_lens…",
+   "verify": "test.sh sources prep.sh, attests the packaged tests (validate_scored_sources.py, sha256 + AST), then run_upstream_e2e_suite.py spawns run_upstream_e2e_group.py per class (13 groups) which calls pytest.main on exact node ids from /tests/postmerge_tests/test/registered/unit/spec/: test_spec_registry.py (19 nodes, 15 F2P + 4 P2P, adapted from upstream PR #23991), test_ngram_accept_metric.py (2 F2P, handwritten), test_p2p_spec_info.py (11 P2P), test_p2p_ngram_worker.py (13 P2P).",
+   "boundary": "GPU tests on one H100 without a full serving run.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-spec-v2-maturation",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-spec-v2-maturation/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-spec-v2-maturation/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-spec-v2-maturation/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "bounded",
+     "relation": "Adds a plugin registry on the SpeculativeAlgorithm enum (public API: SpeculativeAlgorithm.register, from_string dispatch, CustomSpecAlgo.create_worker overlap check) and fixes the accept_lens field NG…"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": false,
+   "family": "Speculative and advanced decoding"
+  },
+  {
+   "id": "sweserve-ss-sgl18630",
+   "benchmark": "sweserve",
+   "title": "Add Anthropic Messages API compatibility layer to SGLang",
+   "format": "Harbor",
+   "hardware": "CPU only; 8 CPUs, 64 GiB RAM",
+   "edit": "Create a new subpackage sglang.srt.entrypoints.anthropic (protocol.py with Pydantic models for the Anthropic /v1/messages API; serving.py with an AnthropicServing handler wrapping OpenAIServingChat that converts Anthropic requests to OpenAI ChatCompletionRequest and ChatCompletionResponse back to Anthropic responses, including tools/tool_choice, images, system blocks, sampling params) and register /v1/messages (+ /v1…",
+   "verify": "test.sh copies one NVIDIA-authored file, test/registered/openai_server/basic/test_anthropic_adapter_unittest.py, into /code and runs its 13 F2P pytest nodes, then in a separate pytest session runs 17 P2P nodes from the hash-attested, unchanged test/registered/openai_server/basic/test_protocol.py (OpenAI protocol Pydantic tests); score.py parses \"PASSED\" lines and gives reward 1.0 only if all 13 F2P and all 17 P2P pass, else 0.0.",
+   "boundary": "CPU-only unit and regression tests; no engine or model runs.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl18630",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl18630/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl18630/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl18630/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "bounded",
+     "relation": "Adds a new public API endpoint (/v1/messages) and a protocol-translation layer over SGLang's OpenAI serving stack;"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": false,
+   "family": "Serving APIs and runtime correctness"
+  },
+  {
+   "id": "sweserve-ss-sgl18760",
+   "benchmark": "sweserve",
+   "title": "Move Eagle-v1 forward-timeout check before verify batch filtering",
+   "format": "Harbor",
+   "hardware": "1 × H100 80 GB; 8 CPUs, 64 GiB RAM",
+   "edit": "Relocate SGLang's opt-in per-request forward timeout (envs.SGLANG_FORWARD_TIMEOUT_MS) out of the decode/prefill result processors in python/sglang/srt/managers/scheduler_output_processor_mixin.py into a new Scheduler._check_forward_timeout_for_running_batch method (exact name required) called from get_next_batch_to_run beside _abort_on_queued_timeout, so it runs before the Eagle-v1 verify stage shrinks EagleDraftInpu…",
+   "verify": "tests/test.sh sources tests/prep.sh (fails fatally unless a read-only /hf-cache holds pinned meta-llama/Llama-2-7b-chat-hf and lmsys/sglang-EAGLE-llama2-chat-7B snapshots; HF offline mode), then runs 13 CPU-only pytest nodes copied into /code: 3 F2P in test/registered/unit/spec/test_forward_timeout_before_verify.py (getattr the new Scheduler method and call it unbound on a types.SimpleNamespace fake scheduler with fake reqs, asserting to_finish/finished_reason effects) and 10 P2P in test/registered/unit/spec/test_e…",
+   "boundary": "End-to-end serving verifier with a real model on one H100.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl18760",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl18760/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl18760/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl18760/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "measured",
+     "relation": "Scheduler request lifecycle (get_next_batch_to_run, timeout abort, result processors) is the edited code;"
+    },
+    {
+     "stage": "serve",
+     "layer": "methods",
+     "kind": "adjacent",
+     "relation": "Eagle-v1 speculative decoding is the workload in which the crash appears (verify-stage tensor filtering vs."
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": true,
+   "family": "Speculative and advanced decoding"
+  },
+  {
+   "id": "sweserve-ss-sgl20457",
+   "benchmark": "sweserve",
+   "title": "Add per-pool batch_exists_v2 to HiCache file storage backend",
+   "format": "Harbor",
+   "hardware": "1 × H100 80 GB; 8 CPUs, 64 GiB RAM",
+   "edit": "Extend python/sglang/srt/mem_cache/hicache_storage.py (SGLang HiCache L3 storage backend) with PoolName/PoolHitPolicy enums, PoolTransfer and a PoolTransferResult-style result dataclass, HiCacheFile._get_component_path(key, component_name), and HiCacheFile.batch_exists_v2(keys, pool_transfers) that computes the longest contiguous KV prefix present as .bin files and shrinks it to the minimum over auxiliary pool compon…",
+   "verify": "tests/test.sh sources prep.sh (PYTHONPATH=/code/python, HOME=/tmp, vendored distro wheel), hash-validates the verifier-owned tree via validate_scored_sources.py, then runs pytest on 24 exact nodes under /tests/postmerge_tests: 9 F2P in test/registered/unit/mem_cache/test_hicache_storage_batch_exists_v2_unittest.py (verifier-authored;",
+   "boundary": "GPU tests on one H100 without a full serving run.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl20457",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl20457/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl20457/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl20457/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "state",
+     "kind": "bounded",
+     "relation": "The verified edit is the HiCache L3 file-storage existence check (per-pool KV + Mamba component prefix bookkeeping) in the hierarchical KV-cache offload path;"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": false,
+   "family": "Caching and runtime state"
+  },
+  {
+   "id": "sweserve-ss-sgl21722-structural-tag-tool-calling",
+   "benchmark": "sweserve",
+   "title": "Add DeepSeek-V4 DSML tool-call detector to SGLang",
+   "format": "Harbor",
+   "hardware": "1 × H100 80 GB; 8 CPUs, 64 GiB RAM",
+   "edit": "Add a new module python/sglang/srt/function_call/deepseekv4_detector.py exposing DeepSeekV4Detector that parses DSML-delimited tool-call sections (<｜DSML｜tool_calls> / <｜DSML｜invoke name=...>) with either <｜DSML｜parameter name=..",
+   "verify": "tests/test.sh sources prep.sh (installs a vendored distro wheel, sha256-verifies a revision-pinned deepseek-ai/DeepSeek-V3.2 tokenizer snapshot at /hf-cache, forces HF offline), overlays tests/postmerge_tests into /code, then runs two separate pytest invocations: 8 F2P nodes (7 methods of test/registered/unit/function_call/test_deepseekv4_maintainer_scored.py::TestDeepSeekV4Detector covering non-stream XML/JSON parsing, streaming XML/JSON, and no-parameter cases, plus test_task_specific_tool_call_guards.py::test_de…",
+   "boundary": "GPU tests on one H100 without a full serving run.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl21722-structural-tag-tool-calling",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl21722-structural-tag-tool-calling/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl21722-structural-tag-tool-calling/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl21722-structural-tag-tool-calling/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "bounded",
+     "relation": "Adds and registers a DeepSeek-V4 DSML tool-call detector in SGLang's function_call parser layer (OpenAI-compatible serving request lifecycle, streaming and non-streaming);"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": false,
+   "family": "Serving APIs and runtime correctness"
+  },
+  {
+   "id": "sweserve-ss-sgl23106",
+   "benchmark": "sweserve",
+   "title": "Make EAGLE bigram radix-cache keys a lazy O(1) view",
+   "format": "Harbor",
+   "hardware": "CPU only; 8 CPUs, 64 GiB RAM",
+   "edit": "Rework `RadixKey` in `python/sglang/srt/mem_cache/radix_cache.py` so that when `is_bigram` is set, `token_ids` stays the raw int list while `__len__`/`__iter__`/`__getitem__` derive bigram semantics on the fly; add `RadixKey.maybe_to_bigram_view(is_eagle, value=None)` (in-place flag flip, returns `(self, value)`), extend `page_align_keys(key, page_size, is_bigram=False)` with bigram-boundary alignment, and keep `get_…",
+   "verify": "`tests/test.sh` sources `tests/prep.sh` (PYTHONPATH=/code/python, HOME=/tmp, installs vendored `distro` wheel), copies the single postmerge file `tests/postmerge_tests/test/registered/unit/mem_cache/test_radix_key_bigram_view_unittest.py` into /code, then runs one `python3 -m pytest -v` over 27 node IDs: 9 F2P + 8 P2P from that new file (`TestRadixKeyBigramView`) plus 10 P2P `TestRadixKey` nodes from the task-base `test/registered/unit/mem_cache/test_radix_cache_unit.py`;",
+   "boundary": "CPU-only unit and regression tests; no engine or model runs.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl23106",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl23106/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl23106/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl23106/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "state",
+     "kind": "bounded",
+     "relation": "Verifier runs CPU pytest on the RadixKey / page_align_keys / get_child_key / _key_match_* helpers of SGLang's radix prefix cache (mem_cache) directly, with no engine, model, or GPU;"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": false,
+   "family": "Speculative and advanced decoding"
+  },
+  {
+   "id": "sweserve-ss-sgl23856-use-torch-torch-mm-for-deepseek-v3-2-indexer",
+   "benchmark": "sweserve",
+   "title": "Speed up DeepSeek-V3.2 NSA indexer weights_proj GEMM on CUDA",
+   "format": "Harbor",
+   "hardware": "1 × H100 80 GB; 8 CPUs, 64 GiB RAM",
+   "edit": "In python/sglang/srt/layers/attention/nsa/nsa_indexer.py, rewrite the CUDA branch of Indexer._weights_proj_bf16_in_fp32_out (a skinny bf16-in/fp32-out GEMM, [num_tokens,7168] x [64,7168]^T) so it is faster than the pre-PR deep_gemm.gemm_nt_bf16bf16f32 call while keeping signature, fp32 dtype and shape;",
+   "verify": "tests/test.sh runs three things on one GPU with no server and no model checkpoint: (1) prepare_upstream_e2e_sources.py rebuilds test/registered/kernels/test_nsa_indexer.py from the immutable /base checkout (CI registration and CustomTestCase stripped) and run_upstream_e2e_suite.py executes its nine TestNSAIndexer nodes with production imports from /code;",
+   "boundary": "GPU tests on one H100 without a full serving run.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl23856-use-torch-torch-mm-for-deepseek-v3-2-indexer",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl23856-use-torch-torch-mm-for-deepseek-v3-2-indexer/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl23856-use-torch-torch-mm-for-deepseek-v3-2-indexer/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl23856-use-torch-torch-mm-for-deepseek-v3-2-indexer/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "kernels",
+     "kind": "measured",
+     "relation": "Verifier times the real bf16->fp32 projection GEMM on the H100 (10 processes x 7 samples, /code vs /base, strict >1.00x) and checks its numerics against an fp32 reference;"
+    },
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "bounded",
+     "relation": "Nine maintainer TestNSAIndexer nodes run the DeepSeek-V3.2 Indexer forward in extend/decode mode with a MockModelRunner, ForwardBatch and patched deep_gemm/act_quant as a regression guard on the model…"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": false,
+   "family": "Kernels, quantization, and performance"
+  },
+  {
+   "id": "sweserve-ss-sgl23962",
+   "benchmark": "sweserve",
+   "title": "Split spec-decode accept_length into draft and token counters",
+   "format": "Harbor",
+   "hardware": "CPU only; 8 CPUs, 64 GiB RAM",
+   "edit": "Replace the single `accept_length` counter (and CPU mirror) on SGLang's speculative-decoding dataclasses with `num_accepted_drafts` / `num_accepted_tokens` (invariant tokens = drafts + 1 bonus) on `EagleDraftInput`, rename `EagleVerifyOutput.accept_length_per_req_cpu` to `num_accepted_drafts_per_req_cpu`, rename `spec_utils.create_accept_length_filter` to `create_num_accepted_drafts_filter`, carry the split onto `Ngr…",
+   "verify": "tests/test.sh sources prep.sh (PYTHONPATH=/code/python, HOME=/tmp, installs a vendored `distro` wheel), overlays tests/postmerge_tests into /code, then runs `pytest -v` on 6 F2P nodes (python/sglang/test/speculative/test_accept_counter_split.py: 5 tests; test_ngram_accept_counter_split.py: 1 test) and 13 P2P nodes (test_spec_decode_invariants_p2p.py); score.py parses PASSED lines and gives reward 1.0 only if every F2P and P2P node passes, else 0.0.",
+   "boundary": "CPU-only unit and regression tests; no engine or model runs.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl23962",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl23962/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl23962/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl23962/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "bounded",
+     "relation": "Verifier executes the SGLang runtime's speculative-decode request-lifecycle dataclasses (EagleDraftInput, EagleVerifyOutput, NgramVerifyInput), create_idle_input, and the spec_utils filter helper on t…"
+    },
+    {
+     "stage": "serve",
+     "layer": "state",
+     "kind": "bounded",
+     "relation": "The ngram F2P drives production NgramVerifyInput.verify() cleanup on CPU with a recording KV allocator and stubbed token-pool kernel, asserting kv_committed_len/kv_allocated_len updates, freed-vs-reta…"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": false,
+   "family": "Speculative and advanced decoding"
+  },
+  {
+   "id": "sweserve-ss-sgl24826-spec-decoding-support-kimi-k2-5-eagle3-mla",
+   "benchmark": "sweserve",
+   "title": "Add Kimi-K2.5 EAGLE3-MLA draft model for speculative decoding",
+   "format": "Harbor",
+   "hardware": "CPU only; 8 CPUs, 64 GiB RAM",
+   "edit": "Add a new SGLang draft-model module python/sglang/srt/models/kimi_k25_eagle3.py defining Eagle3DeepseekV2ForCausalLM (EAGLE3 layout on top of DeepseekV2AttentionMLA + DeepseekV2MLP, doubled fused-QKV-down input width, its own load_weights, EntryClass export so the ModelRegistry auto-discovers it);",
+   "verify": "tests/test.sh sources tests/prep.sh (PYTHONPATH=/code/python, HOME=/tmp, installs a vendored `distro` wheel), then runs `python3 -I /tests/run_scored_nodes.py`, a verifier-owned unittest runner that imports numpy/torch/transformers from the image, loads the candidate sglang package from /code/python by file spec, and executes 3 F2P nodes from tests/postmerge_tests/test/registered/unit/models/test_kimi_k25_eagle3_registry.py (ModelRegistry.get_supported_archs() contains \"Eagle3DeepseekV2ForCausalLM\";",
+   "boundary": "CPU-only unit and regression tests; no engine or model runs.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl24826-spec-decoding-support-kimi-k2-5-eagle3-mla",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl24826-spec-decoding-support-kimi-k2-5-eagle3-mla/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl24826-spec-decoding-support-kimi-k2-5-eagle3-mla/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl24826-spec-decoding-support-kimi-k2-5-eagle3-mla/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "bounded",
+     "relation": "New draft-model architecture registered in SGLang's ModelRegistry, HF config alias in _CONFIG_REGISTRY, and ModelConfig._derive_model_shapes MLA branch;"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": false,
+   "family": "Speculative and advanced decoding"
+  },
+  {
+   "id": "sweserve-ss-sgl24859",
+   "benchmark": "sweserve",
+   "title": "Split EAGLE draft-extend state into EagleDraftExtendInput dataclass",
+   "format": "Harbor",
+   "hardware": "CPU only; 8 CPUs, 64 GiB RAM",
+   "edit": "Refactor the V1 EAGLE speculative-decoding path under python/sglang/srt/speculative/: add an EagleDraftExtendInput(SpecInput) dataclass and SpecInputType.EAGLE_DRAFT_EXTEND (plus the Frozen-KV MTP mirror FROZEN_KV_MTP_DRAFT_EXTEND) in eagle_info.py/spec_info.py/frozen_kv_mtp_info.py, trim EagleDraftInput to draft-only fields, rename EagleVerifyOutput.next_draft_input to draft_extend_input, and rewire eagle_worker.py,…",
+   "verify": "tests/test.sh overlays tests/postmerge_tests onto /code, then runs `python3 -m pytest -v` on 5 F2P nodes (test/registered/unit/speculative/test_eagle_draft_extend_input.py x4 and test_frozen_kv_mtp_draft_extend_contract.py x1) plus 18 P2P nodes (test_eagle_draft_input_basics.py x4 and test/registered/unit/server_args/test_server_args.py x14); score.py parses PASSED lines and gives a binary reward of 1.0 only if every F2P and every P2P node passes.",
+   "boundary": "CPU-only unit and regression tests; no engine or model runs.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl24859",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl24859/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl24859/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl24859/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "bounded",
+     "relation": "Runtime data-structure refactor of the SGLang spec-decode request lifecycle (SpecInput types, EagleVerifyOutput handoff, worker batch.spec_info, ForwardBatch padding);"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": false,
+   "family": "Speculative and advanced decoding"
+  },
+  {
+   "id": "sweserve-ss-sgl24932",
+   "benchmark": "sweserve",
+   "title": "Add pack/unpack wire serialization helpers to PD disaggregation utils",
+   "format": "Harbor",
+   "hardware": "CPU only; 8 CPUs, 64 GiB RAM",
+   "edit": "Add four callables to python/sglang/srt/disaggregation/common/utils.py -- pack_int_lists/unpack_int_lists (struct-packed nested int lists with a format code, accepting Python lists or NumPy int arrays) and pack_list_of_buffers/unpack_list_of_buffers (length-prefixed concatenation of byte strings) -- used by the prefill/decode disaggregation backends (NIXL, Mooncake, MORI, Ascend) to exchange KV/state transfer metadat…",
+   "verify": "tests/test.sh sources prep.sh (PYTHONPATH=/code/python, installs a vendored distro wheel), overlays tests/postmerge_tests into /code, then runs `python3 -m pytest -v` on exactly the node IDs in fail_to_pass.txt and pass_to_pass.txt: 5 F2P nodes in test/registered/unit/disaggregation/test_disaggregation_wire.py::TestDisaggregationWire (test_int_lists_roundtrip with fmt Q/I/i, test_pack_accepts_ndarray with np.int32 arrays, test_empty_outer_list, test_empty_inner_list, test_list_of_buffers_roundtrip) and 12 P2P nodes…",
+   "boundary": "CPU-only unit and regression tests; no engine or model runs.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl24932",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl24932/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl24932/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl24932/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "distributed",
+     "kind": "bounded",
+     "relation": "Edit target: struct pack/unpack helpers for the PD disaggregation metadata wire format (ZMQ messages consumed by NIXL/Mooncake/MORI KV-transfer backends);"
+    },
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "bounded",
+     "relation": "P2P regression guard only: 12 CPU unit tests of ServerArgs/PortArgs parsing (HiCache, load-balance defaults for pd_prefill/pd_decode, ngram SAM args, port allocation) must still pass;"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": false,
+   "family": "Distributed execution and scheduling"
+  },
+  {
+   "id": "sweserve-ss-sgl25052",
+   "benchmark": "sweserve",
+   "title": "Add opt-in FP4-activation w4a4 dispatch to DeepGEMM Mega-MoE",
+   "format": "Harbor",
+   "hardware": "1 × H100 80 GB; 8 CPUs, 64 GiB RAM",
+   "edit": "Add two EnvBool flags (SGLANG_OPT_DEEPGEMM_MEGA_MOE_USE_FP4_ACTS, SGLANG_OPT_DEEPGEMM_MEGA_MOE_USE_MXF4_KIND, default False) to the Envs registry in python/sglang/srt/environ.py; in python/sglang/srt/layers/moe/mega_moe.py add a module-level `_apply_mega_moe_dg_env()` helper plus `_MEGA_MOE_DG_ENV_APPLIED` once-flag that forwards them to DeepGEMM via os.environ.setdefault(\"DG_USE_FP4_ACTS\"/\"DG_USE_MXF4_KIND\"), call i…",
+   "verify": "tests/test.sh sources prep.sh (PYTHONPATH=/code/python, HOME=/tmp, offline install of vendored distro + pytest 8.3.5), overlays two postmerge files into /code, and runs `pytest -v --noconftest` on 7 F2P nodes in test/registered/unit/moe/test_w4a4_megamoe_dispatch_behavioral.py and 16 P2P nodes in test/registered/unit/moe/test_megamoe_surface_p2p.py; score.py parses PASSED lines and awards binary reward 1.0 only if all 7 F2P and all 16 P2P pass.",
+   "boundary": "GPU tests on one H100 without a full serving run.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl25052",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl25052/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl25052/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl25052/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "bounded",
+     "relation": "Verifier directly exercises the real SGLang Envs/EnvBool registry and the new _apply_mega_moe_dg_env() runtime-config helper in the MoE layer module (CPU pytest, os.environ side effects, once-guard, m…"
+    },
+    {
+     "stage": "serve",
+     "layer": "kernels",
+     "kind": "adjacent",
+     "relation": "The subject is FP4 E2M1 activation packing and DeepGEMM's MXF4 mainloop, but the verifier never runs, imports, or numerically checks any kernel: deep_gemm is replaced by a sys.modules stub, the _run_m…"
+    },
+    {
+     "stage": "serve",
+     "layer": "distributed",
+     "kind": "adjacent",
+     "relation": "Mega-MoE pre-dispatch fills an expert-parallel symmetric buffer for cross-rank all-to-all and the PR halves that buffer's footprint, but P2P tests pass object() as the process group and a fake deep_ge…"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": false,
+   "family": "Kernels, quantization, and performance"
+  },
+  {
+   "id": "sweserve-ss-sgl25062-priority-scheduling-pd",
+   "benchmark": "sweserve",
+   "title": "Apply priority ordering to SGLang prefill/decode disaggregation queues",
+   "format": "Harbor",
+   "hardware": "1 × H100 80 GB; 8 CPUs, 64 GiB RAM",
+   "edit": "Fix the interaction between priority scheduling and PD disaggregation in the SGLang scheduler: in python/sglang/srt/managers/scheduler.py hoist _set_or_validate_priority (default-priority assignment and priority-disabled abort) ahead of the DisaggregationMode branch in _add_request_to_queue so PREFILL/DECODE roles get it before the bootstrap/prealloc queue;",
+   "verify": "tests/test.sh sources tests/prep.sh (PYTHONPATH=/code/python, HOME=/tmp, installs a vendored distro wheel), overlays tests/postmerge_tests/ into /code, then runs `python3 -m pytest -v` on the 13 node IDs listed in fail_to_pass.txt (6 tests in test/registered/unit/managers/test_priority_scheduling_disaggregation.py: default priority assigned before bootstrap/prealloc queue in PREFILL and DECODE modes, priority-disabled abort in DECODE mode, prealloc pop order high-first and low-first, waiting queue sorted before pre…",
+   "boundary": "GPU tests on one H100 without a full serving run.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl25062-priority-scheduling-pd",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl25062-priority-scheduling-pd/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl25062-priority-scheduling-pd/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl25062-priority-scheduling-pd/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "bounded",
+     "relation": "Scheduler request intake (_add_request_to_queue), priority policy application (policy.calc_priority) and prebuilt-batch selection are exercised by CPU unittests on __new__-constructed Scheduler object…"
+    },
+    {
+     "stage": "serve",
+     "layer": "distributed",
+     "kind": "adjacent",
+     "relation": "The modified code is the PD-disaggregation decode module (DecodePreallocQueue.pop_preallocated, SchedulerDisaggregationDecodeMixin) and the tests drive DisaggregationMode.PREFILL/DECODE intake paths,…"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": false,
+   "family": "Distributed execution and scheduling"
+  },
+  {
+   "id": "sweserve-ss-sgl25265",
+   "benchmark": "sweserve",
+   "title": "Route slow tokenizers through native encode in TokenizerManager",
+   "format": "Harbor",
+   "hardware": "1 × H100 80 GB; 8 CPUs, 64 GiB RAM",
+   "edit": "Modify `TokenizerManager._tokenize_texts` in python/sglang/srt/managers/tokenizer_manager.py (SGLang serving runtime, request-preprocessing / tokenizer-manager subsystem) so that on the regular (non async-dynamic-batch) branch a slow HuggingFace tokenizer that is not a cross-encoder is tokenized via per-text `tokenizer.encode()` instead of the batched `tokenizer.__call__`, while fast tokenizers and cross-encoder requ…",
+   "verify": "tests/test.sh sources prep.sh (PYTHONPATH=/code/python, vendored distro wheel), overlays tests/postmerge_tests/test/registered/unit/managers/test_tokenize_texts_fast_tokenizer_p2p_unittest.py into /code, runs pytest on the 19 pass_to_pass nodes (12 in test/registered/unit/server_args/test_server_args.py plus 7 in that tokenize-texts P2P file;",
+   "boundary": "GPU tests on one H100 without a full serving run.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl25265",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl25265/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl25265/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl25265/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "bounded",
+     "relation": "Edits the SGLang runtime's TokenizerManager request-preprocessing path (fast/slow HF tokenizer dispatch affecting TTFT);"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": false,
+   "family": "Kernels, quantization, and performance"
+  },
+  {
+   "id": "sweserve-ss-sgl25277",
+   "benchmark": "sweserve",
+   "title": "Fix UnifiedRadixCache device match semantics under HiCache",
+   "format": "Harbor",
+   "hardware": "1 × H100 80 GB; 8 CPUs, 64 GiB RAM",
+   "edit": "Rework SGLang's mem_cache subsystem (python/sglang/srt/mem_cache/unified_radix_cache.py plus unified_cache_components/{full,mamba,swa,tree}_component.py) so UnifiedRadixCache.match_prefix returns mutually consistent device_indices / best_match_node / last_device_node / last_host_node / host_hit_length across plain device-only caches and HiCache (host-offloaded) regimes with Mamba and sliding-window component layouts,…",
+   "verify": "tests/test.sh overlays tests/postmerge_tests/test/registered/unit/mem_cache/test_unified_radix_cache_unittest.py (2581 lines, new at base) into /code and runs `python3 -m pytest -v` on 35 node IDs from that single file: 22 fail-to-pass (19 x test_match_prefix_best_and_device_node_without_hicache across Test_FULL_ps{1,4,16,64,128}, Test_FULL_MAMBA_ps{1,4,64,128}, Test_FULL_SWA_* and Test_FULL_SWA_MAMBA_* config classes, plus 3 x test_scheduler_hicache_aux_only_load_back_appends_full_device_indices on the page_size=1…",
+   "boundary": "GPU tests on one H100 without a full serving run.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl25277",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl25277/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl25277/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl25277/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "state",
+     "kind": "bounded",
+     "relation": "Primary cell: match_prefix anchor/host_hit_length semantics and init_load_back index accounting for the UnifiedRadixCache under HiCache device<->host offload, incl. Mamba and SWA component layouts;"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": false,
+   "family": "Caching and runtime state"
+  },
+  {
+   "id": "sweserve-ss-sgl25311-perf-mla-tma-bulk-store-set-mla-kv-buffer-up",
+   "benchmark": "sweserve",
+   "title": "Add TMA bulk-store JIT kernel for MLA KV-buffer scatter",
+   "format": "Harbor",
+   "hardware": "1 × H100 80 GB; 8 CPUs, 64 GiB RAM",
+   "edit": "Add a new JIT-compiled CUDA kernel (python/sglang/jit_kernel/csrc/elementwise/set_mla_kv_buffer.cuh, one cp.async.bulk TMA store per (nope|rope) row, SM90+) plus a Python module sglang.jit_kernel.set_mla_kv_buffer exposing set_mla_kv_buffer and can_use_set_mla_kv_buffer, and rewrite the production KV-write wrapper set_mla_kv_buffer_triton in python/sglang/srt/mem_cache/utils.py to dispatch n_loc >= 768 (on SM90+ with…",
+   "verify": "tests/test.sh sources prep.sh (PYTHONPATH=/code/python, installs the vendored distro wheel), then run_upstream_e2e_suite.py drives run_upstream_e2e_group.py (pytest, one subprocess per group) over seven groups from the packaged tests/postmerge_tests: 55 F2P nodes in python/sglang/jit_kernel/tests/test_set_mla_kv_buffer.py (50-cell correctness matrix bs in {1,7,64,257,1024} x five (nope,rope) shapes x {fp16,bf16}, int32/int64 loc, uint8 528+128 FP8 byte layout, empty loc, can_use_set_mla_kv_buffer) that call the new…",
+   "boundary": "GPU tests on one H100 without a full serving run.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl25311-perf-mla-tma-bulk-store-set-mla-kv-buffer-up",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl25311-perf-mla-tma-bulk-store-set-mla-kv-buffer-up/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl25311-perf-mla-tma-bulk-store-set-mla-kv-buffer-up/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl25311-perf-mla-tma-bulk-store-set-mla-kv-buffer-up/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "kernels",
+     "kind": "measured",
+     "relation": "Verifier JIT-compiles and runs the new CUDA TMA bulk-store kernel and the Triton fallback on the GPU, checks bit-exact numerics across 55 pytest cells, and times them against the legacy Triton kernel…"
+    },
+    {
+     "stage": "serve",
+     "layer": "state",
+     "kind": "adjacent",
+     "relation": "The gated code is the production MLA paged-KV buffer write path (sglang.srt.mem_cache.utils.set_mla_kv_buffer_triton), exercised on a 262144-slot KV buffer on GPU;"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": false,
+   "family": "Caching and runtime state"
+  },
+  {
+   "id": "sweserve-ss-sgl26972-spec-v2-paged-tree-drafting",
+   "benchmark": "sweserve",
+   "title": "Size per-decode KV allocation for paged EAGLE tree drafting",
+   "format": "Harbor",
+   "hardware": "1 × H100 80 GB; 8 CPUs, 64 GiB RAM",
+   "edit": "Make SGLang's spec-v2 per-decode KV allocation sizing (get_alloc_len_per_decode in python/sglang/srt/managers/utils.py) return a page-aligned, per-branch worst-case length for page_size>1 with speculative_eagle_topk>1 instead of raising NotImplementedError, while keeping the chain/unpaged/non-speculative lengths unchanged.",
+   "verify": "tests/test.sh overlays two NVIDIA-written files (test/registered/unit/managers/test_spec_v2_paged_alloc.py and test_spec_v2_paged_alloc_coverage.py) into /code and runs pytest -v on 4 fail-to-pass and 6 pass-to-pass node ids; score.py gives a binary reward of 1.0 only if all 10 pass. No SGLang server or engine is launched and no model is loaded: every test imports get_alloc_len_per_decode and calls it with a types.SimpleNamespace that stands in for ServerArgs, asserting exact integers (e.g.",
+   "boundary": "GPU tests on one H100 without a full serving run.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl26972-spec-v2-paged-tree-drafting",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl26972-spec-v2-paged-tree-drafting/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl26972-spec-v2-paged-tree-drafting/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl26972-spec-v2-paged-tree-drafting/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "state",
+     "kind": "bounded",
+     "relation": "Verifier unit-tests the per-decode KV allocation length for a paged KV cache under topk>1 tree drafting (page-aligned per-branch worst-case footprint) with a SimpleNamespace in place of ServerArgs;"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": false,
+   "family": "Speculative and advanced decoding"
+  },
+  {
+   "id": "sweserve-ss-sgl27379-nvfp4-config-from-safetensors",
+   "benchmark": "sweserve",
+   "title": "Infer NVFP4 quant config from safetensors headers for Ideogram4",
+   "format": "Harbor",
+   "hardware": "CPU only; 8 CPUs, 64 GiB RAM",
+   "edit": "In SGLang's diffusion runtime (python/sglang/multimodal_gen), rewrite quantization_utils.build_nvfp4_config_from_safetensors_list to classify modules from safetensors header metadata (uint8 .weight + multi-dim F8_E4M3 .weight_scale = NVFP4;",
+   "verify": "tests/test.sh sources tests/prep.sh (HF_HUB_OFFLINE=1, TRANSFORMERS_OFFLINE=1, vendored distro wheel) then runs the verifier-owned tests/run_scored_nodes.py in python -I isolated mode, which imports trusted numpy/safetensors/torch/transformers from site-packages, loads the candidate sglang package from /code/python, loads three sha256-pinned test modules from /tests/postmerge_tests (test_transformer_quant.py = exact upstream, test_ideogram4.py = adapted upstream, test_nvfp4_packed_qkv_task_contract.py = task-owned)…",
+   "boundary": "CPU-only unit and regression tests; no engine or model runs.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl27379-nvfp4-config-from-safetensors",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl27379-nvfp4-config-from-safetensors/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl27379-nvfp4-config-from-safetensors/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl27379-nvfp4-config-from-safetensors/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "bounded",
+     "relation": "Verifier runs CPU unittest nodes against the candidate SGLang diffusion-runtime loader, quantization-config resolver and Ideogram4 model classes (meta-device construction, synthetic safetensors, stubb…"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": false,
+   "family": "Kernels, quantization, and performance"
+  },
+  {
+   "id": "sweserve-ss-sgl-dflash-v1-core-production",
+   "benchmark": "sweserve",
+   "title": "Implement DFLASH speculative decoding end-to-end in SGLang",
+   "format": "Harbor",
+   "hardware": "1 × H100 80 GB; 8 CPUs, 64 GiB RAM",
+   "edit": "Starting from SGLang commit e148767 (v0.5.10.post1 image, before any DFLASH support), add a complete non-overlap DFLASH V1 speculative-decoding path: a `--speculative-algorithm DFLASH` server option with `--speculative-draft-model-revision`, a `DFlashDraftModel` in `sglang.srt.models.dflash` that loads the public z-lab draft checkpoint, a spec worker that captures target hidden states, runs the draft, verifies drafts…",
+   "verify": "tests/test.sh runs 37 exact pytest nodes on one H100 with HF in offline mode against pinned snapshots (NousResearch/Meta-Llama-3.1-8B-Instruct rev d10aef7 as the target, z-lab/LLaMA3.1-8B-Instruct-DFlash-UltraChat rev d3af30d as the draft, a sha256-pinned GSM8K jsonl).",
+   "boundary": "End-to-end serving verifier with a real model on one H100.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-dflash-v1-core-production",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-dflash-v1-core-production/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-dflash-v1-core-production/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-dflash-v1-core-production/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "methods",
+     "kind": "measured",
+     "relation": "Implements the DFLASH draft-verify-accept decoding policy (draft from target hidden states, verify, commit accepted plus bonus token);"
+    },
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "measured",
+     "relation": "Adds the --speculative-algorithm DFLASH server path, DFlashDraftModel model support, spec worker and scheduler/CUDA-graph-runner integration (eager, full graph, chunked prefill);"
+    },
+    {
+     "stage": "serve",
+     "layer": "kernels",
+     "kind": "measured",
+     "relation": "FusedKVMaterializeHelper in sglang.srt.speculative.triton_ops (fused KV projection + K RMSNorm + RoPE) is numerically checked on the GPU against an independent reference using loaded checkpoint weight…"
+    },
+    {
+     "stage": "serve",
+     "layer": "state",
+     "kind": "measured",
+     "relation": "Draft-token KV must be materialised into real attention KV and radix/KV prefix state kept reusable; verifier checks cached_tokens > 0 on a prefix continuation, >= 256 at page size 256, and runs a 50-n…"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": true,
+   "family": "Speculative and advanced decoding"
+  },
+  {
+   "id": "sweserve-ss-sgl-eagle-v2-tree-runtime",
+   "benchmark": "sweserve",
+   "title": "Unify EAGLE speculative decoding onto V2 worker across overlap modes",
+   "format": "Harbor",
+   "hardware": "1 × H100 80 GB; 8 CPUs, 64 GiB RAM",
+   "edit": "Make SGLang's EAGLE/EAGLE3/STANDALONE speculative decoding use the V2 worker whether overlap scheduling is on or off (the reference patch deletes the V1 eagle_worker.py, standalone_worker.py and multi_layer_eagle_worker.py, rewires SpeculativeAlgorithm.create_worker in spec_info.py, and adds a synchronous non-overlap V2 driving path in managers/scheduler.py with a generalized _forward_isolation and explicit D2H copy)…",
+   "verify": "tests/test.sh (after tests/prep.sh checks an offline read-only /hf-cache holding pinned NousResearch/Meta-Llama-3.1-8B-Instruct and lmsys/sglang-EAGLE3-LLaMA3.1-Instruct-8B snapshots plus a sha256-pinned GSM8K jsonl) runs four isolated pytest nodes via run_pytest_node.py: the two test/registered/unit/spec/test_eagle_v2_worker_factory.py tests are CPU-only and load no model (ServerArgs(model_path=\"dummy\") then check create_worker returns the same class for overlap and non-overlap, and NGRAM stays distinct), while th…",
+   "boundary": "End-to-end serving verifier with a real model on one H100.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-eagle-v2-tree-runtime",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-eagle-v2-tree-runtime/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-eagle-v2-tree-runtime/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-eagle-v2-tree-runtime/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "measured",
+     "relation": "Verifier launches real SGLang servers on H100 with Llama-3.1-8B + EAGLE3 draft and sends end-to-end /generate requests;"
+    },
+    {
+     "stage": "serve",
+     "layer": "state",
+     "kind": "measured",
+     "relation": "Accepted tree path must be committed into target KV (move_accepted_tokens_to_target_kvcache, new move_kv_cache on MLA/DSA pools);"
+    },
+    {
+     "stage": "serve",
+     "layer": "kernels",
+     "kind": "measured",
+     "relation": "Triton fill_bonus_tokens stride fix and attention-backend metadata changes are exercised only through the end-to-end GPU run (a wrong stride breaks token parity);"
+    },
+    {
+     "stage": "serve",
+     "layer": "methods",
+     "kind": "adjacent",
+     "relation": "Verifier gates on the EAGLE3 tree draft/verify algorithm's acceptance length (>3.1, >2.4, >1.0) and lossless greedy parity vs target, but the policy itself is a fixed upstream dependency;"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": true,
+   "family": "Speculative and advanced decoding"
+  },
+  {
+   "id": "sweserve-ss-sgl-cluster-dllm-serving-radix-graph",
+   "benchmark": "sweserve",
+   "title": "Complete LLaDA diffusion-LM serving with CUDA graphs, radix reuse",
+   "format": "Harbor",
+   "hardware": "1 × H100 80 GB; 8 CPUs, 64 GiB RAM",
+   "edit": "Extend SGLang's diffusion-LM (dLLM) stack at commit e5135b73: rework sglang/srt/dllm/algorithm LowConfidence so each active request block is thresholded independently with a highest-confidence fallback, add a factory-registered JointThreshold algorithm (mask-to-token fill then bounded token-to-token refinement, no refinement on mask-free blocks) in dllm/config and server_args, make continuous LLaDA serving work with…",
+   "verify": "tests/test.sh sources prep.sh (offline HF cache with pinned inclusionAI/LLaDA2.0-mini and Qwen/Qwen3-0.6B snapshots, sha256-checked GSM8K fixture), runs scorer_selftest.py, then runs each of the 16 node ids (10 F2P + 6 P2P) in its own isolated pytest process via run_exact.py with a verifier-owned report plugin, validates each nonce-bound JSON report (setup/call/teardown all passed, no skip/xfail), and score.py emits a binary reward of 1.0 only if every F2P and every P2P node passes.",
+   "boundary": "End-to-end serving verifier with a real model on one H100.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-dllm-serving-radix-graph",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-dllm-serving-radix-graph/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-dllm-serving-radix-graph/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-dllm-serving-radix-graph/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "measured",
+     "relation": "A real SGLang server is launched with LLaDA2.0-mini (dLLM path: --dllm-algorithm LowConfidence, flashinfer, with and without --max-running-requests) and with Qwen3-0.6B for AR regressions;"
+    },
+    {
+     "stage": "serve",
+     "layer": "methods",
+     "kind": "measured",
+     "relation": "The task changes the diffusion decoding policy itself (per-block LowConfidence thresholding with highest-confidence fallback, new JointThreshold mask-to-token then bounded token-to-token refinement);"
+    },
+    {
+     "stage": "serve",
+     "layer": "kernels",
+     "kind": "measured",
+     "relation": "CUDA-graph capture/replay for diffusion batches is verified on the GPU: greedy output_ids must match between an eager (--disable-cuda-graph) and a graph (--cuda-graph-bs 1 2 4) server at batch sizes 1…"
+    },
+    {
+     "stage": "serve",
+     "layer": "state",
+     "kind": "measured",
+     "relation": "Radix-prefix reuse must be limited to complete diffusion blocks: on a live LLaDA server with fp8_e4m3 KV cache and /flush_cache between probes, cached_tokens is compared at prompt boundaries 31/32/33/…"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": true,
+   "family": "Caching and runtime state"
+  },
+  {
+   "id": "sweserve-ss-sgl-cluster-dsv32-index-cache-primitives",
+   "benchmark": "sweserve",
+   "title": "Add batched NSA index-cache gather and fused FP8 store kernels",
+   "format": "Harbor",
+   "hardware": "1 × H100 80 GB; 8 CPUs, 64 GiB RAM",
+   "edit": "Extend SGLang's DeepSeek V3.2 NSA index-cache accessor (srt/layers/attention/nsa/index_buf_accessor.py, Triton GetKAndS) to gather a batch of requests from a 2-D page table with per-row seq lens beyond 128K tokens, and add a JIT CUDA kernel (jit_kernel/csrc/nsa/fused_store_index_cache.cuh + jit_kernel/fused_store_index_cache.py, TVM-FFI) that quantizes BF16 index keys to FP8 e4m3 with ue8m0 scales and scatters them i…",
+   "verify": "test.sh sources prep.sh (PYTHONPATH=/code/python over the lmsysorg/sglang:v0.5.9-cu130 image at sglang commit 48e9daad), sha256-attests the packaged tests, then runs 62 isolated pytest nodes via run_pytest_node.py: 3 F2P + 1 P2P in test/registered/kernels/test_dsv32_index_cache_gather.py (real CUDA tensors on the H100; duck-typed discovery of the public gather/fused-store callable across 11 signatures; byte-exact gather incl. a 131,073-token row;",
+   "boundary": "GPU tests on one H100 without a full serving run.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-dsv32-index-cache-primitives",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-dsv32-index-cache-primitives/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-dsv32-index-cache-primitives/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-dsv32-index-cache-primitives/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "kernels",
+     "kind": "measured",
+     "relation": "Verifier runs the new Triton batched gather kernel and the new JIT CUDA fused BF16->FP8+ue8m0 scatter kernel on the H100 with byte-exact checks and a CUDA-graph single-kernel-node assertion;"
+    },
+    {
+     "stage": "serve",
+     "layer": "state",
+     "kind": "adjacent",
+     "relation": "The kernels are the paged NSA index-cache (K/scale) data plane: tests verify page-table-driven gather across request and page boundaries and past 128K tokens, and paged-cache writes leave untouched by…"
+    },
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "bounded",
+     "relation": "Reference patch wires the batched gather and fused store into nsa_indexer.py forward paths and memory_pool.py, but no verifier node executes the Indexer, ForwardBatch, or the pool wrapper."
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": false,
+   "family": "Caching and runtime state"
+  },
+  {
+   "id": "sweserve-ss-sgl19044-sdar-day0-production",
+   "benchmark": "sweserve",
+   "title": "Add SDAR dense and MoE diffusion-LM model support to SGLang",
+   "format": "Harbor",
+   "hardware": "1 × H100 80 GB; 8 CPUs, 64 GiB RAM",
+   "edit": "Add two new SGLang model definitions, python/sglang/srt/models/sdar.py (SDARForCausalLM, dense; reference ~534 lines) and sdar_moe.py (SDARMoeForCausalLM, MoE with FusedMoE/EP wiring; ~659 lines), both exporting EntryClass so ModelRegistry resolves them, and extend DllmConfig.from_server_args in python/sglang/srt/dllm/config.py to map both architectures to block_size=4 / mask_id=151669 while keeping LLaDA2MoeModelLM…",
+   "verify": "tests/test.sh sources tests/prep.sh (requires a read-only /hf-cache with pinned snapshots JetLM/SDAR-8B-Chat@ac4528d2 [4 safetensors shards] and JetLM/SDAR-30B-A3B-Chat@f5add2a1 [49 shards], HF_HUB_OFFLINE=1, FlashInfer 0.6.3, SHA-256-checked GSM8K fixtures), copies the adapted helper tests/postmerge_tests/python/sglang/test/few_shot_gsm8k.py into /code, then runs 5 pytest nodes one at a time through tests/run_pytest_node.py with source-hash attestation and per-phase evidence: F2P test/registered/dllm/test_sdar_day…",
+   "boundary": "End-to-end serving verifier with a real model on one H100.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl19044-sdar-day0-production",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl19044-sdar-day0-production/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl19044-sdar-day0-production/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl19044-sdar-day0-production/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "measured",
+     "relation": "Primary cell: new SDARForCausalLM / SDARMoeForCausalLM model classes plus DllmConfig registration in the SGLang runtime;"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": true,
+   "family": "Model and backend enablement"
+  },
+  {
+   "id": "sweserve-ss-sgl-epd-registration-cleanup",
+   "benchmark": "sweserve",
+   "title": "Harden EPD encoder registration and shutdown cleanup",
+   "format": "Harbor",
+   "hardware": "CPU only; 8 CPUs, 64 GiB RAM",
+   "edit": "In SGLang's EPD (encode-prefill-decode) disaggregation code, change python/sglang/srt/disaggregation/encode_receiver.py so EncoderBootstrapServer.register/unregister clear the stale consecutive-health-failure count, and python/sglang/srt/disaggregation/encode_server.py so the encoder advertises a routable, TLS-aware URL (resolving 0.0.0.0 / :: / None via get_local_ip_auto), _register_encoder_url_with_bootstrap return…",
+   "verify": "tests/test.sh sources prep.sh (PYTHONPATH=/code/python, installs a vendored distro wheel), overlays the single NVIDIA-authored file test/registered/unit/disaggregation/test_epd_registration_cleanup.py into /code, then runs each of its 12 pytest node IDs independently (5 F2P in TestRegistrationCleanup, 7 P2P in TestRegistrationRetained) with python3 -m pytest -v; score.py gives a binary reward of 1.0 only if every F2P and P2P node PASSED, else 0.0.",
+   "boundary": "CPU-only unit and regression tests; no engine or model runs.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-epd-registration-cleanup",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-epd-registration-cleanup/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-epd-registration-cleanup/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-epd-registration-cleanup/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "distributed",
+     "kind": "bounded",
+     "relation": "EPD disaggregation control plane: encoder instances register/unregister with multiple bootstrap servers, advertise a routable cross-node URL, and the bootstrap registry clears per-URL health-failure s…"
+    },
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "bounded",
+     "relation": "Encoder server launch lifecycle in encode_server.py (launch_server and _launch_server_dp, atexit shutdown hook, ServerArgs host/port/TLS URL derivation) and the public POST /register_encoder_url and D…"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": false,
+   "family": "Distributed execution and scheduling"
+  },
+  {
+   "id": "sweserve-ss-sgl27313-cp-strategy-abstractions",
+   "benchmark": "sweserve",
+   "title": "Add context-parallel strategy abstraction package and ServerArgs hook",
+   "format": "Harbor",
+   "hardware": "CPU only; 8 CPUs, 32 GiB RAM",
+   "edit": "Create the new `sglang.srt.layers.cp` package (base/zigzag/interleave/utils/__init__) with `ContextParallelStrategyKind` and `CPAttentionBackendKind` enums, `BaseContextParallelMetadata`/`ZigzagContextParallelMetadata`/`InterleaveContextParallelMetadata` dataclasses, an abstract `ContextParallelStrategy` plus `ZigzagCPStrategy`/`InterleaveCPStrategy` shells whose runtime methods (shard/gather/run_attention/materializ…",
+   "verify": "tests/test.sh sources prep.sh (PYTHONPATH=/code/python, HOME=/tmp) then runs run_scored_nodes.py, which spawns one `python -I` subprocess per node (env PYTEST_DISABLE_PLUGIN_AUTOLOAD=1, 300 s per node) running `pytest -vv --tb=short -p no:cacheprovider <node>` under an integrity plugin that requires `sglang.srt.layers.cp.base` and `sglang.srt.server_args` to import from /code/python and pytest/torch/unittest to keep their trusted identity;",
+   "boundary": "CPU-only unit and regression tests; no engine or model runs.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl27313-cp-strategy-abstractions",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl27313-cp-strategy-abstractions/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl27313-cp-strategy-abstractions/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl27313-cp-strategy-abstractions/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "distributed",
+     "kind": "bounded",
+     "relation": "The subject is context parallelism for prefill (attn_cp_size, zigzag vs interleave sequence-sharding strategies, cp_rank delegated to dp_attention, per-layer attention-CP comm flag), but the verifier…"
+    },
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "bounded",
+     "relation": "Public runtime-config surface of the SGLang engine: `SGLANG_ENABLE_CP_V2` EnvBool registration, `ServerArgs._handle_context_parallelism()` hook, `--enable-prefill-cp`/`--cp-strategy` argparse handling…"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": false,
+   "family": "Distributed execution and scheduling"
+  },
+  {
+   "id": "sweserve-ss-sgl28371-chunked-sgmv-cuda-graph-replay",
+   "benchmark": "sweserve",
+   "title": "Fix chunked-SGMV LoRA kernels for CUDA-graph replay with more segments",
+   "format": "Harbor",
+   "hardware": "1 × H100 80 GB; 8 CPUs, 64 GiB RAM",
+   "edit": "Change SGLang's chunked-SGMV LoRA backend (python/sglang/srt/lora/backend/chunked_backend.py) and its Triton kernels (triton_ops/chunked_sgmv_shrink.py, chunked_sgmv_expand.py, chunked_embedding_lora_a.py, kv_b_lora_absorbed.py, plus the trtllm_lora_temp copy of kv_b_lora_absorbed.py) so that under use_cuda_graph the launch grid covers the full preallocated segment-buffer capacity (max segments) instead of the captur…",
+   "verify": "tests/test.sh sources prep.sh (PYTHONPATH=/code/python, CUDA env), runs validate_upstream_e2e_package.py to SHA-attest the packaged test sources, then run_scored_nodes.py launches each of 23 nodes in its own subprocess via pytest.main (900 s/node): 10 P2P in tests/postmerge_tests/test/registered/lora/test_chunked_sgmv_backend.py (TestChunkedSGMV), 4 F2P in test_chunked_sgmv_backend_pr28371.py (the exact upstream PR tests: shrink/expand/kv_b graph replay with 4 segments after 1-segment capture, prepare_lora_batch ze…",
+   "boundary": "GPU tests on one H100 without a full serving run.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl28371-chunked-sgmv-cuda-graph-replay",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl28371-chunked-sgmv-cuda-graph-replay/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl28371-chunked-sgmv-cuda-graph-replay/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl28371-chunked-sgmv-cuda-graph-replay/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "kernels",
+     "kind": "measured",
+     "relation": "Verifier runs the patched Triton chunked-SGMV shrink/expand/embedding-LoRA-A and absorbed-MLA kv_b kernels on a real H100 under torch.cuda.CUDAGraph capture and replay, checking numerics against eager…"
+    },
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "bounded",
+     "relation": "ChunkedSgmvLoRABackend.prepare_lora_batch / init_cuda_graph_batch_info (LoRA batch-metadata preparation in the model-runner path) is exercised directly with a MockForwardBatch and mock ServerArgs, ass…"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": false,
+   "family": "Kernels, quantization, and performance"
+  },
+  {
+   "id": "sweserve-ss-sgl-qwen35-dense-moe-core-serving",
+   "benchmark": "sweserve",
+   "title": "Add Qwen3.5 dense and MoE multimodal serving to SGLang",
+   "format": "Harbor",
+   "hardware": "1 × H100 80 GB; 16 CPUs, 96 GiB RAM",
+   "edit": "Add native model support for Qwen/Qwen3.5-0.8B (Qwen3_5ForConditionalGeneration) and Qwen/Qwen3.5-35B-A3B (Qwen3_5MoeForConditionalGeneration, 256 routed experts, top-8) to SGLang at commit 0b4d4f2 (parent of upstream PR #18489): new nested text/vision HF config classes and loader wiring (srt/configs/qwen3_5.py, model_config.py, hf_transformers_utils.py), a new model implementation (srt/models/qwen3_5.py, plus qwen3_…",
+   "verify": "test.sh sources prep.sh (sha256-verifies the revision-pinned Qwen/Qwen3.5-0.8B@2fc0636 and Qwen/Qwen3.5-35B-A3B@59d61f3 checkpoints from a mounted /hf-cache, sets HF_HUB_OFFLINE=1) and then runs 7 pytest modules from immutable /tests/postmerge_tests via run_pytest_group.py: test_qwen35_public_serving.py (5 tests) and test_qwen35_moe_public_serving.py (3 tests) each launch a real SGLang server with the verifier-owned popen_launch_server (\"python3 -m sglang.launch_server --model-path <checkpoint> --tp-size 1 --contex…",
+   "boundary": "End-to-end serving verifier with a real model on one H100.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-qwen35-dense-moe-core-serving",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-qwen35-dense-moe-core-serving/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-qwen35-dense-moe-core-serving/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-qwen35-dense-moe-core-serving/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "measured",
+     "relation": "Primary cell: model registry, HF config loading, model forward, multimodal processor and the OpenAI /v1/chat/completions and native /generate request paths are exercised by launching the real SGLang s…"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": true,
+   "family": "Model and backend enablement"
+  },
+  {
+   "id": "sweserve-ss-sgl-bcg-cuda-engine-storage",
+   "benchmark": "sweserve",
+   "title": "Implement breakable CUDA-graph prefill engine in SGLang ModelRunner",
+   "format": "Harbor",
+   "hardware": "1 × H100 80 GB; 8 CPUs, 64 GiB RAM",
+   "edit": "Add a breakable (\"piecewise\") CUDA-graph prefill runner to SGLang's model_executor: a new breakable_cuda_graph package that captures the layer stack as multiple torch.cuda.CUDAGraph segments (capture_begin/capture_end on a shared mempool, cuda-python cudaStreamGetCaptureInfo queries, a global hook on torch.cuda.Stream.wait_stream to auto-join forked side streams) split by eager breaks around RadixAttention, a new bre…",
+   "verify": "tests/test.sh copies tests/postmerge_tests into /code and runs 10 pytest nodes one per invocation (vendored pytest 8.3.5, --noconftest, plugin autoload off, xfail_strict; classify_junit.py treats a skip as a failure): 7 F2P nodes in test/registered/unit/bcg_engine/test_bcg_engine_mandatory.py (3) and test_bcg_engine_stress.py (4) plus 3 P2P nodes in test_bcg_engine_p2p.py, and score.py emits a binary reward of 1.0 only if all 10 pass.",
+   "boundary": "GPU tests on one H100 without a full serving run.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-bcg-cuda-engine-storage",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-bcg-cuda-engine-storage/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-bcg-cuda-engine-storage/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-bcg-cuda-engine-storage/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "kernels",
+     "kind": "measured",
+     "relation": "Verifier captures real torch.cuda.CUDAGraph segments on the H100, replays them with changing inputs, counts cudaGraphLaunch events with torch.profiler, and checks replayed numerics and static output-b…"
+    },
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "bounded",
+     "relation": "Exercises production ModelRunner.init_piecewise_cuda_graphs/forward_extend, init_device_graphs/forward (CudaGraphRunner), ForwardBatch, RadixAttention and the capture-mode/forward-context managers, bu…"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": false,
+   "family": "Kernels, quantization, and performance"
+  },
+  {
+   "id": "sweserve-ss-sgl-cluster-hisparse-decode-lifecycle",
+   "benchmark": "sweserve",
+   "title": "Page-align HiSparse host KV pool, select NSA backend by dtype",
+   "format": "Harbor",
+   "hardware": "1 × H100 80 GB; 8 CPUs, 64 GiB RAM",
+   "edit": "Change SGLang's HiSparse hierarchical sparse KV cache (python/sglang/srt/managers/hisparse_coordinator.py, mem_cache/memory_pool_host.py) so the pinned host pool uses the device page size instead of a hardcoded page_size=1, allocates prefill-staging and per-step decode-backup host slots in complete pages via a new HiSparseHostPoolMixin, tracks per-request allocated host length, and frees host/device resources exactly…",
+   "verify": "tests/test.sh runs 26 pytest nodes from four verifier-owned files under tests/postmerge_tests (sha256-attested, not in /code): test/registered/unit/managers/test_hisparse_unit.py (8 scored TestHiSparseUnit methods run as one grouped session sharing setUpClass; 1 F2P, 7 P2P), test/registered/jit/test_hisparse_production_runtime.py (2 F2P, 2 P2P), test/registered/unit/managers/test_hisparse_control_plane.py (3 F2P, 7 P2P), and test/registered/unit/managers/test_hisparse_regressions.py (4 P2P), each of the latter 18 i…",
+   "boundary": "GPU tests on one H100 without a full serving run.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-hisparse-decode-lifecycle",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-hisparse-decode-lifecycle/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-hisparse-decode-lifecycle/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-hisparse-decode-lifecycle/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "state",
+     "kind": "measured",
+     "relation": "Core of the task: page-granular pinned-host KV pool, decode-backup growth, evict-to-host-before-reuse and exact-once release;"
+    },
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "bounded",
+     "relation": "ServerArgs public API (--enable-hisparse, --hisparse-config, KV-dtype-driven flashmla_sparse/flashmla_kv selection, check_server_args rejection) and Req lifecycle hooks (admit/retract/finish) are chec…"
+    },
+    {
+     "stage": "serve",
+     "layer": "kernels",
+     "kind": "adjacent",
+     "relation": "swap_in_selected_pages, sgl_kernel kvcacheio transfers and the store_cache JIT kernel execute on GPU as fixed dependencies to validate the host-page change (page_size is passed through to the kernel c…"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": false,
+   "family": "Caching and runtime state"
+  },
+  {
+   "id": "sweserve-ss-sgl-moe-lora-kernel-correctness",
+   "benchmark": "sweserve",
+   "title": "Implement MoE-LoRA route alignment CUDA kernel and fused Triton op",
+   "format": "Harbor",
+   "hardware": "1 × H100 80 GB; 8 CPUs, 64 GiB RAM",
+   "edit": "Add two new kernels to SGLang: a JIT-compiled CUDA kernel `sglang.jit_kernel.moe_lora_align.moe_lora_align_block_size` (new csrc/lora/moe_lora_align_kernel.cu built via load_jit/TVM-FFI with cub, plus its Python wrapper) that groups every valid flattened MoE route by (adapter, expert), pads groups to block size, drops invalid adapter/expert sentinels and supports >1024 experts;",
+   "verify": "tests/test.sh sources prep.sh (hard-fails unless nvidia-smi reports an H100 under profile h100_1 or GB300 under gb300_1, sets TORCH_CUDA_ARCH_LIST), validates the packaged test copies and scorer, then runs pytest via run_exact.py on six local nodes (4 F2P in postmerge_tests/test/registered/lora/test_moe_lora_kernel_contract.py that call the two new kernels on small hand-built CUDA int32/bf16/fp16 tensors with 1500 experts and invalid sentinels and compare against a Python eager reference at atol/rtol 2e-2;",
+   "boundary": "GPU tests on one H100 without a full serving run.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-moe-lora-kernel-correctness",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-moe-lora-kernel-correctness/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-moe-lora-kernel-correctness/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-moe-lora-kernel-correctness/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "kernels",
+     "kind": "measured",
+     "relation": "Verifier JIT-compiles the new CUDA alignment kernel (cub/TVM-FFI load_jit) and the Triton fused_moe_lora kernel on a real H100/GB300 and checks numerics against torch/eager references across 140 param…"
+    },
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "bounded",
+     "relation": "Weak cell: the two CPU P2P nodes only regression-guard SGLang runtime layer code (BaseLayerWithLoRA forward passthrough and fused_topk_torch_native MoE routing) with tiny tensors;"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": false,
+   "family": "Kernels, quantization, and performance"
+  },
+  {
+   "id": "sweserve-ss-sgl-pcg-mixed-flashinfer-replay",
+   "benchmark": "sweserve",
+   "title": "Fix piecewise CUDA graph replay for mixed-chunk FlashInfer batches",
+   "format": "Harbor",
+   "hardware": "1 × H100 80 GB; 8 CPUs, 64 GiB RAM",
+   "edit": "Make SGLang's piecewise CUDA graph (PCG) runner replay an extend-captured graph for MIXED (extend+decode) chunked-prefill batches on the FlashInfer backend: normalize ForwardMode.MIXED to EXTEND so the dynamo guard captured with EXTEND passes, carry the padded static_num_tokens through ForwardContext, and have the FlashInfer prefill indices updater append a dummy request (padding qo_indptr/kv_indptr to the capture bu…",
+   "verify": "tests/test.sh sources prep.sh (asserts a read-only /hf-cache with a pinned NousResearch/Meta-Llama-3.1-8B-Instruct snapshot d10aef79..., HF offline) then runs each of three pytest nodes from tests/postmerge_tests/test/registered/piecewise_cuda_graph/test_pcg_mixed_flashinfer_public.py in an isolated pytest process (run_pytest_node.py, validated by validate_node_result.py).",
+   "boundary": "End-to-end serving verifier with a real model on one H100.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-pcg-mixed-flashinfer-replay",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-pcg-mixed-flashinfer-replay/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-pcg-mixed-flashinfer-replay/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-pcg-mixed-flashinfer-replay/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "kernels",
+     "kind": "measured",
+     "relation": "Core cell: the fix is in the piecewise CUDA graph runner (dynamo guard on captured forward mode, static token-bucket padding) and FlashInfer paged-attention metadata (qo_indptr/kv_indptr dummy request…"
+    },
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "measured",
+     "relation": "Edit lives in the model-executor runtime (piecewise_cuda_graph_runner.py, ForwardContext) and the attention backend's init_forward_metadata path;"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": true,
+   "family": "Kernels, quantization, and performance"
+  },
+  {
+   "id": "sweserve-ss-sgl-adaptive-allocation-safety",
+   "benchmark": "sweserve",
+   "title": "Stabilize adaptive EAGLE max draft-token capacity across SGLang allocators",
+   "format": "Harbor",
+   "hardware": "CPU only; 8 CPUs, 64 GiB RAM",
+   "edit": "Make the adaptive-EAGLE maximum draft-token capacity (largest JSON candidate_steps entry plus bonus token, for topk=1) a launch-time-stable value on one ServerArgs instance and use it consistently in TokenizerManager request reservation (num_reserved_tokens), managers/utils.get_alloc_len_per_decode, and ModelRunnerKVCacheMixin._init_pools req_to_token_pool max_context_len headroom, without changing static-spec or non…",
+   "verify": "tests/test.sh sources prep.sh (PYTHONPATH=/code/python, CUDA_VISIBLE_DEVICES=\"\", installs sha256-checked vendored pytest 8.3.5), runs scorer_selftest.py, then runs each of 19 exact nodes (3 F2P + 16 P2P) in its own isolated python3 -I /tests/run_exact.py pytest process with a nonce-bound report validated by validate_report.py: 8 nodes from tests/postmerge_tests/test/registered/unit/spec/test_adaptive_allocation_safety.py (NVIDIA-authored) and 11 P2P nodes from test_adaptive_spec_params.py (upstream policy unit suit…",
+   "boundary": "CPU-only unit and regression tests; no engine or model runs.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-adaptive-allocation-safety",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-adaptive-allocation-safety/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-adaptive-allocation-safety/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-adaptive-allocation-safety/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "bounded",
+     "relation": "Core of the task: ServerArgs launch-time config lifecycle, TokenizerManager request reservation and per-decode allocation length are exercised by real SGLang code paths in CPU pytest with lifecycle ha…"
+    },
+    {
+     "stage": "serve",
+     "layer": "state",
+     "kind": "bounded",
+     "relation": "req_to_token_pool max_context_len headroom (captured ReqToTokenPool kwargs) and EAGLE decode token-slot allocation / kv_allocated_len monotonicity are checked with small CPU torch tensors and monkeypa…"
+    },
+    {
+     "stage": "serve",
+     "layer": "methods",
+     "kind": "bounded",
+     "relation": "Only regression coverage: the 11 P2P nodes unit-test the AdaptiveSpeculativeParams step-selection policy (EMA, hysteresis, warmup, update_interval) from temp JSON configs;"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": false,
+   "family": "Speculative and advanced decoding"
+  },
+  {
+   "id": "sweserve-ss-sgl-transformers5-compute-runtime",
+   "benchmark": "sweserve",
+   "title": "Add HF-order RMSNorm CUDA kernel for Transformers backend",
+   "format": "Harbor",
+   "hardware": "1 × H100 80 GB; 16 CPUs, 128 GiB RAM",
+   "edit": "Add a new JIT-compiled CUDA RMSNorm kernel with Hugging Face semantics (normalized value cast to fp16/bf16 before the weight multiply; warp kernel for hidden sizes in [32,512) multiples of 32, CTA kernel for multiples of 512) under python/sglang/jit_kernel (csrc/elementwise/rmsnorm_hf.cuh + rmsnorm_hf.py, or equivalently in jit_kernel.norm), wire it into sglang.srt.layers.layernorm.RMSNorm.forward_cuda when cast_x_be…",
+   "verify": "tests/test.sh (on a real GPU, base image lmsysorg/sglang:v0.5.9-cu130 at SGLang commit 267c2c08, transformers==5.5.3 pinned) first attests test-file hashes and validates a real 16 GB checkpoint (NousResearch/Meta-Llama-3.1-8B-Instruct @ d10aef79, mounted at /hf-cache), then runs pytest on the verifier-local tests/postmerge_tests/test/registered/models/test_transformers5_quantized_rmsnorm_serving.py, which launches a real SGLang server via popen_launch_server with --model-impl transformers --torchao-config int4wo-12…",
+   "boundary": "End-to-end serving verifier with a real model on one H100.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-transformers5-compute-runtime",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-transformers5-compute-runtime/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-transformers5-compute-runtime/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-transformers5-compute-runtime/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "kernels",
+     "kind": "measured",
+     "relation": "Verifier JIT-compiles and runs the new rmsnorm_hf CUDA kernel on H100 across 244 dtype x batch x hidden-size cases (numerical checks vs HF reference and an HF-vs-legacy discriminator), runs 2032 legac…"
+    },
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "measured",
+     "relation": "Verifier launches two real SGLang servers on Meta-Llama-3.1-8B-Instruct with --model-impl transformers and TorchAO int4wo-128, queries /v1/models and runs end-to-end gsm8k/mmlu evaluations through the…"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": true,
+   "family": "Kernels, quantization, and performance"
+  },
+  {
+   "id": "sweserve-ss-sgl-transformers5-moe-core-serving",
+   "benchmark": "sweserve",
+   "title": "Wire Transformers-backend MoE models to SGLang FusedMoE",
+   "format": "Harbor",
+   "hardware": "1 × H100 80 GB; 20 CPUs, 96 GiB RAM",
+   "edit": "Extend SGLang's Transformers fallback backend (python/sglang/srt/models/transformers.py plus model_loader/utils.py, model_config.py, scheduler.py, tokenizer_manager.py, model_runner.py, multimodal processors) so an authentic Hugging Face MoE causal LM (Qwen3-30B-A3B under transformers==5.3.0) is detected as MoE and its per-expert module loop is replaced by SGLang's FusedMoE layer, while preserving HF weight-loading s…",
+   "verify": "tests/test.sh runs prep.sh, verify_model_assets.py (asserts one sm90 GPU and SHA-256 of all 16 Qwen/Qwen3-30B-A3B safetensors shards, offline mode) and then four pytest files, each of which launches the real candidate SGLang server (python -m sglang.launch_server --model-impl transformers --tp-size 1 --attention-backend triton --moe-runner-backend triton --disable-cuda-graph) with the real Qwen3-30B-A3B checkpoint on the H100 and sends HTTP requests: test_transformers5_moe_serving.py (server boots with --expert-dis…",
+   "boundary": "End-to-end serving verifier with a real model on one H100.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-transformers5-moe-core-serving",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-transformers5-moe-core-serving/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-transformers5-moe-core-serving/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-transformers5-moe-core-serving/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "measured",
+     "relation": "The verifier launches the real SGLang server with Qwen3-30B-A3B via --model-impl transformers on an H100 and scores OpenAI-compatible /v1/chat/completions and /v1/completions responses (MMLU/GSM8K thr…"
+    },
+    {
+     "stage": "serve",
+     "layer": "kernels",
+     "kind": "adjacent",
+     "relation": "The task's point is to route HF experts through SGLang's fused MoE Triton runner (--moe-runner-backend triton), which the verifier exercises on the GPU as a fixed dependency, but no kernel is written…"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": true,
+   "family": "Model and backend enablement"
+  },
+  {
+   "id": "sweserve-ss-sgl-gemma4-pcg-execution",
+   "benchmark": "sweserve",
+   "title": "Enable piecewise CUDA-graph execution for Gemma 4 multimodal serving",
+   "format": "Harbor",
+   "hardware": "1 × H100 80 GB; 16 CPUs, 128 GiB RAM",
+   "edit": "Wire SGLang's existing piecewise CUDA-graph (PCG) runner to the native Gemma4ForConditionalGeneration model so that --enforce-piecewise-cuda-graph actually initializes, captures and replays instead of silently falling back to eager: model_executor/model_runner.py (resolve_language_model and the init_piecewise_cuda_graph layer discovery, which must handle models whose decoder layers sit at language_model.layers rather…",
+   "verify": "test.sh sources prep.sh (puts /tests/postmerge_tests/test/registered/models first on PYTHONPATH so its sitecustomize.py monkeypatches PiecewiseCudaGraphRunner.__init__/capture/replay to emit JSON trace events in every process, including the launched server; requires the sha256-pinned gated google/gemma-4-26B-A4B-it snapshot rev 4c55b528 (~51.6 GB of safetensors) and a pinned MMMU validation snapshot pre-mounted at /hf-cache, fully HF-offline), runs verify_model_assets.py, then run_scored_module.py executes pytest o…",
+   "boundary": "End-to-end serving verifier with a real model on one H100.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-gemma4-pcg-execution",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-gemma4-pcg-execution/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-gemma4-pcg-execution/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-gemma4-pcg-execution/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "measured",
+     "relation": "Core edit is ModelRunner/PiecewiseCudaGraphRunner wiring and the Gemma4ForConditionalGeneration model-support alias;"
+    },
+    {
+     "stage": "serve",
+     "layer": "kernels",
+     "kind": "measured",
+     "relation": "Piecewise CUDA-graph capture and replay (torch.compile patch_model plus CUDA graph runner) is proven on GPU through trace events from the monkeypatched capture/replay methods, with eager-vs-graph nume…"
+    },
+    {
+     "stage": "serve",
+     "layer": "distributed",
+     "kind": "adjacent",
+     "relation": "Instruction asks for TP1 and TP4 support and the test reads tp_size from the hardware profile, but on the declared 1-GPU profile it runs TP1;"
+    },
+    {
+     "stage": "serve",
+     "layer": "dataeval",
+     "kind": "adjacent",
+     "relation": "A verifier-owned, hash-pinned 100-sample MMMU accuracy floor (>=0.27) is run as a pass-to-pass regression guard with default server args;"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": true,
+   "family": "Kernels, quantization, and performance"
+  },
+  {
+   "id": "sweserve-ss-sgl-gemma4-speculative-execution",
+   "benchmark": "sweserve",
+   "title": "Enable DFLASH speculative decoding for Gemma 4 in SGLang",
+   "format": "Harbor",
+   "hardware": "1 × H100 80 GB; 16 CPUs, 96 GiB RAM",
+   "edit": "Add DFLASH speculative-execution support for the already-supported Gemma 4 model in SGLang (base commit cd60c4edd, parent of PR #27471): the reference patch adds set_dflash_layers_to_capture() to Gemma4ForCausalLM (python/sglang/srt/models/gemma4_causal.py) and Gemma4ForConditionalGeneration (gemma4_mm.py) so the target captures auxiliary hidden states at the configured layer ids, and changes DFlashWorkerV2 greedy sa…",
+   "verify": "tests/test.sh sources prep.sh (pins sglang-kernel 0.4.4 / transformers 5.10.1, resolves checkpoints from a pre-mounted /hf-cache), runs verify_model_assets.py (sha256-validates google/gemma-4-31B-it rev 3548789 (~62.5 GB BF16) and z-lab/gemma-4-31B-it-DFlash rev eabd648 (~3.07 GB) offline), overlays tests/postmerge_tests into /code, then runs a single pytest over 4 F2P nodes in test/registered/models/test_gemma4_dflash_serving.py plus 1 P2P node in test/registered/unit/test_speculative_registry_compatibility.py (a…",
+   "boundary": "End-to-end serving verifier with a real model on one H100.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-gemma4-speculative-execution",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-gemma4-speculative-execution/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-gemma4-speculative-execution/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-gemma4-speculative-execution/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "measured",
+     "relation": "Verifier launches the real SGLang server (google/gemma-4-31B-it + z-lab DFlash draft, TP1 FP8 on the declared H100) and drives /server_info, /v1/models, /v1/chat/completions and /generate end to end;"
+    },
+    {
+     "stage": "serve",
+     "layer": "methods",
+     "kind": "measured",
+     "relation": "The task is a speculative-decoding policy (DFLASH draft/verify with 16 draft tokens, aux-hidden-state capture layers, greedy argmax path in the spec worker);"
+    },
+    {
+     "stage": "serve",
+     "layer": "kernels",
+     "kind": "adjacent",
+     "relation": "CUDA graphs must stay enabled and test_cuda_graph_batch_replay_and_order replays captured batch sizes 1/2/4/2 checking greedy outputs;"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": true,
+   "family": "Speculative and advanced decoding"
+  },
+  {
+   "id": "sweserve-ss-sgl-gemma4-moe-core-serving",
+   "benchmark": "sweserve",
+   "title": "Add Gemma 4 MoE multimodal model serving support to SGLang",
+   "format": "Harbor",
+   "hardware": "1 × H100 80 GB; 16 CPUs, 96 GiB RAM",
+   "edit": "Implement Gemma4ForConditionalGeneration in SGLang (base commit be0277f9, the parent of upstream #21952) so the pinned google/gemma-4-26B-A4B-it checkpoint loads through the normal model registry and server: nested HF text/vision config handling (srt/configs, utils/hf_transformers_utils), a 128-expert / top-8 MoE decoder with the custom router normalization and scaling executed through real expert dispatch (srt/model…",
+   "verify": "tests/test.sh runs prep.sh (resolves the revision-pinned google/gemma-4-26B-A4B-it snapshot from /hf-cache, pins transformers==5.6.0, forces HF offline), verify_model_assets.py (sha256 of both safetensors shards, ~51.6 GB, and config.json 128 experts / top_k 8), then run_scored_nodes.py under python3 -I, which asserts an H100 is visible, launches the real SGLang server with the real 26B-A4B checkpoint via the verifier's `sglang serve` wrapper (`--tp-size 1 --context-length 4096 --max-running-requests 8 --max-total-…",
+   "boundary": "End-to-end serving verifier with a real model on one H100.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-gemma4-moe-core-serving",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-gemma4-moe-core-serving/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-gemma4-moe-core-serving/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-gemma4-moe-core-serving/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "measured",
+     "relation": "The verifier launches the real SGLang server with the real google/gemma-4-26B-A4B-it checkpoint on an H100 and checks model-registry resolution, /v1/models, OpenAI chat (text and image), native /gener…"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": true,
+   "family": "Kernels, quantization, and performance"
+  },
+  {
+   "id": "sweserve-ss-sgl22544-score-multi-item-delimiters",
+   "benchmark": "sweserve",
+   "title": "Add enable_mis flag with precomputed multi-item scoring delimiter indices",
+   "format": "Harbor",
+   "hardware": "1 × H100 80 GB; 8 CPUs, 64 GiB RAM",
+   "edit": "Replace the caller-supplied `multi_item_scoring_delimiter` token-id ServerArg with a boolean `enable_mis` (hard-coded placeholder MIS_DELIMITER_TOKEN_ID=9999, auto-disables CUDA graph/radix cache/chunked prefill, asserts flashinfer backend), and precompute delimiter positions from item lengths in the tokenizer-manager score mixin, piping them as CPU tensors through io_struct -> scheduler -> ScheduleBatch -> ForwardBa…",
+   "verify": "test.sh first attests vendored wheels and sha256-pins two mounted HF snapshots (Qwen/Qwen3-0.6B and tomaarsen/Qwen3-Reranker-0.6B-seq-cls, offline at /hf-cache), then runs 8 per-class pytest groups from /tests/postmerge_tests with PYTHONPATH=/code/python: 18 F2P nodes from test/registered/prefill_only/test_multi_item_scoring.py (TestMISServerArgsValidation::test_enable_mis_default, a CPU-only `ServerArgs.enable_mis is False` default check;",
+   "boundary": "End-to-end serving verifier with a real model on one H100.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl22544-score-multi-item-delimiters",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl22544-score-multi-item-delimiters/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl22544-score-multi-item-delimiters/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl22544-score-multi-item-delimiters/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "measured",
+     "relation": "Verifier launches the in-process SGLang Engine on an H100 with Qwen3-0.6B and Qwen3-Reranker-0.6B-seq-cls and issues score()/async_score() requests;"
+    },
+    {
+     "stage": "serve",
+     "layer": "kernels",
+     "kind": "adjacent",
+     "relation": "The patch rebuilds FlashInfer's MultiItemScoringParams (prefix_len_ptr, token_pos_in_items_ptr) in the Python attention backend and the parity tests exercise the resulting custom attention mask numeri…"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": true,
+   "family": "Serving APIs and runtime correctness"
+  },
+  {
+   "id": "sweserve-ss-sgl-cluster-ngram-trie-refactor",
+   "benchmark": "sweserve",
+   "title": "Refactor SGLang n-gram speculative-decoding trie with stateful matching",
+   "format": "Harbor",
+   "hardware": "1 × H100 80 GB; 8 CPUs, 64 GiB RAM",
+   "edit": "Rework SGLang's draft-model-free NGRAM speculative decoding reference cache: split the monolithic C++ ngram module into trie/result/core translation units (the oracle relocates it to python/sglang/jit_kernel/csrc/ngram_corpus with a tvm-ffi binding and a new python/sglang/srt/speculative/cpp_ngram/ngram_corpus.py wrapper exposing NgramCorpus), rename branch_length to max_trie_depth and delete the min/max match-window…",
+   "verify": "test.sh runs 38 exact pytest nodes one at a time through run_pytest_node.py (isolated, verifier-owned re-derivation, any disagreement aborts with no reward): 34 fail_to_pass nodes in tests/postmerge_tests/test/registered/spec/utils/test_ngram_corpus.py, which are CPU-only numpy tests that JIT-compile and drive the C++ NgramCorpus wrapper directly (no torch, no GPU, no model; they fail at base with ModuleNotFoundError because the wrapper module is new;",
+   "boundary": "End-to-end serving verifier with a real model on one H100.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-ngram-trie-refactor",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-ngram-trie-refactor/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-ngram-trie-refactor/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-ngram-trie-refactor/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "methods",
+     "kind": "measured",
+     "relation": "The n-gram draft-tree policy (BFS recency vs PROB frequency, all-suffix matching, longest-suffix continuation, draft budget/mask contract) is a speculative-decoding drafting algorithm;"
+    },
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "measured",
+     "relation": "SGLang runtime integration: ngram_worker request lifecycle (req-id keyed batch_get, erase_match_state on finished/retracted requests), ServerArgs/CLI rename to --speculative-ngram-max-trie-depth, and…"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": true,
+   "family": "Speculative and advanced decoding"
+  },
+  {
+   "id": "sweserve-ss-sgl-cluster-radix-streaming-session",
+   "benchmark": "sweserve",
+   "title": "Embed native streaming-session KV retention in UnifiedRadixCache",
+   "format": "Harbor",
+   "hardware": "1 × H100 80 GB; 8 CPUs, 64 GiB RAM",
+   "edit": "Give SGLang's UnifiedRadixCache (python/sglang/srt/mem_cache/unified_radix_cache.py) native multi-turn streaming-session support: park a finished turn's committed KV and request-pool slot against the session instead of inserting it into the shared radix tree, reclaim it verbatim as the matched prefix on the next turn, and expose supports_streaming_session / session_held_tokens / session_held_req_count / release_sessi…",
+   "verify": "tests/test.sh sources prep.sh (PYTHONPATH=/code/python, installs a vendored distro wheel), runs validate_upstream_e2e_sources.py (sha256 attestation of the two scored test files and manifests, no execution), then runs 9 pytest nodes one at a time in isolation via run_pytest_node.py (--noconftest, plugin autoload off, pytest must not come from /code and sglang must resolve under /code/python);",
+   "boundary": "GPU tests on one H100 without a full serving run.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-radix-streaming-session",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-radix-streaming-session/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-radix-streaming-session/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-radix-streaming-session/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "state",
+     "kind": "bounded",
+     "relation": "Primary cell: the verified work is KV-cache state management inside the radix prefix cache (parking a session's committed KV and req-pool slot across turns, restoring it as the matched prefix, keeping…"
+    },
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "bounded",
+     "relation": "Secondary cell: one F2P node runs the production Scheduler.init_cache_with_memory_pool cache-construction path on a fake scheduler object to check that streaming-session KV ownership stays with the na…"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": false,
+   "family": "Caching and runtime state"
+  },
+  {
+   "id": "sweserve-ss-sgl-cluster-glmv-sampling-restore",
+   "benchmark": "sweserve",
+   "title": "Restore repetition_penalty in SGLang's sampling penalizer path",
+   "format": "Harbor",
+   "hardware": "1 × H100 80 GB; 20 CPUs, 128 GiB RAM",
+   "edit": "Add a multiplicative BatchedRepetitionPenalizer to python/sglang/srt/sampling/penaltylib/ (new repetition_penalty.py with a torch.compile-wrapped apply_scaling_penalties), register it in the orchestrator and SamplingBatchInfo, split overlap-mode accumulation into additive vs scaling penalties in sampling_batch_info.py, and rework penalty application in the speculative verify paths (srt/speculative/eagle_info.py, ngra…",
+   "verify": "tests/test.sh runs run_upstream_e2e_suite.py over three grouped pytest sources under /tests/postmerge_tests/test/registered/sampling/: test_penalty.py::TestPenalty (10 P2P, the upstream maintainer test with an import-only adaptation), test_penalty_isolated.py::TestRepetitionPenaltyIsolated (2 F2P), and test_repetition_penalty_public_contract.py (1 P2P);",
+   "boundary": "End-to-end serving verifier with a real model on one H100.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-glmv-sampling-restore",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-glmv-sampling-restore/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-glmv-sampling-restore/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-glmv-sampling-restore/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "methods",
+     "kind": "measured",
+     "relation": "Restores the repetition-penalty sampling algorithm (multiplicative logit scaling of already-emitted tokens);"
+    },
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "measured",
+     "relation": "Change lives in the SGLang runtime's SamplingBatchInfo / penalizer orchestrator (per-batch prepare, filter, merge, overlap-mode accumulation) and is verified end to end through the public /generate an…"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": true,
+   "family": "Serving APIs and runtime correctness"
+  },
+  {
+   "id": "sweserve-ss-sgl-cluster-ngram-sam-corpus",
+   "benchmark": "sweserve",
+   "title": "Add suffix-automaton external corpus to NGRAM speculative decoding",
+   "format": "Harbor",
+   "hardware": "1 × H100 80 GB; 8 CPUs, 64 GiB RAM",
+   "edit": "Extend SGLang's draft-model-free NGRAM speculative decoding so the draft token tree is seeded from external reference corpora, not just the session trie: add a C++ suffix automaton (SAM) under python/sglang/jit_kernel/csrc/ngram_corpus/ (new suffix_automaton.cpp/.h, changes to ngram.cpp, result.cpp, the tvm-ffi bindings) merged into the trie's BFS/PROB draft tree under a reserved external budget;",
+   "verify": "tests/test.sh sources prep.sh (PYTHONPATH=/code/python, HF offline, pinned local snapshot of Qwen/Qwen2.5-Coder-7B-Instruct rev c03e6d35, sha256 pin on test_utils.py), runs validate_upstream_e2e_package.py and verify_model_assets.py (sha256 of config/tokenizer files and all 4 weight shards), then runs 24 exact pytest nodes one process each via run_pytest_node.py, and score.py gives a binary reward 1.0 only if all 23 F2P + 1 P2P pass (any collection/skip/setup error aborts fail-closed with no reward).",
+   "boundary": "End-to-end serving verifier with a real model on one H100.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-ngram-sam-corpus",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-ngram-sam-corpus/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-ngram-sam-corpus/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-ngram-sam-corpus/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "methods",
+     "kind": "measured",
+     "relation": "The SAM-plus-trie draft-tree construction (BFS recency / PROB frequency composition under a reserved external budget, document-boundary isolation) is a speculative-decoding draft-proposal policy;"
+    },
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "measured",
+     "relation": "New ServerArgs flags with validation, three HTTP endpoints, and the tokenizer-manager -> scheduler -> ngram_worker request routing for runtime corpus add/remove/list are exercised on a real SGLang ser…"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": true,
+   "family": "Speculative and advanced decoding"
+  },
+  {
+   "id": "sweserve-ss-sgl17780-embedding-lora",
+   "benchmark": "sweserve",
+   "title": "Thread per-request LoRA adapter selection through SGLang embedding path",
+   "format": "Harbor",
+   "hardware": "1 × H100 80 GB; 12 CPUs, 64 GiB RAM",
+   "edit": "Add optional lora_path/lora_id fields to the embedding request structs (EmbeddingReqInput, TokenizedEmbeddingReqInput in managers/io_struct.py, with single-to-batch expansion and a ValueError on list/batch length mismatch), plumb lora_id through tokenizer_manager.py and scheduler.py into the Req, expose lora_path on Engine.encode/async_encode (entrypoints/engine.py) and on the OpenAI EmbeddingRequest protocol plus Op…",
+   "verify": "tests/test.sh sources tests/prep.sh (PYTHONPATH=/code/python, offline HF cache at /hf-cache with sha256-pinned snapshots), attests the candidate import root and test-file/manifest hashes (validate_upstream_sources.py), then runs 5 exact pytest nodes from tests/postmerge_tests/test/registered/lora/test_embedding_lora_support.py, each in an isolated pytest process via run_pytest_node.py: F2P = TestEmbeddingLoraSupport::test_embedding_lora_fields (CPU-only struct/field plumbing, byte-identical to the upstream maintain…",
+   "boundary": "End-to-end serving verifier with a real model on one H100.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl17780-embedding-lora",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl17780-embedding-lora/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl17780-embedding-lora/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl17780-embedding-lora/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "measured",
+     "relation": "The edit is SGLang request-lifecycle plumbing (io_struct normalization/split, tokenizer_manager, scheduler Req construction, Engine.encode API, OpenAI EmbeddingRequest/serving adapter);"
+    },
+    {
+     "stage": "serve",
+     "layer": "kernels",
+     "kind": "adjacent",
+     "relation": "The GPU tests run the pre-existing triton LoRA backend (lora_backend=triton, CUDA graphs disabled) as a fixed dependency so the adapter actually alters the forward pass;"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": true,
+   "family": "Serving APIs and runtime correctness"
+  },
+  {
+   "id": "sweserve-ss-sgl20960-sparse-embed-overrides-v2",
+   "benchmark": "sweserve",
+   "title": "Add hybrid token+embedding override inputs to SGLang Scoring API",
+   "format": "Harbor",
+   "hardware": "1 × H100 80 GB; 12 CPUs, 64 GiB RAM",
+   "edit": "Extend SGLang's Prefill-Only Scoring API (Engine.score and /v1/score) so a request can carry embed_override_token_id plus query_embed_overrides / item_embed_overrides (JSON float arrays), and every placeholder-token position consumes the supplied vector instead of the token embedding in the forward pass, with validation that rejects overrides without a placeholder id, item_first ordering with overrides, and per-item…",
+   "verify": "tests/test.sh sources tests/prep.sh (sets PYTHONPATH=/code/python, pins Qwen/Qwen3-0.6B at snapshot c1899de2 from a read-only offline /hf-cache with sha256 attestation of 7 model files, shims an `sglang` CLI), runs validate_source_contract.py (sha256 of the gate file and F2P/P2P manifests), then runs each of the 9 exact pytest nodes (7 fail-to-pass, 2 pass-to-pass) from tests/postmerge_tests/test/registered/prefill_only/test_embed_overrides_e2e.py in its own isolated pytest process via run_pytest_node.py, re-valida…",
+   "boundary": "End-to-end serving verifier with a real model on one H100.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl20960-sparse-embed-overrides-v2",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl20960-sparse-embed-overrides-v2/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl20960-sparse-embed-overrides-v2/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl20960-sparse-embed-overrides-v2/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "measured",
+     "relation": "Verifier launches a real SGLang server with Qwen3-0.6B on one H100 and drives /v1/score over HTTP; the edit is to the public API schema, the tokenizer-manager score path, ScheduleBatch/ForwardBatch pl…"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": true,
+   "family": "Serving APIs and runtime correctness"
+  },
+  {
+   "id": "sweserve-ss-sgl-cluster-score-seqcls",
+   "benchmark": "sweserve",
+   "title": "Extend SGLang Scoring API to SequenceClassification models",
+   "format": "Harbor",
+   "hardware": "1 × H100 80 GB; 8 CPUs, 64 GiB RAM",
+   "edit": "Make Engine.score() / POST /v1/score work for SequenceClassification models (per-item pooled classification logits of length num_labels, optional softmax, label_token_ids not required, text and pre-tokenized inputs agree, and multi-item-scoring delimiter mode extracting one distinct vector per item at each delimiter boundary), and add a return_pooled_hidden_states option (Python attribute of CPU tensors, nested float…",
+   "verify": "test.sh sources tests/prep.sh, which pins Qwen/Qwen3-0.6B at revision c1899de from the offline HF cache (sha256-attested by verify_model_assets.py, HF_HUB_OFFLINE=1) and shims the `sglang` CLI, then runs one isolated pytest process (run_maintainer_pytest.py under python3 -I) over the two vendored maintainer files test/registered/prefill_only/test_score_engine.py and test/registered/prefill_only/test_pooled_hidden_states.py, which contain exactly the 33 fail-to-pass and 7 pass-to-pass nodes.",
+   "boundary": "End-to-end serving verifier with a real model on one H100.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-score-seqcls",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-score-seqcls/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-score-seqcls/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-cluster-score-seqcls/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "measured",
+     "relation": "Engine.score() and /v1/score request lifecycle (io_struct, tokenizer-manager score mixin, scheduler output processing, pooler score_and_pool, classification/reward model support) is exercised by real…"
+    },
+    {
+     "stage": "serve",
+     "layer": "kernels",
+     "kind": "measured",
+     "relation": "The patch adds a return_pooled_hidden_states capture flag to the piecewise CUDA-graph runner and the two-batch-overlap preparer, but the verifier's Engine/server args never enable piecewise CUDA graph…"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": true,
+   "family": "Serving APIs and runtime correctness"
+  },
+  {
+   "id": "sweserve-ss-sgl28754-spec-v2-session-commit",
+   "benchmark": "sweserve",
+   "title": "Fix spec-v2 KV commit boundary in EAGLE3 streaming sessions",
+   "format": "Harbor",
+   "hardware": "1 × H100 80 GB; 8 CPUs, 96 GiB RAM",
+   "edit": "Repair KV-ownership bookkeeping when overlap-scheduled EAGLE3 speculative decoding (spec v2) meets streaming sessions, forced retraction and large (256) KV pages: the reference patch changes three SGLang files -- python/sglang/srt/speculative/eagle_info_v2.py (EagleDraftInputV2Mixin.prepare_for_decode must stop pre-claiming the bonus slot / advancing kv_committed_len), python/sglang/srt/managers/scheduler_components/…",
+   "verify": "tests/test.sh sources prep.sh (hard-fails unless pinned offline snapshots of NousResearch/Meta-Llama-3.1-8B-Instruct and lmsys/sglang-EAGLE3-LLaMA3.1-Instruct-8B are mounted at /hf-cache), then run_pytest_group.py runs one pytest session over 47 nodes and score.py gives a binary reward (1.0 only if all 8 F2P and 39 P2P nodes pass setup/call/teardown with no skips).",
+   "boundary": "End-to-end serving verifier with a real model on one H100.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl28754-spec-v2-session-commit",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl28754-spec-v2-session-commit/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl28754-spec-v2-session-commit/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl28754-spec-v2-session-commit/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "measured",
+     "relation": "Scheduler result processing and request lifecycle (SchedulerBatchResultProcessor._resolve_spec_v2_tokens, EAGLE3 prepare_for_decode, finished/retracted/aborted request handling) are unit-probed on CPU…"
+    },
+    {
+     "stage": "serve",
+     "layer": "state",
+     "kind": "measured",
+     "relation": "KV committed/allocated boundary tracking, streaming-session KV inheritance across turns, retraction rollback, page-aligned tail cleanup and overshoot trimming;"
+    },
+    {
+     "stage": "serve",
+     "layer": "methods",
+     "kind": "adjacent",
+     "relation": "EAGLE3 speculative decoding (3 steps, topk 1, 4 draft tokens) with a real draft model runs as a fixed dependency and spec_verify_ct>0 is asserted, but the edit changes only the KV commit bookkeeping a…"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": true,
+   "family": "Speculative and advanced decoding"
+  },
+  {
+   "id": "sweserve-ss-sgl-runtime-metadata-lifecycle",
+   "benchmark": "sweserve",
+   "title": "Relax overlap-scheduler WAR barrier to EAGLE3 draft-extend read boundary",
+   "format": "Harbor",
+   "hardware": "1 × H100 80 GB; 8 CPUs, 64 GiB RAM",
+   "edit": "Replace the scheduler's whole-forward `schedule_stream.wait_stream(forward_stream)` WAR barrier (python/sglang/srt/managers/scheduler.py) with a wait on a read-done CUDA event that the EAGLE3 draft-extend CUDA-graph runner records right after it builds its forward-metadata snapshot (eagle_draft_extend_cuda_graph_runner.py), plumbed through a new `war_fastpath_runner` property on tp_worker / base_spec_worker / eagle_w…",
+   "verify": "tests/test.sh sources prep.sh (requires an offline /hf-cache with pinned NousResearch/Meta-Llama-3.1-8B-Instruct, lmsys/sglang-EAGLE3-LLaMA3.1-Instruct-8B and z-lab/LLaMA3.1-8B-Instruct-DFlash-UltraChat snapshots plus sha256-checked GSM8K/HellaSwag jsonl assets), then runs each focused node with run_pytest_node.py and the exact 113-node maintainer suite with run_maintainer_suite.py, and score.py returns a binary reward of 1.0 only if the single F2P node and all 116 P2P nodes pass with an exact result-set match.",
+   "boundary": "End-to-end serving verifier with a real model on one H100.",
+   "prerequisites": "Docker with Compose, NVIDIA Container Toolkit for GPU tasks; one H100 80GB, 20 CPU cores, 128 GiB RAM, about 1 TB disk for the full run; closed-book proxy optional. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-runtime-metadata-lifecycle",
+   "containerUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-runtime-metadata-lifecycle/environment/Dockerfile",
+   "verifierUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-runtime-metadata-lifecycle/tests/test.sh",
+   "resourceUrl": "https://github.com/NVIDIA/swe-serve/blob/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks/ss-sgl-runtime-metadata-lifecycle/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "measured",
+     "relation": "Primary cell: the edit changes the SGLang scheduler's overlap event loop WAR barrier and the EAGLE3 spec-worker/model-runner runtime plumbing;"
+    },
+    {
+     "stage": "serve",
+     "layer": "kernels",
+     "kind": "adjacent",
+     "relation": "Secondary cell: the fix records a CUDA event inside EAGLEDraftExtendCudaGraphRunner after the forward-metadata snapshot, and the verifier runs the real CUDA-graph path on H100, forces a can_run_graph…"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": true,
+   "family": "Speculative and advanced decoding"
   }
  ],
  "benchmarks": [
@@ -2599,6 +4390,26 @@
    "screened_tasks": 51,
    "lifecycle_tasks": 0,
    "census_basis": "task census of 23 September 2026 (census/README.md)"
+  },
+  {
+   "id": "sweserve",
+   "short": "SWE-Serve",
+   "name": "SWE-Serve",
+   "org": "NVIDIA",
+   "group": "primary",
+   "url": "https://github.com/NVIDIA/swe-serve",
+   "pinned": "https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks",
+   "corpus": "53 tasks from 83 merged SGLang pull requests; 41 declare one H100, 12 declare no GPU",
+   "format": "Harbor (task.toml + Dockerfile + hidden tests + provenance)",
+   "hardware": "One H100 80 GB or CPU; 8–16 CPUs, 64–128 GiB RAM per task; about 1 TB disk for the full run",
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "selected": 53,
+   "adoption": "Paper leaderboard of 11 models (arXiv 2609.26777); best 75% pass@1 (Claude Opus 5); end-to-end serving tests reject a third of otherwise-passing patches.",
+   "public_tasks": 53,
+   "screened_tasks": 53,
+   "lifecycle_tasks": 53,
+   "census_basis": "all 53 tasks read at commit e4286ec by one reader and one skeptic per task (25 September 2026); see notes/swe_serve_review.md"
   },
   {
    "id": "isobench",
@@ -5661,14 +7472,24 @@
     "unscreened": 0,
     "method": "The 51 public tasks screened from the README task table (name and category) and the task descriptions read on 21–22 Sept; 83 tasks are held out.",
     "tag": "spot-checked"
+   },
+   "sweserve": {
+    "public": 53,
+    "advertised": 53,
+    "screened": 53,
+    "L": 53,
+    "A": 0,
+    "O": 0,
+    "unscreened": 0,
+    "basis": "all 53 tasks read at commit e4286ec by one reader and one skeptic per task (25 September 2026); see notes/swe_serve_review.md"
    }
   },
   "totals": {
-   "screened": 537,
-   "L": 97,
+   "screened": 590,
+   "L": 150,
    "A": 161,
    "O": 279,
-   "public": 537
+   "public": 590
   }
  }
 }

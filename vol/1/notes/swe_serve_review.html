@@ -1,0 +1,411 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>swe serve review</title><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{font:15.5px/1.6 system-ui,-apple-system,'Segoe UI',sans-serif;max-width:880px;margin:36px auto;padding:0 16px;color:#111}a{color:#1c5cab}h1{font-size:24px;line-height:1.25}h2{font-size:19px;margin-top:28px}table{border-collapse:collapse;font-size:13.5px;margin:12px 0}th,td{border:1px solid #d9dee5;padding:5px 8px;text-align:left;vertical-align:top}code{font:13px ui-monospace,Menlo,monospace;background:#f1f3f6;padding:1px 4px;border-radius:3px}pre{background:#f1f3f6;padding:10px;overflow:auto}.nav{font:12px ui-monospace,Menlo,monospace;color:#666;margin-bottom:18px}</style></head><body><div class="nav"><a href="index.html">notes</a> · <a href="../index.html">overview</a> · <a href="swe_serve_review.md.txt">raw markdown</a></div><h1>SWE-Serve review — 25 September 2026</h1>
+<p><strong>What it is.</strong> <a href="https://github.com/NVIDIA/swe-serve">SWE-Serve</a> (NVIDIA; paper <a href="https://arxiv.org/abs/2609.26777">arXiv 2609.26777</a>, 22 September 2026) is a frozen benchmark of 53 production inference-engineering tasks derived from 83 merged SGLang pull requests (37 single-PR tasks, 16 that bundle two to six PRs). Every task is a Harbor package (instruction, task.toml, environment Dockerfile, hidden tests, reference solution, provenance). 41 tasks declare one H100 80 GB, 12 declare no GPU; the host needs 20 CPU cores, 128 GiB RAM and about 1 TB of disk for a full run. Leaderboard runs are closed-book (a proxy allows only the model endpoint, huggingface.co and the harness's own hosts) with a 350-step, 120-second-per-command limit. Controls: the oracle patch must score 1 on every task, the no-op 0. The paper reports 11 models over 31 configurations; the best, Claude Opus 5 at maximum effort, reaches 75% ± 4% pass@1, and on the 19 tasks with end-to-end serving tests the pass rate is 45.9% with those tests and 69.4% without them. The paper states that multi-GPU and multi-node tasks (parallelism, disaggregation, distributed coordination) were left out to keep evaluation to one H100.</p>
+<p><strong>How we read it.</strong> All 53 task directories were read at commit <code>e4286ec</code> by one agent per task (instruction, task.toml, provenance, test.sh, score.py, fail-to-pass and pass-to-pass lists, the post-merge tests), and a second agent per task tried to refute each claimed cell and depth against the verifier code; six tasks had a depth lowered or a cell dropped. Two tasks were also read by hand (<code>ss-sgl24932</code>, <code>ss-sgl-gemma4-moe-core-serving</code>) and matched. Nothing was built or executed.</p>
+<h2>Result on the audit's surface</h2>
+<ul>
+<li>Every task touches the LLM life cycle (53 of 53), and every mapping lands in the <strong>Serve &amp; deployment</strong> stage.</li>
+<li>Task-cells by layer: Training &amp; inference engines 46, Kernels &amp; compilers 23, Memory &amp; state management 17, Model &amp; algorithm 11, Parallelism &amp; communication 6, Data pipeline &amp; evaluation 1. Depth: 47 executed, 38 bounded, 19 related.</li>
+<li>21 verifiers launch the SGLang engine or server with a real checkpoint or run a real GPU kernel under the verifier (all on the H100 tasks); the other 20 H100 tasks and all 12 CPU tasks are graded by unit or regression tests that never run a model. 15 tasks carry a quantitative gate, several of them proxies (allocation counts, storage-pointer identity, CUDA-graph launch counts) rather than timing.</li>
+<li>Cells reached: 6 of 35. Executed: serve × engines, serve × kernels, serve × methods, serve × state. Bounded: serve × parallelism (prefill/decode disaggregation wire format, priority scheduling under disaggregation, context-parallel strategy abstraction, all CPU-tested). Related: serve × data pipeline (tokenization preprocessing).</li>
+<li>Effect on the union of the audited suites: no new cell and no new executed cell; serve × parallelism moves from related to bounded. Depth-weighted score 14% (4.75 of 35), the same band as Terminal-Bench 4.0 and RSI-Exam; RSI-in-benchmark share 100%.</li>
+<li>Families, normalized to the paper's six: speculative and advanced decoding 16, kernels/quantization/performance 14, caching and runtime state 9, serving APIs and runtime correctness 7, distributed execution and scheduling 4, model and backend enablement 3 (the paper's own counts are 14, 8, 7, 8, 4, 12; our keyword normalization pulls model-enablement tasks with kernel or decoding work into those families).</li>
+</ul>
+<h2>Verifier-versus-instruction gaps the readers flagged</h2>
+<ul>
+<li><code>ss-sgl-cluster-adaptive-spec-origin</code>: the instruction demands runtime wiring of adaptive speculative steps; the verifier runs 13 CPU unit tests of the policy object, so a patch containing only that module scores full marks.</li>
+<li><code>ss-sgl-cluster-dsv32-nvfp4-perf</code>: named "perf", but the only performance evidence is a storage-pointer identity assertion.</li>
+<li><code>ss-sgl24826</code> (Kimi K2.5 EAGLE3 on MLA) and <code>ss-sgl21722</code> (structural-tag tool calling): scoped far narrower than the upstream PRs; the verifier observes thin surfaces.</li>
+<li><code>ss-sgl24859</code>: schema-only checks (dataclass field names, enum members, empty-tensor shapes).</li>
+<li>The "cluster" token in fifteen task ids means a PR cluster, not cluster orchestration; no task touches the cluster layer.</li>
+</ul>
+<h2>Fit for the post</h2>
+<p>SWE-Serve is the densest serving benchmark in the set: it adds 53 task-level entries to one stage and 21 verifiers that run a real engine, which strengthens the finding that specialized suites test serving components deeply. It does not change the headline: no data, post-training or agent post-training cell, nothing multi-GPU or multi-node by the authors' own design, and its parallelism tasks are CPU-verified wire formats and abstractions. If added as an eleventh row it would sit at 14% coverage with 100% of its tasks in the life cycle, and the bottom-row count for Serve &amp; deployment would rise from 37 to 90.</p>
+<p>Draft entries in the audit's task schema are in <code>data/tasks_v4_swe_serve.json</code> (not wired into the build). A benchmark row for <code>benchmarks.json</code>, if adopted:</p>
+<pre><code class="language-json">{&quot;id&quot;: &quot;sweserve&quot;, &quot;short&quot;: &quot;SWE-Serve&quot;, &quot;name&quot;: &quot;SWE-Serve&quot;, &quot;org&quot;: &quot;NVIDIA&quot;, &quot;group&quot;: &quot;primary&quot;, &quot;url&quot;: &quot;https://github.com/NVIDIA/swe-serve&quot;, &quot;pinned&quot;: &quot;https://github.com/NVIDIA/swe-serve/tree/e4286ecfeb125c4321325abd3446dc7813c40cd8/tasks&quot;, &quot;corpus&quot;: &quot;53 tasks from 83 merged SGLang pull requests; 41 declare one H100, 12 declare no GPU&quot;, &quot;format&quot;: &quot;Harbor (task.toml + Dockerfile + hidden tests + provenance)&quot;, &quot;hardware&quot;: &quot;One H100 80 GB or CPU; 8–16 CPUs, 64–128 GiB RAM per task; about 1 TB disk for the full run&quot;, &quot;audit&quot;: &quot;task-level&quot;, &quot;tag&quot;: &quot;agent-reported&quot;, &quot;selected&quot;: 53, &quot;adoption&quot;: &quot;Paper leaderboard of 11 models; best 75% pass@1 (Claude Opus 5); E2E serving tests reject a third of otherwise-passing patches.&quot;, &quot;public_tasks&quot;: 53, &quot;screened_tasks&quot;: 53, &quot;lifecycle_tasks&quot;: 53, &quot;census_basis&quot;: &quot;all 53 tasks read at commit e4286ec (25 Sep 2026)&quot;}
+</code></pre>
+<h2>Per-task mapping</h2>
+<p>Cells are stage Serve &amp; deployment × layer (depth); <code>*</code> marks a depth corrected by the skeptic, <code>+</code> a cell the skeptic added.</p>
+<table>
+<thead>
+<tr>
+<th>Task</th>
+<th>What the agent must do</th>
+<th>Hardware</th>
+<th>Runs a real engine or model</th>
+<th>Cells</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ss-sgl-cluster-dllm-serving-radix-graph</code></td>
+<td>Complete LLaDA diffusion-LM serving with CUDA graphs, radix reuse</td>
+<td>H100</td>
+<td>yes</td>
+<td>Training &amp; inference engines (executed); Model &amp; algorithm (executed); Kernels &amp; compilers (executed); Memory &amp; state management (executed)</td>
+</tr>
+<tr>
+<td><code>ss-sgl-cluster-dsv32-index-cache-primitives</code></td>
+<td>Add batched NSA index-cache gather and fused FP8 store kernels</td>
+<td>H100</td>
+<td>no</td>
+<td>Kernels &amp; compilers (executed); Memory &amp; state management (related<em>); Training &amp; inference engines (bounded</em>)</td>
+</tr>
+<tr>
+<td><code>ss-sgl-cluster-hicache-evict-tombstone-4pr</code></td>
+<td>Fix four HiCache radix-cache match, lock and eviction bugs</td>
+<td>H100</td>
+<td>no</td>
+<td>Memory &amp; state management (bounded); Training &amp; inference engines (related)</td>
+</tr>
+<tr>
+<td><code>ss-sgl-cluster-hicache-framework-swa</code></td>
+<td>Add host-tier HiCache to SGLang unified radix cache for SWA</td>
+<td>H100</td>
+<td>no</td>
+<td>Memory &amp; state management (bounded); Training &amp; inference engines (related)</td>
+</tr>
+<tr>
+<td><code>ss-sgl-cluster-hisparse-decode-lifecycle</code></td>
+<td>Page-align HiSparse host KV pool, select NSA backend by dtype</td>
+<td>H100</td>
+<td>no</td>
+<td>Memory &amp; state management (executed); Training &amp; inference engines (bounded); Kernels &amp; compilers (related)</td>
+</tr>
+<tr>
+<td><code>ss-sgl-cluster-radix-streaming-session</code></td>
+<td>Embed native streaming-session KV retention in UnifiedRadixCache</td>
+<td>H100</td>
+<td>no</td>
+<td>Memory &amp; state management (bounded); Training &amp; inference engines (bounded)</td>
+</tr>
+<tr>
+<td><code>ss-sgl20457</code></td>
+<td>Add per-pool batch_exists_v2 to HiCache file storage backend</td>
+<td>H100</td>
+<td>no</td>
+<td>Memory &amp; state management (bounded)</td>
+</tr>
+<tr>
+<td><code>ss-sgl25277</code></td>
+<td>Fix UnifiedRadixCache device match semantics under HiCache</td>
+<td>H100</td>
+<td>no</td>
+<td>Memory &amp; state management (bounded)</td>
+</tr>
+<tr>
+<td><code>ss-sgl25311-perf-mla-tma-bulk-store-set-mla-kv-buffer-up</code></td>
+<td>Add TMA bulk-store JIT kernel for MLA KV-buffer scatter</td>
+<td>H100</td>
+<td>no</td>
+<td>Kernels &amp; compilers (executed); Memory &amp; state management (related*)</td>
+</tr>
+<tr>
+<td><code>ss-sgl-epd-registration-cleanup</code></td>
+<td>Harden EPD encoder registration and shutdown cleanup</td>
+<td>CPU</td>
+<td>no</td>
+<td>Parallelism &amp; communication (bounded); Training &amp; inference engines (bounded)</td>
+</tr>
+<tr>
+<td><code>ss-sgl24932</code></td>
+<td>Add pack/unpack wire serialization helpers to PD disaggregation utils</td>
+<td>CPU</td>
+<td>no</td>
+<td>Parallelism &amp; communication (bounded); Training &amp; inference engines (bounded)</td>
+</tr>
+<tr>
+<td><code>ss-sgl25062-priority-scheduling-pd</code></td>
+<td>Apply priority ordering to SGLang prefill/decode disaggregation queues</td>
+<td>H100</td>
+<td>no</td>
+<td>Training &amp; inference engines (bounded); Parallelism &amp; communication (related*)</td>
+</tr>
+<tr>
+<td><code>ss-sgl27313-cp-strategy-abstractions</code></td>
+<td>Add context-parallel strategy abstraction package and ServerArgs hook</td>
+<td>CPU</td>
+<td>no</td>
+<td>Parallelism &amp; communication (bounded); Training &amp; inference engines (bounded)</td>
+</tr>
+<tr>
+<td><code>ss-sgl-gemma4-moe-core-serving</code></td>
+<td>Add Gemma 4 MoE multimodal model serving support to SGLang</td>
+<td>H100</td>
+<td>yes</td>
+<td>Training &amp; inference engines (executed)</td>
+</tr>
+<tr>
+<td><code>ss-sgl-gemma4-pcg-execution</code></td>
+<td>Enable piecewise CUDA-graph execution for Gemma 4 multimodal serving</td>
+<td>H100</td>
+<td>yes</td>
+<td>Training &amp; inference engines (executed); Kernels &amp; compilers (executed); Parallelism &amp; communication (related); Data pipeline &amp; evaluation (related)</td>
+</tr>
+<tr>
+<td><code>ss-sgl-pcg-mixed-flashinfer-replay</code></td>
+<td>Fix piecewise CUDA graph replay for mixed-chunk FlashInfer batches</td>
+<td>H100</td>
+<td>yes</td>
+<td>Kernels &amp; compilers (executed); Training &amp; inference engines (executed)</td>
+</tr>
+<tr>
+<td><code>ss-sgl-transformers5-compute-runtime</code></td>
+<td>Add HF-order RMSNorm CUDA kernel for Transformers backend</td>
+<td>H100</td>
+<td>yes</td>
+<td>Kernels &amp; compilers (executed); Training &amp; inference engines (executed)</td>
+</tr>
+<tr>
+<td><code>ss-sgl-bcg-cuda-engine-storage</code></td>
+<td>Implement breakable CUDA-graph prefill engine in SGLang ModelRunner</td>
+<td>H100</td>
+<td>no</td>
+<td>Kernels &amp; compilers (executed); Training &amp; inference engines (bounded)</td>
+</tr>
+<tr>
+<td><code>ss-sgl-cluster-dsv32-nvfp4-perf</code></td>
+<td>Alias NVFP4 scales, gate hidden-state D2H, defer shared experts</td>
+<td>CPU</td>
+<td>no</td>
+<td>Training &amp; inference engines (bounded); Memory &amp; state management (bounded); Kernels &amp; compilers (related)</td>
+</tr>
+<tr>
+<td><code>ss-sgl-cluster-gemma4-fused-ops</code></td>
+<td>Add fused Triton dual-RMSNorm and MoE routing kernels for Gemma4</td>
+<td>H100</td>
+<td>no</td>
+<td>Kernels &amp; compilers (executed)</td>
+</tr>
+<tr>
+<td><code>ss-sgl-cluster-gpu-fused-kernels</code></td>
+<td>Add fused Triton masked-SiLU and GDN QKV-split kernels</td>
+<td>H100</td>
+<td>no</td>
+<td>Kernels &amp; compilers (executed)</td>
+</tr>
+<tr>
+<td><code>ss-sgl-moe-lora-kernel-correctness</code></td>
+<td>Implement MoE-LoRA route alignment CUDA kernel and fused Triton op</td>
+<td>H100</td>
+<td>no</td>
+<td>Kernels &amp; compilers (executed); Training &amp; inference engines (bounded)</td>
+</tr>
+<tr>
+<td><code>ss-sgl23856-use-torch-torch-mm-for-deepseek-v3-2-indexer</code></td>
+<td>Speed up DeepSeek-V3.2 NSA indexer weights_proj GEMM on CUDA</td>
+<td>H100</td>
+<td>no</td>
+<td>Kernels &amp; compilers (executed); Training &amp; inference engines (bounded)</td>
+</tr>
+<tr>
+<td><code>ss-sgl25052</code></td>
+<td>Add opt-in FP4-activation w4a4 dispatch to DeepGEMM Mega-MoE</td>
+<td>H100</td>
+<td>no</td>
+<td>Training &amp; inference engines (bounded); Kernels &amp; compilers (related); Parallelism &amp; communication (related)</td>
+</tr>
+<tr>
+<td><code>ss-sgl25265</code></td>
+<td>Route slow tokenizers through native encode in TokenizerManager</td>
+<td>H100</td>
+<td>no</td>
+<td>Training &amp; inference engines (bounded)</td>
+</tr>
+<tr>
+<td><code>ss-sgl27379-nvfp4-config-from-safetensors</code></td>
+<td>Infer NVFP4 quant config from safetensors headers for Ideogram4</td>
+<td>CPU</td>
+<td>no</td>
+<td>Training &amp; inference engines (bounded)</td>
+</tr>
+<tr>
+<td><code>ss-sgl28371-chunked-sgmv-cuda-graph-replay</code></td>
+<td>Fix chunked-SGMV LoRA kernels for CUDA-graph replay with more segments</td>
+<td>H100</td>
+<td>no</td>
+<td>Kernels &amp; compilers (executed); Training &amp; inference engines (bounded)</td>
+</tr>
+<tr>
+<td><code>ss-sgl-qwen35-dense-moe-core-serving</code></td>
+<td>Add Qwen3.5 dense and MoE multimodal serving to SGLang</td>
+<td>H100</td>
+<td>yes</td>
+<td>Training &amp; inference engines (executed)</td>
+</tr>
+<tr>
+<td><code>ss-sgl-transformers5-moe-core-serving</code></td>
+<td>Wire Transformers-backend MoE models to SGLang FusedMoE</td>
+<td>H100</td>
+<td>yes</td>
+<td>Training &amp; inference engines (executed); Kernels &amp; compilers (related)</td>
+</tr>
+<tr>
+<td><code>ss-sgl19044-sdar-day0-production</code></td>
+<td>Add SDAR dense and MoE diffusion-LM model support to SGLang</td>
+<td>H100</td>
+<td>yes</td>
+<td>Training &amp; inference engines (executed)</td>
+</tr>
+<tr>
+<td><code>ss-sgl-cluster-glmv-sampling-restore</code></td>
+<td>Restore repetition_penalty in SGLang's sampling penalizer path</td>
+<td>H100</td>
+<td>yes</td>
+<td>Model &amp; algorithm (executed); Training &amp; inference engines (executed)</td>
+</tr>
+<tr>
+<td><code>ss-sgl-cluster-score-seqcls</code></td>
+<td>Extend SGLang Scoring API to SequenceClassification models</td>
+<td>H100</td>
+<td>yes</td>
+<td>Training &amp; inference engines (executed); Kernels &amp; compilers (executed*)</td>
+</tr>
+<tr>
+<td><code>ss-sgl17780-embedding-lora</code></td>
+<td>Thread per-request LoRA adapter selection through SGLang embedding path</td>
+<td>H100</td>
+<td>yes</td>
+<td>Training &amp; inference engines (executed); Kernels &amp; compilers (related)</td>
+</tr>
+<tr>
+<td><code>ss-sgl20960-sparse-embed-overrides-v2</code></td>
+<td>Add hybrid token+embedding override inputs to SGLang Scoring API</td>
+<td>H100</td>
+<td>yes</td>
+<td>Training &amp; inference engines (executed)</td>
+</tr>
+<tr>
+<td><code>ss-sgl22544-score-multi-item-delimiters</code></td>
+<td>Add enable_mis flag with precomputed multi-item scoring delimiter indices</td>
+<td>H100</td>
+<td>yes</td>
+<td>Training &amp; inference engines (executed); Kernels &amp; compilers (related)</td>
+</tr>
+<tr>
+<td><code>ss-sgl18630</code></td>
+<td>Add Anthropic Messages API compatibility layer to SGLang</td>
+<td>CPU</td>
+<td>no</td>
+<td>Training &amp; inference engines (bounded)</td>
+</tr>
+<tr>
+<td><code>ss-sgl21722-structural-tag-tool-calling</code></td>
+<td>Add DeepSeek-V4 DSML tool-call detector to SGLang</td>
+<td>H100</td>
+<td>no</td>
+<td>Training &amp; inference engines (bounded)</td>
+</tr>
+<tr>
+<td><code>ss-sgl-cluster-ngram-sam-corpus</code></td>
+<td>Add suffix-automaton external corpus to NGRAM speculative decoding</td>
+<td>H100</td>
+<td>yes</td>
+<td>Model &amp; algorithm (executed); Training &amp; inference engines (executed)</td>
+</tr>
+<tr>
+<td><code>ss-sgl-cluster-ngram-trie-refactor</code></td>
+<td>Refactor SGLang n-gram speculative-decoding trie with stateful matching</td>
+<td>H100</td>
+<td>yes</td>
+<td>Model &amp; algorithm (executed); Training &amp; inference engines (executed)</td>
+</tr>
+<tr>
+<td><code>ss-sgl-dflash-v1-core-production</code></td>
+<td>Implement DFLASH speculative decoding end-to-end in SGLang</td>
+<td>H100</td>
+<td>yes</td>
+<td>Model &amp; algorithm (executed); Training &amp; inference engines (executed); Kernels &amp; compilers (executed); Memory &amp; state management (executed)</td>
+</tr>
+<tr>
+<td><code>ss-sgl-eagle-v2-tree-runtime</code></td>
+<td>Unify EAGLE speculative decoding onto V2 worker across overlap modes</td>
+<td>H100</td>
+<td>yes</td>
+<td>Training &amp; inference engines (executed); Memory &amp; state management (executed); Kernels &amp; compilers (executed); Model &amp; algorithm (related*)</td>
+</tr>
+<tr>
+<td><code>ss-sgl-gemma4-speculative-execution</code></td>
+<td>Enable DFLASH speculative decoding for Gemma 4 in SGLang</td>
+<td>H100</td>
+<td>yes</td>
+<td>Training &amp; inference engines (executed); Model &amp; algorithm (executed); Kernels &amp; compilers (related)</td>
+</tr>
+<tr>
+<td><code>ss-sgl-runtime-metadata-lifecycle</code></td>
+<td>Relax overlap-scheduler WAR barrier to EAGLE3 draft-extend read boundary</td>
+<td>H100</td>
+<td>yes</td>
+<td>Training &amp; inference engines (executed); Kernels &amp; compilers (related*)</td>
+</tr>
+<tr>
+<td><code>ss-sgl18760</code></td>
+<td>Move Eagle-v1 forward-timeout check before verify batch filtering</td>
+<td>H100</td>
+<td>yes</td>
+<td>Training &amp; inference engines (executed); Model &amp; algorithm (related)</td>
+</tr>
+<tr>
+<td><code>ss-sgl28754-spec-v2-session-commit</code></td>
+<td>Fix spec-v2 KV commit boundary in EAGLE3 streaming sessions</td>
+<td>H100</td>
+<td>yes</td>
+<td>Training &amp; inference engines (executed); Memory &amp; state management (executed); Model &amp; algorithm (related)</td>
+</tr>
+<tr>
+<td><code>ss-sgl-adaptive-allocation-safety</code></td>
+<td>Stabilize adaptive EAGLE max draft-token capacity across SGLang allocators</td>
+<td>CPU</td>
+<td>no</td>
+<td>Training &amp; inference engines (bounded); Memory &amp; state management (bounded); Model &amp; algorithm (bounded)</td>
+</tr>
+<tr>
+<td><code>ss-sgl-cluster-adaptive-spec-origin</code></td>
+<td>Add EMA-driven adaptive speculative step control to SGLang EAGLE</td>
+<td>CPU</td>
+<td>no</td>
+<td>Model &amp; algorithm (bounded); Training &amp; inference engines (bounded)</td>
+</tr>
+<tr>
+<td><code>ss-sgl-cluster-spec-v2-maturation</code></td>
+<td>Add spec-decoding plugin registry, fix ngram accept length</td>
+<td>H100</td>
+<td>no</td>
+<td>Training &amp; inference engines (bounded)</td>
+</tr>
+<tr>
+<td><code>ss-sgl23106</code></td>
+<td>Make EAGLE bigram radix-cache keys a lazy O(1) view</td>
+<td>CPU</td>
+<td>no</td>
+<td>Memory &amp; state management (bounded)</td>
+</tr>
+<tr>
+<td><code>ss-sgl23962</code></td>
+<td>Split spec-decode accept_length into draft and token counters</td>
+<td>CPU</td>
+<td>no</td>
+<td>Training &amp; inference engines (bounded); Memory &amp; state management (bounded)</td>
+</tr>
+<tr>
+<td><code>ss-sgl24826-spec-decoding-support-kimi-k2-5-eagle3-mla</code></td>
+<td>Add Kimi-K2.5 EAGLE3-MLA draft model for speculative decoding</td>
+<td>CPU</td>
+<td>no</td>
+<td>Training &amp; inference engines (bounded)</td>
+</tr>
+<tr>
+<td><code>ss-sgl24859</code></td>
+<td>Split EAGLE draft-extend state into EagleDraftExtendInput dataclass</td>
+<td>CPU</td>
+<td>no</td>
+<td>Training &amp; inference engines (bounded)</td>
+</tr>
+<tr>
+<td><code>ss-sgl26972-spec-v2-paged-tree-drafting</code></td>
+<td>Size per-decode KV allocation for paged EAGLE tree drafting</td>
+<td>H100</td>
+<td>no</td>
+<td>Memory &amp; state management (bounded)</td>
+</tr>
+</tbody>
+</table></body></html>

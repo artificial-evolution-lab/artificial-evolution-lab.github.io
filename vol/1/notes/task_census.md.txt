@@ -16,7 +16,8 @@ Snapshot 2026-09-23. A task counts as touching the LLM life cycle (L) when the w
 | InferenceBench | 4 of 4 | 4 | 0 | 0 | 0 |
 | WeirdML | 4 of 4 (11 advertised) | 0 | 3 | 1 | 7 |
 | EdgeBench | 51 of 51 (134 advertised) | 0 | 4 | 47 | 83 |
-| **Total** | 537 | 97 | 161 | 279 | |
+| SWE-Serve | 53 of 53 | 53 | 0 | 0 | 0 |
+| **Total** | 590 | 150 | 161 | 279 | |
 
 ## TB 4.0
 
