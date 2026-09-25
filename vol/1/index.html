@@ -325,7 +325,7 @@ svg .hdrbtn{cursor:pointer} svg .hdrbtn:hover text.lg{fill:var(--accent)} svg .h
   <h2>Where public benchmark environments land</h2>
   <p>Of the <span id="cov-screened">537</span> public tasks in ten benchmark suites, <span id="cov-L">97</span> touch the LLM life cycle at all; they appear here as <span id="cov-n">74</span> entries, since task families count once. Each row is a benchmark: the marks show which cells its tasks reach, the bar on the left sums them into one coverage score, and the row along the bottom counts tasks per stage.</p>
   <figure id="fig-joint" aria-label="Per-benchmark coverage of the stage by layer surface">
-    <div class="fig-title"><strong id="joint-title"></strong><span>hover a name, a mark or an icon</span></div>
+    <div class="fig-title"><strong id="joint-title"></strong></div>
     <div class="legend"><span class="k"><i class="sq ev3"></i> real LLM workload executed · 1</span><span class="k"><i class="sq ev2"></i> bounded unit or artifact tests · ½</span><span class="k"><i class="sq ev1"></i> related or simulated · ¼</span><span class="k"><i class="sq none"></i> untouched</span><span class="k mut">bar = weighted score · marks = which cells</span></div>
     <div class="scroll"><div id="joint-svg"></div></div>
     <figcaption id="joint-cap"></figcaption>
@@ -341,12 +341,11 @@ svg .hdrbtn{cursor:pointer} svg .hdrbtn:hover text.lg{fill:var(--accent)} svg .h
 <section class="block" id="lifecycle">
   <span class="section-no">03</span>
   <h2>Open-source pipelines for full-cycle LLM training</h2>
-  <p>A filled mark means public code or a released recipe exists for that stage; a ring means a report only. Hover a mark for the source's own vocabulary; select a row to read its stage names in order, and select a stage name to show what each stage covers. Continued pretraining and long-context extension share the pretraining objective, so they sit inside that column; older reports are hidden behind the toggle. The <a href="loop.html">RL loop</a>, the <a href="posttrain.html">post-training recipes</a> and the <a href="agentic.html">agent post-training infrastructure</a> are described on companion pages.</p>
+  <p>A filled mark means public code or a released recipe exists for that stage; a ring means a report only. Hover a mark for the source's own vocabulary; select a row to read its stage names in order, and select a stage name to show what each stage covers. Continued pretraining and long-context extension share the pretraining objective, so they sit inside that column; older reports are hidden behind the toggle.</p>
   <figure id="fig-life" aria-label="Documented life cycles of models and recipes across five stages">
     <div class="fig-title"><strong>Documented life cycles</strong><span id="life-meta"></span></div>
     <div class="scroll"><div id="life-svg"></div></div>
     <div class="vocab" id="vocab" hidden></div>
-    <figcaption>Stage names differ (OLMo says <em>midtraining</em>, Llama 3 says <em>annealing</em>, MiMo-V2.6 says <em>agent-centric mid-training</em>), but the shape is shared: a corpus, one long run with continuation phases, rounds of SFT, preference, RL and increasingly on-policy distillation, and a serving system that also produces RL rollouts. Only Llama 3, LLM360 and MiMo-V2.6 publish failure statistics.</figcaption>
     <details class="tableview"><summary>Table view</summary><div id="life-table"></div></details>
   </figure>
   <h3 style="margin-top:22px">Where the public code lives</h3>
