@@ -36,8 +36,8 @@ A cell is one life-cycle stage (data; pretrain & midtrain; post-train; agent pos
 | Data × kernels | GPU dedup and tokenization kernels (NeMo Curator style pipelines) |
 | Data × cluster | Corpus builds on Slurm or Ray clusters (Dolma 3, Datatrove) |
 | Pretrain × cluster | Node health checks and cordoning; 419 unexpected interruptions in Llama 3; OLMo 2 host failures |
-| Post-train × data pipeline & evaluation | Sample mixing and mask semantics (MiMo Sample Mixer; tool-token masking in slime) |
-| Post-train × cluster | Trainer and sampler job placement (colocated verl; disaggregated GLM-5) |
+| Post-training × data pipeline & evaluation | Sample mixing and mask semantics (MiMo Sample Mixer; tool-token masking in slime) |
+| Post-training × cluster | Trainer and sampler job placement (colocated verl; disaggregated GLM-5) |
 | Agent post-training × distributed | Weight publication to rollout replicas (checkpoint-engine; slime delta sync) |
 | Agent post-training × kernels | Trainer/sampler numeric parity (MiMo MXFP4 QDQ; R3 routing replay) |
 | Agent post-training × cluster | Sandbox fleets (MiMo Harness Pool; Mercor MCP fleets; SkyRL on Modal) |

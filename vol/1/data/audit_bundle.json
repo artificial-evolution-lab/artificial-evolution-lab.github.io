@@ -2716,7 +2716,7 @@
    },
    {
     "id": "posttrain",
-    "name": "Post-train",
+    "name": "Post-training",
     "sub": "SFT · preference · reasoning RL · on-policy distillation",
     "short": "SFT · pref · RL · OPD"
    },
