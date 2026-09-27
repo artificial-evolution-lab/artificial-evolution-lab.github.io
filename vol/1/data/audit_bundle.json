@@ -5092,7 +5092,7 @@
     "kind": "report+code",
     "url": "https://arxiv.org/abs/2604.12374",
     "tag": "agent-reported",
-    "summary": "120B-total / 12B-active hybrid model pretrained on 25T tokens in two phases (20T diversity, 5T high quality) with NVFP4, a long-context continued-pretraining phase at 1M tokens, then SFT, a three-stage RL phase (RLVR, SWE-RL, RLHF) and MTP healing. The public recipe spans data preparation, Megatron-Bridge, NeMo-RL, quantization and NeMo-Evaluator; the released data is a subset.",
+    "summary": "120B-total / 12B-active hybrid model pretrained on 25T tokens in two phases (20T diversity, 5T high quality) with NVFP4, a long-context continued-pretraining phase at 1M tokens, then SFT, a three-stage RL phase (RLVR, SWE-RL, RLHF) and MTP healing. The public recipe spans data preparation, Megatron-Bridge, NeMo RL, quantization and NeMo-Evaluator; the released data is a subset.",
     "stages": {
      "data": {
       "ev": "code",
@@ -5108,7 +5108,7 @@
      },
      "posttrain": {
       "ev": "code",
-      "label": "SFT → RLVR · RLHF → MTP healing (NeMo-RL)",
+      "label": "SFT → RLVR · RLHF → MTP healing (NeMo RL)",
       "note": "RLVR rounds over 37 environment types with up to 4,000 environment instances per batch, asynchronous on thousands of GPUs; published configs: 109 nodes RLVR, 72 nodes RLHF at 8 B200 per node. Teacher checkpoints for the Ultra recipe are not open, so the full RL pipeline cannot be replicated exactly.",
       "url": "https://github.com/NVIDIA-NeMo/Nemotron/blob/8749344f8ccefd50181c56b013ddc5c8a6154a8c/docs/nemotron/super3/rl/index.md"
      },
@@ -5457,12 +5457,12 @@
      "pretrain": {
       "ev": "code",
       "label": "TP/PP/EP/CP training core",
-      "note": "Trainer used by slime, NeMo-RL/Megatron-Bridge and many released models."
+      "note": "Trainer used by slime, NeMo RL/Megatron-Bridge and many released models."
      },
      "posttrain": {
       "ev": "code",
       "label": "trainer backend for RL",
-      "note": "Megatron is the training side of slime and of NeMo-RL's Nemotron recipe."
+      "note": "Megatron is the training side of slime and of NeMo RL's Nemotron recipe."
      }
     }
    },
@@ -5547,7 +5547,7 @@
    },
    {
     "id": "nemorl",
-    "name": "NeMo-RL",
+    "name": "NeMo RL",
     "org": "NVIDIA",
     "kind": "code",
     "tag": "note-2026-09-21",
@@ -5573,12 +5573,12 @@
     "kind": "code",
     "tag": "prior-note",
     "url": "https://github.com/vllm-project/vllm",
-    "summary": "Inference and serving runtime: continuous batching, paged KV cache, prefix caching, tensor/pipeline/expert parallelism, prefill/decode disaggregation; also the rollout engine inside SkyRL, NeMo-RL, OpenRLHF and verl.",
+    "summary": "Inference and serving runtime: continuous batching, paged KV cache, prefix caching, tensor/pipeline/expert parallelism, prefill/decode disaggregation; also the rollout engine inside SkyRL, NeMo RL, OpenRLHF and verl.",
     "stages": {
      "posttrain": {
       "ev": "code",
       "label": "rollout engine for RL",
-      "note": "Serves training rollouts inside SkyRL, verl, NeMo-RL and the Mercor recipe."
+      "note": "Serves training rollouts inside SkyRL, verl, NeMo RL and the Mercor recipe."
      },
      "serve": {
       "ev": "code",
@@ -5728,7 +5728,7 @@
      "name": "Megatron-Core",
      "org": "NVIDIA",
      "url": "https://github.com/NVIDIA/Megatron-LM/tree/main/megatron/core",
-     "what": "TP/PP/DP/EP/CP training core; trainer inside slime, NeMo-RL and Apertus.",
+     "what": "TP/PP/DP/EP/CP training core; trainer inside slime, NeMo RL and Apertus.",
      "tag": "prior-note"
     },
     {
@@ -5774,7 +5774,7 @@
      "tag": "agent-reported"
     },
     {
-     "name": "NeMo-RL",
+     "name": "NeMo RL",
      "org": "NVIDIA",
      "url": "https://github.com/NVIDIA-NeMo/RL",
      "what": "DTensor or Megatron-Core training, vLLM or Megatron-native generation; async GRPO with a replay buffer.",
@@ -5830,10 +5830,10 @@
      "tag": "agent-reported"
     },
     {
-     "name": "NeMo-RL on-policy distillation",
+     "name": "NeMo RL on-policy distillation",
      "org": "NVIDIA",
      "url": "https://github.com/NVIDIA-NeMo/RL",
-     "what": "The README lists on-policy distillation (the student generates on-policy sequences and aligns logits to a larger teacher via KL) and an X-token off-policy distillation recipe; Nemotron 3 Ultra's stage 2 is MOPD on NeMo-RL.",
+     "what": "The README lists on-policy distillation (the student generates on-policy sequences and aligns logits to a larger teacher via KL) and an X-token off-policy distillation recipe; Nemotron 3 Ultra's stage 2 is MOPD on NeMo RL.",
      "tag": "spot-checked"
     }
    ],
@@ -5870,7 +5870,7 @@
      "name": "NeMo-Gym",
      "org": "NVIDIA",
      "url": "https://github.com/NVIDIA-NeMo/RL",
-     "what": "Environment service for NeMo-RL; up to 4,000 environment instances per batch in the Nemotron 3 Super RLVR runs.",
+     "what": "Environment service for NeMo RL; up to 4,000 environment instances per batch in the Nemotron 3 Super RLVR runs.",
      "tag": "agent-reported"
     },
     {
@@ -5940,7 +5940,7 @@
   }
  },
  "rl_loop": {
-  "note": "Conceptual view of a production RL post-training loop, synthesized from slime, verl, SkyRL, AReaL and NeMo-RL documentation. It is not one repository's class diagram. 'implementations' cite where each mechanism is documented; 'tasks' list audited benchmark tasks whose verifier touches the component (task ids from tasks.json) with the evidence depth; 'rib' names the multi-device mechanism families associated with the component.",
+  "note": "Conceptual view of a production RL post-training loop, synthesized from slime, verl, SkyRL, AReaL and NeMo RL documentation. It is not one repository's class diagram. 'implementations' cite where each mechanism is documented; 'tasks' list audited benchmark tasks whose verifier touches the component (task ids from tasks.json) with the evidence depth; 'rib' names the multi-device mechanism families associated with the component.",
   "components": [
    {
     "id": "prompts",
@@ -6105,7 +6105,7 @@
       "tag": "note-2026-09-21"
      },
      {
-      "fw": "NeMo-RL",
+      "fw": "NeMo RL",
       "what": "async trajectory collector and replay buffer keyed by generation and target weight versions; max_trajectory_age_steps = 1; importance-sampling correction required for convergence",
       "url": "https://docs.nvidia.com/nemo/rl/latest/guides/async-grpo.html",
       "tag": "agent-reported"
@@ -6159,7 +6159,7 @@
       "tag": "note-2026-09-21"
      },
      {
-      "fw": "NeMo-RL",
+      "fw": "NeMo RL",
       "what": "asynchronous GRPO with Ray, Megatron training and vLLM generation on separate GPUs",
       "url": "https://github.com/NVIDIA-NeMo/Nemotron/blob/8749344f8ccefd50181c56b013ddc5c8a6154a8c/docs/nemotron/super3/rl/index.md",
       "tag": "note-2026-09-21"
@@ -6779,7 +6779,7 @@
      "tag": "spot-checked"
     },
     {
-     "name": "NeMo-RL DPO + RM",
+     "name": "NeMo RL DPO + RM",
      "org": "NVIDIA",
      "url": "https://github.com/NVIDIA-NeMo/RL",
      "what": "DPO and reward-model training recipes; RLHF track in Nemotron 3 Super (72 nodes).",
@@ -6816,7 +6816,7 @@
      "tag": "agent-reported"
     },
     {
-     "name": "NeMo-RL",
+     "name": "NeMo RL",
      "org": "NVIDIA",
      "url": "https://github.com/NVIDIA-NeMo/RL",
      "what": "GRPO, DAPO, GDPO over DTensor or Megatron-Core with vLLM generation; async GRPO with a replay buffer.",
@@ -6867,7 +6867,7 @@
    ],
    "opd": [
     {
-     "name": "NeMo-RL on-policy distillation",
+     "name": "NeMo RL on-policy distillation",
      "org": "NVIDIA",
      "url": "https://github.com/NVIDIA-NeMo/RL",
      "what": "MOPD-style on-policy distillation and X-token off-policy distillation recipes; Nemotron 3 Ultra stage 2.",
@@ -7184,7 +7184,7 @@
     "tag": "agent-reported"
    },
    {
-    "system": "NeMo-RL",
+    "system": "NeMo RL",
     "knob": "max_trajectory_age_steps",
     "value": "1 (default); buffer = prompts × age × 2",
     "handling": "importance-sampling correction required for convergence; optional in-flight updates",
