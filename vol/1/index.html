@@ -265,6 +265,12 @@ main{max-width:1020px}
 .mini svg{width:100%; height:auto; display:block; font-family:var(--sans)}
 svg .hic{fill:none; stroke:var(--muted); stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; cursor:default}
 svg .hic:hover{stroke:var(--ink)}
+/* coverage figure: the life-cycle figure's brighter blue (its filled dot is --ev2) as "executed", with lighter tints below it */
+#fig-joint{--ev3:#4f93e3; --ev2:#93bdef; --ev1:#c3dbf7; --ev0:#e8eef4}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) #fig-joint{--ev3:#7fb2e0; --ev2:#4d7499; --ev1:#324a61; --ev0:#222b35} }
+:root[data-theme="dark"] #fig-joint{--ev3:#7fb2e0; --ev2:#4d7499; --ev1:#324a61; --ev0:#222b35}
+#joint-svg .hic{opacity:.5} #joint-svg .hic:hover{opacity:1}
+#joint-svg .cellmark.none{opacity:.06} #fig-joint .legend .sq{border:none}
 svg .cellmark{cursor:default; stroke:var(--surface); stroke-width:.6} svg .cellmark.none{fill:var(--ink); opacity:.09; stroke:none} svg .cellmark:hover, svg .cellmark:focus{stroke:var(--ink); stroke-width:1.5; outline:none; opacity:1}
 svg .namebtn{cursor:default} svg .namebtn:hover text{fill:var(--accent)}
 svg .hdrbtn{cursor:pointer} svg .hdrbtn:hover text.lg{fill:var(--accent)} svg .hdrbtn:focus{outline:none}
@@ -343,7 +349,7 @@ svg .hdrbtn{cursor:pointer} svg .hdrbtn:hover text.lg{fill:var(--accent)} svg .h
   <p>Each row below is a benchmark. The marks show which of the 35 stage × layer cells its task environments reach, and how deeply; the bar sums them into one coverage score; the bottom row counts task environments per stage.</p>
   <figure id="fig-joint" aria-label="Per-benchmark coverage of the stage by layer surface">
     <div class="fig-title"><strong id="joint-title"></strong></div>
-    <div class="legend"><span class="k"><i class="sq ev3"></i> verifier runs a real LLM workload · 1</span><span class="k"><i class="sq ev2"></i> bounded unit or artifact tests · ½</span><span class="k"><i class="sq ev1"></i> related or simulated · ¼</span><span class="k"><i class="sq none"></i> untouched</span><span class="k mut">bar = weighted score · marks = which cells</span></div>
+    <div class="legend"><span class="k"><i class="sq ev3"></i> verifier runs a real LLM workload · 1</span><span class="k"><i class="sq ev2"></i> bounded unit or artifact tests · ½</span><span class="k"><i class="sq ev1"></i> related or simulated · ¼</span><span class="k"><i class="sq none"></i> untouched</span></div>
     <div class="scroll"><div id="joint-svg"></div></div>
     <figcaption id="joint-cap"></figcaption>
   </figure>
@@ -870,14 +876,16 @@ function renderJoint(){
     const lines=showStageSubs2?wrapSub(st.sub,18):[], nl=nameLines(st.name), hy=TOP-46-(lines.length?36:0); s+=`<g class="hdrbtn" tabindex="0" role="button" data-hdr="1" aria-label="${esc(st.name)}: ${showStageSubs2?'hide':'show'} what this stage covers"><rect x="${gx0}" y="${hy-12-(nl.length-1)*HL}" width="${gx1-gx0}" height="${18+(nl.length-1)*HL+lines.length*11}" fill="transparent"/>${nl.map((ln,k)=>`<text x="${gm}" y="${hy-(nl.length-1-k)*HL}" text-anchor="middle" class="lg">${esc(ln)}</text>`).join('')}${lines.map((ln,k)=>`<text x="${gm}" y="${TOP-46-36+13+k*11}" text-anchor="middle" class="sm mono mut" style="font-size:8.5px">${esc(ln)}</text>`).join('')}</g>`;
     LAYERS.forEach((ly,li)=>{ const x=sx(si,li)+(SLOT-IC)/2; s+=`<use href="#ic-${ly.id}" x="${x}" y="${TOP-27}" width="${IC}" height="${IC}" class="hic" data-tt="layer" data-layer="${ly.id}" tabindex="0" aria-label="${esc(ly.name)}"/>`; });
     s+=`<line x1="${gx0}" y1="${TOP-10}" x2="${gx1}" y2="${TOP-10}" class="hair2"/>`; });
-  s+=`<text x="${BX0}" y="${TOP-34}" class="lg">LLM lifecycle coverage</text><text x="${BX0}" y="${TOP-22}" class="sm mono mut" style="font-size:8.5px">cells weighted 1 · ½ · ¼, of ${NCELL}</text><line x1="${BX0}" y1="${TOP-10}" x2="${BX1}" y2="${TOP-10}" class="hair2"/>`;
+  // light column lines between stage groups, as in the life-cycle figure; drawn to the end of the bottom row
+  const YEND=TOP+rows.length*RH+48; for(let si=0;si<=NS;si++){ const x=si<NS?sx(si,0)-GAP/2:sx(NS-1,NL-1)+SLOT+GAP/2; s+=`<line x1="${x}" y1="${TOP-4}" x2="${x}" y2="${YEND}" class="hair"/>`; }
+  s+=`<text x="${BX0}" y="${TOP-22}" class="lg">LLM lifecycle coverage</text><line x1="${BX0}" y1="${TOP-10}" x2="${BX1}" y2="${TOP-10}" class="hair2"/>`;
   function marks(r, ym, bmId){ STAGES.forEach((st,si)=>{ LAYERS.forEach((ly,li)=>{ const kind=r.cells.get(st.id+'|'+ly.id); const x=sx(si,li)+(SLOT-MK)/2; const cls=kind==='measured'?'ev3 cellmark':kind==='bounded'?'ev2 cellmark':kind?'ev1 cellmark':'cellmark none'; s+=`<rect x="${x}" y="${ym-MK/2}" width="${MK}" height="${MK}" rx="1.5" class="${cls}" tabindex="0" role="img" data-tt="cell" data-bm="${bmId}" data-stage="${st.id}" data-layer="${ly.id}" aria-label="${esc(st.name)} / ${esc(ly.name)}: ${kind?KIND[kind].label:'no task'}"/>`; }); }); }
   function bar(r, ym){ const wM=BW*r.meas/NCELL, wA=BW*r.wtd/NCELL; s+=`<rect x="${BX0}" y="${ym-6}" width="${BW}" height="12" rx="3" class="ev0"/>`; if(wA>wM+2) s+=`<rect x="${BX0+wM+(wM>0?2:0)}" y="${ym-6}" width="${wA-wM-(wM>0?2:0)}" height="12" rx="3" class="ev2"/>`; if(wM>0) s+=`<rect x="${BX0}" y="${ym-6}" width="${wM}" height="12" rx="3" class="ev3"/>`; s+=`<text x="${BX1+8}" y="${ym+4}" class="md mono" style="font-weight:600">${r.pct}%</text>`; }
   // union row (column marginal)
   let y=TOP;
   for(const r of rows){ const ym=y+RH/2; s+=`<g class="namebtn" tabindex="0" data-tt="score" data-bm="${esc(r.b.id)}"><rect x="0" y="${y}" width="${NAMEX}" height="${RH}" fill="transparent"/><text x="${NAMEX-8}" y="${ym+4}" text-anchor="end" class="md">${esc(r.b.short)}</text></g>`; bar(r, ym); marks(r, ym, r.b.id); y+=RH; }
   // bottom marginal
-  { const yb=y+12; s+=`<line x1="${X0}" y1="${y+4}" x2="${X1}" y2="${y+4}" class="hair2"/><line x1="${BX0}" y1="${y+4}" x2="${BX1}" y2="${y+4}" class="hair2"/><text x="${BX0}" y="${yb+12}" class="lg">Task environments per stage</text><text x="${BX0}" y="${yb+24}" class="sm mono mut" style="font-size:8.5px">any depth · of ${NT}</text>`;
+  { const yb=y+12; s+=`<line x1="${X0}" y1="${y+4}" x2="${X1}" y2="${y+4}" class="hair2"/><line x1="${BX0}" y1="${y+4}" x2="${BX1}" y2="${y+4}" class="hair2"/><text x="${BX0}" y="${yb+12}" class="lg">Task environments per stage</text>`;
     STAGES.forEach((st,si)=>{ const n=stageEntries(st.id).length, gx0=sx(si,0), gw=sx(si,NL-1)+SLOT-gx0, bw=gw*n/NT; s+=`<rect x="${gx0}" y="${yb+4}" width="${gw}" height="10" rx="2" class="ev0"/><rect x="${gx0}" y="${yb+4}" width="${Math.max(2,bw)}" height="10" rx="2" class="ev3"/><text x="${gx0}" y="${yb+29}" class="sm mono" style="font-weight:600">${n}</text><text x="${gx0+String(n).length*7+3}" y="${yb+29}" class="sm mono mut">· ${Math.round(100*n/NT)}%</text>`; }); }
   s+='</svg>'; $('#joint-svg').innerHTML=s;
   const best=rows[0];
