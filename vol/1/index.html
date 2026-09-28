@@ -848,6 +848,8 @@ renderChips(); renderExample();
 // ---------- 02 joint plot
 function bmCells(bmId){ const c=new Map(); for(const t of A.tasks){ if(bmId && t.benchmark!==bmId) continue; const b=BM[t.benchmark]; if(!b || b.group!=='primary') continue; for(const m of t.mappings){ const k=m.stage+'|'+m.layer; const prev=c.get(k); if(!prev || KIND[m.kind].rank>KIND[prev].rank) c.set(k,m.kind); } } return c; }
 const WT={measured:1,bounded:.5,adjacent:.25};
+// stage names too wide for one column break at the most balanced space: "Agent / post-training", "Serve & / deployment"
+function nameLines(nm){ if(nm.length<=14 || !nm.includes(' ')) return [nm]; const w=nm.split(' '); let best=null; for(let i=1;i<w.length;i++){ const a=w.slice(0,i).join(' '), b=w.slice(i).join(' '), m=Math.max(a.length,b.length); if(!best || m<=best.m) best={a,b,m}; } return [best.a, best.b]; }
 function scoreRow(b){ const c=bmCells(b?b.id:null); let meas=0, wtd=0; for(const k of c.values()){ if(k==='measured') meas++; wtd+=WT[k]||0; } const cen=CEN?(b?CEN.benchmarks[b.id]:CEN.totals):null; return {b, cells:c, meas, any:c.size, wtd, pct:Math.round(100*wtd/NCELL), cen}; }
 function cellName(k){ const [s,l]=k.split('|'); return `${STAGES[SIDX[s]].name} / ${LAYERS.find(x=>x.id===l).name}`; }
 let showStageSubs2=false;
@@ -855,30 +857,30 @@ function renderJoint(){
   const prim=A.benchmarks.filter(b=>b.group==='primary');
   const rows=prim.map(scoreRow).sort((a,b)=>(b.wtd-a.wtd)||(b.meas-a.meas)||(b.any-a.any)||a.b.short.localeCompare(b.b.short));
   const union=scoreRow(null);
-  const NS=STAGES.length, NL=LAYERS.length, NAMEX=148, BX0=160, BW=150, BX1=BX0+BW, X0=376, X1=W-14, GAP=10;
-  const SLOT=(X1-X0-GAP*(NS-1))/NCELL, MK=Math.min(8, SLOT-6), IC=10, RH=26, TOP=showStageSubs2?106:70;
+  const NS=STAGES.length, NL=LAYERS.length, NAMEX=148, BX0=160, BW=150, BX1=BX0+BW, X0=376, X1=W-14, GAP=16, HL=14;
+  const SLOT=(X1-X0-GAP*(NS-1))/NCELL, MK=Math.min(8, SLOT-6), IC=10, RH=26, TOP=(showStageSubs2?106:70)+HL;
   const sx=(si,li)=>X0+si*(NL*SLOT+GAP)+li*SLOT;
   const NT=A.tasks.filter(t=>BM[t.benchmark]&&BM[t.benchmark].group==='primary').length;
   const H=TOP+rows.length*RH+66; let s='';
   s+=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Per benchmark: coverage score on the left, the ${NCELL} stage by layer cells as marks, tasks per stage along the bottom">`;
   // headers
   STAGES.forEach((st,si)=>{ const gx0=sx(si,0), gx1=sx(si,NL-1)+SLOT, gm=(gx0+gx1)/2;
-    const lines=showStageSubs2?wrapSub(st.sub,18):[]; s+=`<g class="hdrbtn" tabindex="0" role="button" data-hdr="1" aria-label="${esc(st.name)}: ${showStageSubs2?'hide':'show'} what this stage covers"><rect x="${gx0}" y="${TOP-58-(lines.length?36:0)}" width="${gx1-gx0}" height="${18+lines.length*11}" fill="transparent"/><text x="${gm}" y="${TOP-46-(lines.length?36:0)}" text-anchor="middle" class="lg">${esc(st.name)}</text>${lines.map((ln,k)=>`<text x="${gm}" y="${TOP-46-36+13+k*11}" text-anchor="middle" class="sm mono mut" style="font-size:8.5px">${esc(ln)}</text>`).join('')}</g>`;
+    const lines=showStageSubs2?wrapSub(st.sub,18):[], nl=nameLines(st.name), hy=TOP-46-(lines.length?36:0); s+=`<g class="hdrbtn" tabindex="0" role="button" data-hdr="1" aria-label="${esc(st.name)}: ${showStageSubs2?'hide':'show'} what this stage covers"><rect x="${gx0}" y="${hy-12-(nl.length-1)*HL}" width="${gx1-gx0}" height="${18+(nl.length-1)*HL+lines.length*11}" fill="transparent"/>${nl.map((ln,k)=>`<text x="${gm}" y="${hy-(nl.length-1-k)*HL}" text-anchor="middle" class="lg">${esc(ln)}</text>`).join('')}${lines.map((ln,k)=>`<text x="${gm}" y="${TOP-46-36+13+k*11}" text-anchor="middle" class="sm mono mut" style="font-size:8.5px">${esc(ln)}</text>`).join('')}</g>`;
     LAYERS.forEach((ly,li)=>{ const x=sx(si,li)+(SLOT-IC)/2; s+=`<use href="#ic-${ly.id}" x="${x}" y="${TOP-27}" width="${IC}" height="${IC}" class="hic" data-tt="layer" data-layer="${ly.id}" tabindex="0" aria-label="${esc(ly.name)}"/>`; });
     s+=`<line x1="${gx0}" y1="${TOP-10}" x2="${gx1}" y2="${TOP-10}" class="hair2"/>`; });
-  s+=`<text x="${BX0}" y="${TOP-34}" class="lg">LLM-training coverage</text><text x="${BX0}" y="${TOP-22}" class="sm mono mut" style="font-size:8.5px">cells weighted 1 · ½ · ¼, of ${NCELL}</text><line x1="${BX0}" y1="${TOP-10}" x2="${BX1}" y2="${TOP-10}" class="hair2"/>`;
+  s+=`<text x="${BX0}" y="${TOP-34}" class="lg">LLM lifecycle coverage</text><text x="${BX0}" y="${TOP-22}" class="sm mono mut" style="font-size:8.5px">cells weighted 1 · ½ · ¼, of ${NCELL}</text><line x1="${BX0}" y1="${TOP-10}" x2="${BX1}" y2="${TOP-10}" class="hair2"/>`;
   function marks(r, ym, bmId){ STAGES.forEach((st,si)=>{ LAYERS.forEach((ly,li)=>{ const kind=r.cells.get(st.id+'|'+ly.id); const x=sx(si,li)+(SLOT-MK)/2; const cls=kind==='measured'?'ev3 cellmark':kind==='bounded'?'ev2 cellmark':kind?'ev1 cellmark':'cellmark none'; s+=`<rect x="${x}" y="${ym-MK/2}" width="${MK}" height="${MK}" rx="1.5" class="${cls}" tabindex="0" role="img" data-tt="cell" data-bm="${bmId}" data-stage="${st.id}" data-layer="${ly.id}" aria-label="${esc(st.name)} / ${esc(ly.name)}: ${kind?KIND[kind].label:'no task'}"/>`; }); }); }
   function bar(r, ym){ const wM=BW*r.meas/NCELL, wA=BW*r.wtd/NCELL; s+=`<rect x="${BX0}" y="${ym-6}" width="${BW}" height="12" rx="3" class="ev0"/>`; if(wA>wM+2) s+=`<rect x="${BX0+wM+(wM>0?2:0)}" y="${ym-6}" width="${wA-wM-(wM>0?2:0)}" height="12" rx="3" class="ev2"/>`; if(wM>0) s+=`<rect x="${BX0}" y="${ym-6}" width="${wM}" height="12" rx="3" class="ev3"/>`; s+=`<text x="${BX1+8}" y="${ym+4}" class="md mono" style="font-weight:600">${r.pct}%</text>`; }
   // union row (column marginal)
   let y=TOP;
   for(const r of rows){ const ym=y+RH/2; s+=`<g class="namebtn" tabindex="0" data-tt="score" data-bm="${esc(r.b.id)}"><rect x="0" y="${y}" width="${NAMEX}" height="${RH}" fill="transparent"/><text x="${NAMEX-8}" y="${ym+4}" text-anchor="end" class="md">${esc(r.b.short)}</text></g>`; bar(r, ym); marks(r, ym, r.b.id); y+=RH; }
   // bottom marginal
-  { const yb=y+12; s+=`<line x1="${X0}" y1="${y+4}" x2="${X1}" y2="${y+4}" class="hair2"/><text x="4" y="${yb+12}" text-anchor="start" class="md" style="font-weight:500">Task environments per stage</text><text x="4" y="${yb+25}" text-anchor="start" class="sm mono mut">any depth · of ${NT}</text>`;
+  { const yb=y+12; s+=`<line x1="${X0}" y1="${y+4}" x2="${X1}" y2="${y+4}" class="hair2"/><text x="${NAMEX-8}" y="${yb+12}" text-anchor="end" class="md" style="font-weight:500">Task environments</text><text x="${NAMEX-8}" y="${yb+26}" text-anchor="end" class="md" style="font-weight:500">per stage</text><text x="${NAMEX-8}" y="${yb+40}" text-anchor="end" class="sm mono mut">any depth · of ${NT}</text>`;
     STAGES.forEach((st,si)=>{ const n=stageEntries(st.id).length, gx0=sx(si,0), gw=sx(si,NL-1)+SLOT-gx0, bw=gw*n/NT; s+=`<rect x="${gx0}" y="${yb+4}" width="${gw}" height="10" rx="2" class="ev0"/><rect x="${gx0}" y="${yb+4}" width="${Math.max(2,bw)}" height="10" rx="2" class="ev3"/><text x="${gx0}" y="${yb+29}" class="sm mono" style="font-weight:600">${n}</text><text x="${gx0+String(n).length*7+3}" y="${yb+29}" class="sm mono mut">· ${Math.round(100*n/NT)}%</text>`; }); }
   s+='</svg>'; $('#joint-svg').innerHTML=s;
   const best=rows[0];
   const NWORD={10:'ten',11:'eleven',12:'twelve'}; $('#joint-title').textContent=`No benchmark covers more than ${best.pct}% of LLM training; all ${NWORD[prim.length]||prim.length} together cover ${union.pct}%`;
-  $('#joint-cap').textContent=`Rows are benchmarks, sorted by coverage. Marks: the ${NCELL} stage × layer cells, grouped by stage, in this order: ${LAYERS.map(l=>l.name).join(' · ')}. Left bar: the cells weighted 1, ½ and ¼ as a share of ${NCELL}; the darker part is the executed cells alone. Bottom: task environments touching each stage at any depth; one that spans two stages counts in both. The figure holds ${NT} task environments: the ones that touch the LLM life cycle, with PostTrainBench's 28 variants and InferenceBench's 4 scenarios each counted once as a family, plus seven environments of adjacent systems work (five DeepSWE cluster-tooling tasks and the WeirdML and EdgeBench families). Hover a benchmark name for the share of its public task environments that touch the LLM life cycle.`;
+  $('#joint-cap').textContent=`Marks are the ${NCELL} stage × layer cells, grouped by stage; the bar weights them 1, ½ and ¼ as a share of ${NCELL}, its first segment counting executed cells alone. The bottom row counts the ${NT} task environments touching each stage at any depth (one spanning two stages counts in both); hover a benchmark name for its share of public task environments that touch the LLM life cycle.`;
   const cn=$('#cov-n'); if(cn) cn.textContent=String(A.meta.task_entries); if(CEN&&CEN.totals){ const a=$('#cov-screened'), b=$('#cov-L'); if(a) a.textContent=String(CEN.totals.screened); if(b) b.textContent=String(CEN.totals.L); }
 }
 renderJoint();
@@ -894,21 +896,22 @@ bindTips($('#joint-svg'), el=>{
 let selModel=null, showStageSubs=false;
 const LL=312, COLW2=(W-LL-(U.RPAD||14))/STAGES.length, cx2=i=>LL+COLW2*i+COLW2/2;
 function wrapSub(sub, maxChars){ const parts=String(sub||'').split(' · '); const lines=[]; let cur=''; for(const p of parts){ const cand=cur?cur+' · '+p:p; if(cand.length>maxChars && cur){ lines.push(cur); cur=p; } else cur=cand; } if(cur) lines.push(cur); return lines.slice(0,3); }
-function lifeHeader(y){ let s=''; STAGES.forEach((st,i)=>{ const lines=showStageSubs?wrapSub(st.sub,24):[]; s+=`<g class="hdrbtn" tabindex="0" role="button" data-hdr="1" aria-label="${esc(st.name)}: ${showStageSubs?'hide':'show'} what this stage covers"><rect x="${cx2(i)-COLW2/2}" y="${y-14}" width="${COLW2}" height="${18+lines.length*11}" fill="transparent"/><text x="${cx2(i)}" y="${y}" text-anchor="middle" class="lg">${esc(st.name)}</text>${lines.map((ln,k)=>`<text x="${cx2(i)}" y="${y+13+k*11}" text-anchor="middle" class="sm mono mut" style="font-size:8.5px">${esc(ln)}</text>`).join('')}</g>`; }); return s; }
+function lifeHeader(y){ let s=''; STAGES.forEach((st,i)=>{ const lines=showStageSubs?wrapSub(st.sub,24):[], nl=nameLines(st.name); s+=`<g class="hdrbtn" tabindex="0" role="button" data-hdr="1" aria-label="${esc(st.name)}: ${showStageSubs?'hide':'show'} what this stage covers"><rect x="${cx2(i)-COLW2/2}" y="${y-14-(nl.length-1)*14}" width="${COLW2}" height="${18+(nl.length-1)*14+lines.length*11}" fill="transparent"/>${nl.map((ln,k)=>`<text x="${cx2(i)}" y="${y-(nl.length-1-k)*14}" text-anchor="middle" class="lg">${esc(ln)}</text>`).join('')}${lines.map((ln,k)=>`<text x="${cx2(i)}" y="${y+13+k*11}" text-anchor="middle" class="sm mono mut" style="font-size:8.5px">${esc(ln)}</text>`).join('')}</g>`; }); return s; }
 function colLines2(y0,y1){ let s=''; for(let i=0;i<=STAGES.length;i++){ const x=LL+COLW2*i; s+=`<line x1="${x}" y1="${y0}" x2="${x}" y2="${y1}" class="hair"/>`; } return s; }
 function renderLife(){
   const all=A.pipelines.models.filter(m=>!m.dim); const models=all; const groups=A.pipelines.model_groups;
   if(selModel && !models.find(m=>m.id===selModel)) selModel=null;
-  const ROW=32, TOP=showStageSubs?92:54, GH=26; let y=TOP; let s=''; const rows=[];
-  for(const g of groups){ const gm=models.filter(x=>x.group===g.id); if(!gm.length) continue; rows.push({group:g, y}); y+=GH; for(const m of gm){ rows.push({m, y}); y+=ROW; } y+=8; }
-  const H=y+6;
+  const ROW=34, TOP=(showStageSubs?92:54)+14, GH=30, GGAP=14; let y=TOP; let s=''; const rows=[], spans=[];
+  for(const g of groups){ const gm=models.filter(x=>x.group===g.id); if(!gm.length) continue; rows.push({group:g, y}); y+=GH; const y0=y; for(const m of gm){ rows.push({m, y}); y+=ROW; } spans.push([y0, y]); y+=GGAP; }
+  const H=y-GGAP+8;
   s+=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Documented life cycles of ${models.length} models and recipes across five stages">`;
-  s+=colLines2(TOP-8, H-6); s+=lifeHeader(22);
+  for(const [y0,y1] of spans) s+=colLines2(y0, y1); s+=lifeHeader(36);
   for(const r of rows){
-    if(r.group){ s+=`<text x="0" y="${r.y+16}" class="sm mono mut" style="letter-spacing:.08em">${esc(r.group.name.toUpperCase())}</text><text x="${LL+8}" y="${r.y+16}" class="sm mono mut">${esc(r.group.sub)}</text>`; continue; }
+    // group header: full-width rule, then name and note on one line above the grid (column lines stop short of it)
+    if(r.group){ s+=`<line x1="0" y1="${r.y}" x2="${W-(U.RPAD||14)}" y2="${r.y}" class="hair2"/><text x="0" y="${r.y+20}" class="sm mono"><tspan style="letter-spacing:.08em;font-weight:600">${esc(r.group.name.toUpperCase())}</tspan><tspan dx="14" class="mut">${esc(r.group.sub)}</tspan></text>`; continue; }
     const m=r.m; const ym=r.y+ROW/2; const present=STAGES.map((st,i)=>m.stages[st.id]?i:-1).filter(i=>i>=0); const sel=m.id===selModel;
     s+=`<g class="${sel?'row-sel':''}">`;
-    s+=`<g class="rowbtn" tabindex="0" role="button" data-model="${esc(m.id)}" aria-label="${sel?'Deselect':'Select'} ${esc(m.name)}"><text x="${LL-12}" y="${ym-2}" text-anchor="end" class="md" style="font-weight:${sel?600:500}">${esc(m.name)}</text><text x="${LL-12}" y="${ym+11}" text-anchor="end" class="sm mono mut">${esc(m.org)} · ${esc(m.date)}</text></g>`;
+    s+=`<g class="rowbtn" tabindex="0" role="button" data-model="${esc(m.id)}" aria-label="${sel?'Deselect':'Select'} ${esc(m.name)}"><text x="${LL-14}" y="${ym-3}" text-anchor="end" class="md" style="font-weight:${sel?600:500}">${esc(m.name)}</text><text x="${LL-14}" y="${ym+12}" text-anchor="end" class="sm mono mut">${esc(m.org)} · ${esc(m.date)}</text></g>`;
     if(present.length>1) s+=`<line x1="${cx2(present[0])}" y1="${ym}" x2="${cx2(present[present.length-1])}" y2="${ym}" class="lifeline"/>`;
     for(const i of present){ const st=STAGES[i]; const e=m.stages[st.id]; const hollow=e.ev!=='code';
       s+=`<g class="mark ${hollow?'hollow':''}" tabindex="0" role="button" data-tt="model" data-model="${esc(m.id)}" data-stage="${st.id}" aria-label="${esc(m.name)}, ${esc(st.name)}: ${hollow?'report only':'public code'}, ${esc(e.label)}"><circle cx="${cx2(i)}" cy="${ym}" r="5.5" class="${hollow?'':'ev2'}"/><rect x="${cx2(i)-12}" y="${ym-12}" width="24" height="24" fill="transparent"/></g>`; }
