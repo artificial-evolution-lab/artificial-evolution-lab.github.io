@@ -5724,6 +5724,12 @@
      "what": "PyTorch-native platform for large-scale LLM pretraining; composable 4D parallelism, validated on Llama 3.1 8B to 405B."
     },
     {
+     "name": "nanotron",
+     "org": "Hugging Face",
+     "url": "https://github.com/huggingface/nanotron",
+     "what": "Minimalistic 3D-parallel pretraining library; trained SmolLM3 on 384 H100s."
+    },
+    {
      "name": "OLMo-core",
      "org": "Ai2",
      "url": "https://github.com/allenai/OLMo-core",
