@@ -5718,6 +5718,12 @@
      "what": "torch.distributed: process groups, collectives, FSDP, DTensor and distributed checkpointing."
     },
     {
+     "name": "TorchTitan",
+     "org": "PyTorch",
+     "url": "https://github.com/pytorch/torchtitan",
+     "what": "PyTorch-native platform for large-scale LLM pretraining; composable 4D parallelism, validated on Llama 3.1 8B to 405B."
+    },
+    {
      "name": "OLMo-core",
      "org": "Ai2",
      "url": "https://github.com/allenai/OLMo-core",
@@ -6499,7 +6505,7 @@
     "id": "state",
     "name": "Memory & state management",
     "subtitle": "",
-    "examples": "KV cache management · hierarchical KV · distributed checkpoints · checkpoint recovery · RAG",
+    "examples": "KV cache management · hierarchical KV · distributed checkpoints · checkpoint recovery",
     "contract": "Preserve KV, checkpoint and optimizer state through interruption, movement and recovery; compare against an uninterrupted reference."
    }
   ],
