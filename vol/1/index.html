@@ -66,7 +66,7 @@ p{max-width:none}
 .key{display:flex; flex-wrap:wrap; gap:8px 20px; align-items:center; font-size:13px; color:var(--ink-2); padding:12px 14px; border:1px solid var(--line); border-radius:8px; background:var(--surface)}
 .key .k{display:inline-flex; align-items:center; gap:7px}
 .dot{display:inline-block; width:10px; height:10px; border-radius:50%; flex:none}
-.dot.ev3{background:var(--ev3)} .dot.ev2{background:var(--ev2)} .dot.ev1{background:var(--ev1)}
+.dot.ev3{background:var(--ev3)} .dot.ev2{background:var(--ev2)} .dot.ev1{background:var(--ev1)} .dot.ring{background:none; border:1.6px solid var(--ev2); box-sizing:border-box}
 .dot.c1{background:var(--c1)} .dot.c2{background:var(--c2)} .dot.c3{background:var(--c3)} .dot.c4{background:var(--c4)} .dot.c5{background:var(--c5)}
 .ring{display:inline-block; width:10px; height:10px; border-radius:50%; border:1.6px solid var(--ev2); flex:none}
 .sq{display:inline-block; width:10px; height:10px; border-radius:2px; border:1.5px solid var(--warm-line); background:var(--warm-bg); flex:none}
@@ -361,6 +361,7 @@ svg .hdrbtn{cursor:pointer} svg .hdrbtn:hover text.lg{fill:var(--accent)} svg .h
   <p>Where could we find the materials to build task environments that fill these gaps? Public training reports and run records describe the work involved in developing LLMs, while widely used open-source frameworks provide implementations across the life cycle. Together, they offer a starting point for extending existing benchmarks with tasks grounded in real training and deployment workflows. The open side is further along than it may seem. Several open models now compete with frontier proprietary ones and were trained on open-source frameworks, GLM-5 on <a href="https://github.com/THUDM/slime" target="_blank" rel="noreferrer">slime</a> and Nemotron 3 on <a href="https://github.com/NVIDIA-NeMo/RL" target="_blank" rel="noreferrer">NeMo RL</a>; Xiaomi even streamed MiMo-V2.6's RL run to a <a href="https://mimo.xiaomi.com/rl/mimo-v26" target="_blank" rel="noreferrer">public dashboard</a>. Reviewing these materials, the full cycle falls into the same five stages we audit against, from data through pretraining and post-training to agent post-training and deployment.</p>
   <figure id="fig-life" aria-label="Documented life cycles of models and recipes across five stages">
     <div class="fig-title"><strong>Documented life cycles</strong><span id="life-meta"></span></div>
+    <div class="legend"><span class="k"><i class="dot ev2"></i> public code or released recipe for that stage</span><span class="k"><i class="dot ring"></i> described in a report only</span></div>
     <div class="scroll"><div id="life-svg"></div></div>
     <div class="vocab" id="vocab" hidden></div>
     <details class="tableview"><summary>Table view</summary><div id="life-table"></div></details>
@@ -902,17 +903,17 @@ function colLines2(y0,y1){ let s=''; for(let i=0;i<=STAGES.length;i++){ const x=
 function renderLife(){
   const all=A.pipelines.models.filter(m=>!m.dim); const models=all; const groups=A.pipelines.model_groups;
   if(selModel && !models.find(m=>m.id===selModel)) selModel=null;
-  const ROW=34, TOP=(showStageSubs?92:54)+14, GH=30, GGAP=14; let y=TOP; let s=''; const rows=[], spans=[];
+  const ROW=26, TOP=(showStageSubs?92:54)+14, GH=30, GGAP=14; let y=TOP; let s=''; const rows=[], spans=[];
   for(const g of groups){ const gm=models.filter(x=>x.group===g.id); if(!gm.length) continue; rows.push({group:g, y}); y+=GH; const y0=y; for(const m of gm){ rows.push({m, y}); y+=ROW; } spans.push([y0, y]); y+=GGAP; }
   const H=y-GGAP+8;
   s+=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Documented life cycles of ${models.length} models and recipes across five stages">`;
   for(const [y0,y1] of spans) s+=colLines2(y0, y1); s+=lifeHeader(36);
   for(const r of rows){
-    // group header: full-width rule, then name and note on one line above the grid (column lines stop short of it)
-    if(r.group){ s+=`<line x1="0" y1="${r.y}" x2="${W-(U.RPAD||14)}" y2="${r.y}" class="hair2"/><text x="0" y="${r.y+20}" class="sm mono"><tspan style="letter-spacing:.08em;font-weight:600">${esc(r.group.name.toUpperCase())}</tspan><tspan dx="14" class="mut">${esc(r.group.sub)}</tspan></text>`; continue; }
+    // group header: full-width rule, then the group name above the grid (column lines stop short of it); the mark legend carries what the groups' notes said
+    if(r.group){ s+=`<line x1="0" y1="${r.y}" x2="${W-(U.RPAD||14)}" y2="${r.y}" class="hair2"/><text x="0" y="${r.y+20}" class="sm mono" style="letter-spacing:.08em;font-weight:600">${esc(r.group.name.toUpperCase())}</text>`; continue; }
     const m=r.m; const ym=r.y+ROW/2; const present=STAGES.map((st,i)=>m.stages[st.id]?i:-1).filter(i=>i>=0); const sel=m.id===selModel;
     s+=`<g class="${sel?'row-sel':''}">`;
-    s+=`<g class="rowbtn" tabindex="0" role="button" data-model="${esc(m.id)}" aria-label="${sel?'Deselect':'Select'} ${esc(m.name)}"><text x="0" y="${ym-3}" class="md" style="font-weight:${sel?600:500}">${esc(m.name)}</text><text x="${LL-14}" y="${ym-3}" text-anchor="end" class="sm mono mut">${esc(m.date)}</text><text x="0" y="${ym+12}" class="sm mut">${esc(m.org)}</text></g>`;
+    s+=`<g class="rowbtn" tabindex="0" role="button" data-tt="row" data-model="${esc(m.id)}" aria-label="${sel?'Deselect':'Select'} ${esc(m.name)}, ${esc(m.org)}"><rect x="0" y="${r.y}" width="${LL-8}" height="${ROW}" fill="transparent"/><text x="0" y="${ym+4}" class="md" style="font-weight:${sel?600:500}">${esc(m.name)}</text><text x="${LL-14}" y="${ym+4}" text-anchor="end" class="sm mono mut">${esc(m.date)}</text></g>`;
     if(present.length>1) s+=`<line x1="${cx2(present[0])}" y1="${ym}" x2="${cx2(present[present.length-1])}" y2="${ym}" class="lifeline"/>`;
     for(const i of present){ const st=STAGES[i]; const e=m.stages[st.id]; const hollow=e.ev!=='code';
       s+=`<g class="mark ${hollow?'hollow':''}" tabindex="0" role="button" data-tt="model" data-model="${esc(m.id)}" data-stage="${st.id}" aria-label="${esc(m.name)}, ${esc(st.name)}: ${hollow?'report only':'public code'}, ${esc(e.label)}"><circle cx="${cx2(i)}" cy="${ym}" r="5.5" class="${hollow?'':'ev2'}"/><rect x="${cx2(i)-12}" y="${ym-12}" width="24" height="24" fill="transparent"/></g>`; }
@@ -921,13 +922,15 @@ function renderLife(){
   s+='</svg>'; $('#life-svg').innerHTML=s;
   $('#life-meta').textContent=`${models.length} sources · ${models.filter(m=>m.group==='reports').length} reports · ${models.filter(m=>m.group==='open').length} open pipelines`;
   renderVocab(models);
-  const tb=h('table'); tb.append(h('thead',null,h('tr',null,h('th',{text:'Source'}),...STAGES.map(st=>h('th',{text:st.name})),h('th',{text:'Tag'}))));
-  const tbody=h('tbody'); for(const m of models){ tbody.append(h('tr',null,h('td',null,link(m.url,m.name)),...STAGES.map(st=>{const e=m.stages[st.id]; return h('td',null, e? [h('span',{class:'kindtag',text:e.ev==='code'?'code · ':'report · '}), e.label] : '—');}), h('td',null,tagEl(m.tag)))); } tb.append(tbody); $('#life-table').replaceChildren(tb);
+  const tb=h('table'); tb.append(h('thead',null,h('tr',null,h('th',{text:'Source'}),h('th',{text:'Org'}),...STAGES.map(st=>h('th',{text:st.name})),h('th',{text:'Tag'}))));
+  const tbody=h('tbody'); for(const m of models){ tbody.append(h('tr',null,h('td',null,link(m.url,m.name)),h('td',{text:m.org}),...STAGES.map(st=>{const e=m.stages[st.id]; return h('td',null, e? [h('span',{class:'kindtag',text:e.ev==='code'?'code · ':'report · '}), e.label] : '—');}), h('td',null,tagEl(m.tag)))); } tb.append(tbody); $('#life-table').replaceChildren(tb);
 }
 function renderVocab(models){ const v=$('#vocab'); const m=selModel?models.find(x=>x.id===selModel):null; if(!m){ v.hidden=true; v.replaceChildren(); return; } v.hidden=false; v.replaceChildren(h('span',{class:'lab',text:'STAGE NAMES · '+m.name.toUpperCase()})); let first=true; for(const st of STAGES){ const e=m.stages[st.id]; if(!e) continue; if(!first) v.append(h('span',{class:'arrow',text:'→'})); first=false; v.append(h('span',{class:'chip'},h('b',{text:st.name}),e.label)); } v.append(link(m.url,'source ↗')); v.append(tagEl(m.tag)); }
 $('#life-svg').addEventListener('click', e=>{ const hd=e.target.closest('[data-hdr]'); if(hd){ showStageSubs=!showStageSubs; renderLife(); return; } const r=e.target.closest('[data-model]'); if(!r) return; selModel = selModel===r.dataset.model ? null : r.dataset.model; renderLife(); });
 $('#life-svg').addEventListener('keydown', e=>{ if(e.key!=='Enter'&&e.key!==' ') return; const hd=e.target.closest('[data-hdr]'); if(hd){ e.preventDefault(); showStageSubs=!showStageSubs; renderLife(); return; } const r=e.target.closest('[data-model]'); if(!r) return; e.preventDefault(); selModel = selModel===r.dataset.model ? null : r.dataset.model; renderLife(); });
-bindTips($('#life-svg'), el=>{ if(el.dataset.tt!=='model') return null; const m=A.pipelines.models.find(x=>x.id===el.dataset.model); return tipForModel(m, el.dataset.stage); });
+bindTips($('#life-svg'), el=>{ const m=A.pipelines.models.find(x=>x.id===el.dataset.model); if(!m) return null;
+  if(el.dataset.tt==='row'){ const n=h('div'); n.append(h('b',{text:m.name})); n.append(h('div',{class:'m',text:`${m.org} · ${m.date}`})); return n; }
+  return el.dataset.tt==='model' ? tipForModel(m, el.dataset.stage) : null; });
 
 // ---------- code band
 function renderCode(){ const band=$('#codeband'); band.replaceChildren(); for(const st of STAGES){ const col=h('div',{class:'codecol'}); col.append(h('h4',null,st.name,h('span',{text:st.sub}))); const chips=h('div',{class:'chips'}); let grp=null; for(const c of (A.pipelines.code_by_stage[st.id]||[])){ if(c.group&&c.group!==grp){ grp=c.group; chips.append(h('div',{class:'chipgrp',text:grp})); } chips.append(h('a',{class:'chipbtn',href:c.url,target:'_blank',rel:'noreferrer',title:c.what||''}, c.name+' ↗', h('small',{text:c.org}))); } col.append(chips); band.append(col); } }
