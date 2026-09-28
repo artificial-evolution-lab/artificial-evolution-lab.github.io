@@ -236,6 +236,10 @@ main{max-width:1020px}
 .fig-title{display:flex; justify-content:space-between; gap:16px; align-items:baseline; flex-wrap:wrap; margin-bottom:10px}
 .fig-title strong{font-weight:600; font-size:14px}
 .fig-title span{font:12px var(--mono); color:var(--muted)}
+.fig-title .replay{font:11px var(--mono); color:var(--muted); background:none; border:0; padding:0; cursor:pointer; margin-left:auto; white-space:nowrap}
+.fig-title .replay span{font:inherit; color:inherit}
+.fig-title .replay:hover{color:var(--ink)}
+@media print{#fig-joint .fig-title .replay{display:none}}
 .chipcol{display:flex; flex-direction:column; gap:6px}
 .chipcol .chipbtn{width:100%}
 .def-grid{display:grid; grid-template-columns:250px minmax(0,1fr); gap:14px; align-items:start}
@@ -901,6 +905,317 @@ bindTips($('#joint-svg'), el=>{
   if(el.dataset.tt==='cell'){ const b=el.dataset.bm==='all'?null:BM[el.dataset.bm], st=STAGES[SIDX[el.dataset.stage]], ly=LAYERS[LIDX[el.dataset.layer]]; const es=cellEntries(st.id, ly.id, b?new Set([b.id]):null); const n=h('div'); n.append(h('b',{text:`${b?b.short:'All benchmarks'} · ${st.name} / ${ly.name}`})); n.append(h('div',{class:'m',text: es.length? `${KIND[es[0].kind].label} · ${es.length} ${es.length===1?'task environment':'task environments'}` : 'no audited task reaches this cell'})); for(const e of es.slice(0,3)) n.append(h('p',{text:`${e.t.title}${e.t.count>1?' ×'+e.t.count:''} — ${e.relation}`})); if(es.length>3) n.append(h('p',{text:`… and ${es.length-3} more`})); return n; }
   if(el.dataset.tt==='score'){ const r = el.dataset.bm==='all' ? scoreRow(null) : scoreRow(BM[el.dataset.bm]); const n=h('div'); n.append(h('b',{text: r.b? r.b.name : 'All ten benchmarks'})); if(r.cen){ const c=r.cen; n.append(h('div',{class:'m',text:`RSI in benchmark: ${c.L} of ${c.public} public task environments touch the LLM life cycle (${Math.round(100*c.L/Math.max(1,c.public))}%)`})); } const nb=[...r.cells.values()].filter(v=>v==='bounded').length, na=[...r.cells.values()].filter(v=>v==='adjacent').length; n.append(h('div',{class:'m',text:`coverage ${r.pct}% · ${r.meas} executed · ${nb} bounded · ${na} related · ${NCELL-r.any} untouched`})); const M=[...r.cells].filter(([k,v])=>v==='measured').map(([k])=>cellName(k)); if(M.length) n.append(h('p',null,h('span',{style:'font-weight:600',text:'Executed: '}),M.join('; '))); return n; }
   return null; });
+
+// build-up animation of the coverage figure; it runs in this script, right after the figure is drawn, so no frame of the static drawing is painted first
+/* Coverage figure build-up animation (#fig-joint). Animates INTO the static drawing:
+   every effect ends on the element's own final style, and at the end every effect is cancelled and every change undone. */
+(function(){
+'use strict';
+const fig=document.getElementById('fig-joint'), host=document.getElementById('joint-svg');
+if(!fig||!host||!Element.prototype.animate||!(window.CSS&&CSS.supports&&CSS.supports('translate','1px')&&CSS.supports('scale','1'))) return;
+const RM=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+const EO='cubic-bezier(.22,.61,.36,1)', FLY='cubic-bezier(.4,0,.3,1)';
+// timeline (ms): frame, rows drop in audit order, evidence fills in, marks flow left into the scores and down into the
+// stage totals, then the rows sort. flowD, sort and end follow from the flights and are set per run.
+const T={hdr:0, hdrStep:120, hdrDur:560, grid:820, stagger:58, drop:500, dropH:16, ev:[1880,2160,2440], evSweep:380, evDur:420,
+  flowL:3340, flowD:0, overlap:300, grow:200, rest:320, sort:0, end:0};
+// flights: a copy covering d px travels base+per*d ms, then is absorbed at the bar tip over absorb ms;
+// rows leave in audit order, stages left to right (bottom rows first within a stage, rowLag apart),
+// and a row's ½ and ¼ cells land after its executed ones
+const F={base:340, per:.72, absorb:140, row:40, stage:120, rowLag:25, partAfter:90, passes:4};
+// sort: rows are lifted one at a time in rank order; a lift over n slots takes base+per*n ms, the next may start after gap of it
+const S={base:260, per:48, gap:.5, dt:16};
+const KW=[.25,.5,1];   // cell weights by evidence kind: related, bounded, executed
+let run=null;
+const num=(el,a)=>parseFloat(el.getAttribute(a)||'0');
+const kindOf=el=>el.classList.contains('ev3')?2:el.classList.contains('ev2')?1:el.classList.contains('ev1')?0:-1;
+// CSS cubic-bezier as a function of progress, for motion that is sampled rather than keyframed
+function bez(x1,y1,x2,y2){ const f=(a,b,t)=>((1-3*b+3*a)*t+(3*b-6*a))*t*t+3*a*t;
+  return p=>{ if(p<=0) return 0; if(p>=1) return 1; let lo=0,hi=1,t=p; for(let i=0;i<30;i++){ const x=f(x1,x2,t); if(Math.abs(x-p)<1e-6) break; if(x<p) lo=t; else hi=t; t=(lo+hi)/2; } return f(y1,y2,t); }; }
+const eMove=bez(.65,0,.35,1), smooth=u=>u<=0?0:u>=1?1:u*u*(3-2*u), easeOut=p=>p<=0?0:p>=1?1:1-Math.pow(1-p,3);
+// how much of a bar has landed at t: each arrival eases in its weight over T.grow (bars and counters both use this)
+const landed=(arr,t)=>{ let a=0; for(const x of arr) a+=x.w*easeOut((t-x.t)/T.grow); return a; };
+// insertion in rank order; each passed row drops one slot while the lifted row crosses it
+function plan(rows){
+  const order=rows.slice().sort((a,b)=>a.aud-b.aud), steps=[];
+  for(let k=0;k<rows.length;k++){ const r=rows.find(x=>x.fin===k), p=order.indexOf(r); if(p>k) steps.push({r,k,p,passed:order.slice(k,p),d:S.base+S.per*(p-k)}); order.splice(p,1); order.splice(k,0,r); }
+  const pos=(r,t)=>{ let y=r.aud; for(const s of steps){ if(s.a===undefined) continue; const e=eMove((t-s.a)/s.d); if(s.r===r){ y-=(s.p-s.k)*e; continue; } const i=s.passed.indexOf(r); if(i>=0) y+=smooth(s.k+i+1-(s.p-(s.p-s.k)*e)); } return y; };
+  const lifted=(r,t)=>steps.some(s=>s.r===r&&s.a!==undefined&&t>=s.a&&t<=s.a+s.d);
+  // lifted rows never meet each other, and rows lying flat never overlap
+  const clash=j=>{ const s=steps[j]; for(let t=s.a;t<=s.a+s.d;t+=8){
+      for(let m=0;m<j;m++){ const q=steps[m]; if(t>=q.a&&t<=q.a+q.d&&Math.abs(pos(s.r,t)-pos(q.r,t))<1.04) return true; }
+      const ys=rows.filter(r=>!lifted(r,t)).map(r=>pos(r,t)).sort((a,b)=>a-b); for(let q=1;q<ys.length;q++) if(ys[q]-ys[q-1]<.97) return true; }
+    return false; };
+  steps.forEach((s,j)=>{ s.a=j?steps[j-1].a+S.gap*steps[j-1].d:T.sort; for(let n=0;n<400&&clash(j);n++) s.a+=10; });
+  return {steps,pos};
+}
+// copies in one group leave together and land one after another on a growing bar. Each aims at the tip as it will stand
+// when it arrives, plus half its own share; a few passes settle arrival order, aim and travel time.
+function settle(items,dep,aim){
+  for(const it of items) it.travel=F.base+F.per*it.d;
+  for(let pass=0;pass<F.passes;pass++){
+    const t0=dep(items); for(const it of items) it.arr=t0+(it.lag||0)+it.travel;
+    items.sort((a,b)=>a.arr-b.arr);
+    items.forEach((it,i)=>{ Object.assign(it,aim(it,landed(items.slice(0,i).map(x=>({t:x.arr,w:x.w})),it.arr))); it.travel=F.base+F.per*it.d; });
+  }
+  const t0=dep(items); for(const it of items){ it.dep=t0+(it.lag||0); it.arr=it.dep+it.travel; } items.sort((a,b)=>a.arr-b.arr);
+  return items;
+}
+function collect(){
+  const svg=host.querySelector('svg'); if(!svg) return null;
+  const names=[...svg.querySelectorAll('g.namebtn')]; if(!names.length) return null;
+  const rowY=names.map(g=>num(g.querySelector('rect'),'y')), RH=rowY.length>1?rowY[1]-rowY[0]:26;
+  const rows=names.map((g,i)=>({bm:g.dataset.bm,y0:rowY[i],fin:i,els:[g],fills:[],pct:null,track:null,marks:[]}));
+  const yEnd=rowY[rowY.length-1]+RH;
+  const marks=[...svg.querySelectorAll('rect.cellmark')];
+  for(const m of marks){ const r=rows.find(r=>r.bm===m.dataset.bm); if(r){ r.els.push(m); r.marks.push(m); } }
+  const mx=marks.map(m=>num(m,'x')), xmin=Math.min(...mx), xmax=Math.max(...mx);
+  for(const el of svg.querySelectorAll('rect,text')){
+    if(el.closest('g.namebtn,g.hdrbtn')||el.classList.contains('cellmark')) continue;
+    const x=num(el,'x'), y=num(el,'y'); if(x>=xmin-6) continue;
+    const r=rows.find(r=>y>=r.y0&&y<r.y0+RH); if(!r) continue;
+    r.els.push(el);
+    if(el.tagName==='text') r.pct=el; else if(el.classList.contains('ev0')) r.track=el; else r.fills.push(el);
+  }
+  const lines=[...svg.querySelectorAll('line')];
+  const vlines=lines.filter(l=>num(l,'x1')===num(l,'x2'));
+  const topRules=lines.filter(l=>num(l,'y1')===num(l,'y2')&&num(l,'y1')<rowY[0]);
+  const hdrs=[...svg.querySelectorAll('g.hdrbtn')].map(h=>({h,b:h.getBBox()})).sort((a,b)=>a.b.x-b.b.x);
+  const icons=[...svg.querySelectorAll('use.hic')].sort((a,b)=>num(a,'x')-num(b,'x'));
+  const colHeads=[...svg.querySelectorAll('text')].filter(t=>!t.closest('g')&&num(t,'y')<rowY[0]);
+  const bottom=[...svg.querySelectorAll('rect,text,line')].filter(el=>{ if(el.tagName==='line') return num(el,'y1')===num(el,'y2')&&num(el,'y1')>=yEnd-6; return !el.closest('g')&&num(el,'y')>=yEnd; });
+  // left edge of the lifted card: the longest benchmark name, measured before anything moves
+  const nameX=Math.min(...rows.map(r=>{ const t=r.els[0].querySelector('text'); return t?t.getBBox().x:0; }));
+  return {svg,rows,RH,marks,xmin,xmax,vlines,topRules,hdrs,icons,colHeads,bottom,nameX};
+}
+function audit(){ const A=(window.U&&U.A)||window.AUDIT; return (A&&A.benchmarks?A.benchmarks.filter(b=>b.group==='primary').map(b=>b.id):[]); }
+function build(G){
+  const anims=[], counters=[], styles=new Map();
+  // every computed value is read up front, before the first animate() dirties styles
+  const oc=new Map(), fc=new Map(), rd=el=>{ const cs=getComputedStyle(el), v=parseFloat(cs.opacity); oc.set(el,isNaN(v)?1:v); fc.set(el,cs.fill); };
+  for(const el of [...G.hdrs.map(x=>x.h),...G.colHeads,...G.topRules,...G.icons,...G.vlines,...G.bottom,...G.rows.flatMap(r=>r.els)]) rd(el);
+  const op=el=>{ if(!oc.has(el)) rd(el); return oc.get(el); }, fillOf=el=>{ if(!fc.has(el)) rd(el); return fc.get(el); };
+  const rgb=c=>(String(c).match(/[\d.]+/g)||[0,0,0]).slice(0,3).map(Number);
+  const surf=(()=>{ let e=fig; while(e){ const b=getComputedStyle(e).backgroundColor; if(b&&b!=='transparent'&&!/rgba\(0, 0, 0, 0\)/.test(b)) return rgb(b); e=e.parentElement; } return [255,255,255]; })();
+  // an untouched mark is ink at low opacity; coloured marks start from that colour, pre-blended over the figure surface
+  const grey=G.svg.querySelector('rect.cellmark.none'), ink=grey?rgb(fillOf(grey)):[200,200,200], ga=grey?op(grey):1;
+  const gFill='rgb('+ink.map((v,i)=>Math.round(surf[i]*(1-ga)+v*ga)).join(',')+')', gOp=1;
+  // static copies of each row, for the lifted card during the sort
+  for(const r of G.rows) r.clones=r.els.map(el=>{ const n=el.cloneNode(true); for(const e of [n,...n.querySelectorAll('*')]){ ['id','tabindex','role','aria-label','data-tt'].forEach(a=>e.removeAttribute(a)); } return n; });
+
+  const add=(el,kf,o)=>{ const a=el.animate(kf,Object.assign({fill:'backwards',easing:EO},o)); anims.push(a); return a; };
+  // transform boxes are set inline; the original style attribute is kept and put back at the end
+  const box=(el,origin,kind)=>{ if(!styles.has(el)) styles.set(el,el.getAttribute('style')); el.style.transformBox=kind||'fill-box'; el.style.transformOrigin=origin; };
+  const NS='http://www.w3.org/2000/svg', mk=(tag,at)=>{ const e=document.createElementNS(NS,tag); for(const k in at) e.setAttribute(k,at[k]); return e; };
+  // one continuous timeline per element, built from absolute-time stops
+  const life=(el,stops)=>{ stops.sort((a,b)=>a.t-b.t); const t0=stops[0].t, t1=stops[stops.length-1].t, D=Math.max(1,t1-t0);
+    const cur={}; const kf=stops.map(st=>{ for(const q of ['opacity','translate','fill']) if(st[q]!==undefined) cur[q]=st[q]; const k=Object.assign({offset:(st.t-t0)/D},cur); k.easing=st.easing||'linear'; return k; });
+    for(const q of ['opacity','translate','fill']){ const first=kf.find(k=>k[q]!==undefined); if(first) kf.forEach(k=>{ if(k[q]===undefined) k[q]=first[q]; }); }
+    return add(el,kf,{delay:t0,duration:D,easing:'linear'}); };
+  // f(t) sampled on [t0,t1]; samples inside flat runs are dropped
+  const samp=(f,t0,t1)=>{ const s=[]; for(let t=t0;;t+=S.dt){ const tt=Math.min(t,t1); s.push({t:tt,v:+f(tt).toFixed(4)}); if(tt>=t1) break; }
+    return s.filter((p,i)=>i===0||i===s.length-1||p.v!==s[i-1].v||p.v!==s[i+1].v); };
+  // a bar that grows from its left end as its copies land
+  const grow=(el,arr,tot,fallback)=>{ box(el,'left center');
+    if(!arr.length||!(tot>0)) return add(el,[{scale:'0 1'},{scale:'1 1'}],{delay:fallback,duration:600});
+    const t0=arr[0].t, t1=arr[arr.length-1].t+T.grow, f=t=>landed(arr,t)/tot;
+    return add(el,samp(f,t0,t1).map(p=>({offset:(p.t-t0)/(t1-t0),scale:`${p.v} 1`})),{delay:t0,duration:t1-t0,easing:'linear'}); };
+
+  // 1. frame: stage headers, their rules, layer icons, the score-column heading
+  G.hdrs.forEach(({h},i)=>add(h,[{opacity:0,translate:'0 8px'},{opacity:op(h),translate:'0 0'}],{delay:T.hdr+i*T.hdrStep,duration:T.hdrDur}));
+  G.colHeads.forEach(t=>add(t,[{opacity:0,translate:'0 8px'},{opacity:op(t),translate:'0 0'}],{delay:T.hdr+75,duration:T.hdrDur}));
+  G.topRules.forEach(l=>{ box(l,'left center'); const i=G.hdrs.findIndex(({b})=>num(l,'x1')>=b.x-40&&num(l,'x1')<=b.x+b.width); add(l,[{scale:'0 1'},{scale:'1 1'}],{delay:T.hdr+Math.max(0,i)*T.hdrStep+150,duration:T.hdrDur}); });
+  // a <use>'s fill box does not include its x/y, so icons scale about their own centre in view-box units (the viewBox starts at 0 0)
+  const per=Math.max(1,Math.round(G.icons.length/Math.max(1,G.hdrs.length)));
+  G.icons.forEach((ic,k)=>{ box(ic,`${num(ic,'x')+num(ic,'width')/2}px ${num(ic,'y')+num(ic,'height')/2}px`,'view-box'); const si=Math.floor(k/per), li=k%per; add(ic,[{opacity:0,scale:'.55'},{opacity:op(ic),scale:'1'}],{delay:T.hdr+si*T.hdrStep+210+li*36,duration:360}); });
+  G.vlines.forEach(l=>add(l,[{opacity:0},{opacity:op(l)}],{delay:T.grid,duration:600}));
+
+  // 2. rows drop in AUDIT order (they sort into ranking at the end)
+  const order=audit(), pos=new Map(order.map((id,i)=>[id,i]));
+  G.rows.slice().sort((a,b)=>(pos.has(a.bm)?pos.get(a.bm):99)-(pos.has(b.bm)?pos.get(b.bm):99)).forEach((r,ai)=>{ r.aud=ai; });
+  for(const r of G.rows){ r.off=(r.aud-r.fin)*G.RH; r.s0=T.grid+r.aud*T.stagger; r.s1=r.s0+T.drop; }
+  const W8=G.marks.length?num(G.marks[0],'width'):8, flights=[];
+
+  // 4a. flow left: each coloured mark sends a copy along its row into the tip of the bar, which grows by that cell's weight;
+  //     executed cells land first (dark segment), then the ½ and ¼ cells extend the light segment
+  let lastL=T.flowL;
+  for(const r of G.rows){
+    const x0=r.track?num(r.track,'x'):0, f3=r.fills.find(f=>f.classList.contains('ev3')), f2=r.fills.find(f=>f.classList.contains('ev2'));
+    const W3=f3?num(f3,'width'):0, W2=f2?num(f2,'width'):0, x2=f2?num(f2,'x'):x0+W3+1;
+    const cells=r.marks.map(m=>({m,k:kindOf(m),x:num(m,'x')})).filter(c=>c.k>=0);
+    const meas=cells.filter(c=>c.k===2).map(c=>({...c,w:1,d:Math.abs(x0+W3-c.x)})), part=cells.filter(c=>c.k<2).map(c=>({...c,w:KW[c.k],d:Math.abs(x2-c.x)}));
+    const nM=meas.length, WP=part.reduce((a,c)=>a+c.w,0), d0=T.flowL+r.aud*F.row;
+    settle(meas,()=>d0,(it,l)=>{ const dx=Math.max(x0,x0+W3*(l+it.w/2)/nM-W8/2)-it.x; return {dx,d:Math.abs(dx)}; });
+    const lastM=meas.length?meas[meas.length-1].arr:d0;
+    settle(part,its=>Math.max(d0+(nM?160:0),lastM+F.partAfter-Math.min(...its.map(it=>it.travel))),(it,l)=>{ const dx=Math.max(x0,(f2?x2+W2*(l+it.w/2)/WP:x2)-W8/2)-it.x; return {dx,d:Math.abs(dx)}; });
+    const under=f2&&f3?(f2.compareDocumentPosition(f3)&Node.DOCUMENT_POSITION_FOLLOWING?f2:f3):(f2||f3);
+    for(const it of [...meas,...part]) flights.push({m:it.m,o:op(it.m),dep:it.dep,travel:it.travel,from:[0,r.off],to:[it.dx,r.off],dir:'x',under});
+    const a3=meas.map(it=>({t:it.arr,w:1})), a2=part.map(it=>({t:it.arr,w:it.w}));
+    r.flow={d0,a3,a2,all:[...a3,...a2].sort((a,b)=>a.t-b.t),f3,f2,nM,WP};
+    for(const a of r.flow.all) lastL=Math.max(lastL,a.t);
+  }
+
+  // 4b. flow down: each stage column funnels its coloured marks into the stage's bar in the bottom row;
+  //     every task environment counted there sits behind one of these marks
+  T.flowD=Math.round(lastL-T.overlap);
+  const bTracks=G.bottom.filter(e=>e.tagName==='rect'&&e.classList.contains('ev0')).sort((a,b)=>num(a,'x')-num(b,'x'));
+  const bFills=G.bottom.filter(e=>e.tagName==='rect'&&e.classList.contains('ev3')), bNums=G.bottom.filter(e=>e.tagName==='text'&&e.classList.contains('mono'));
+  const stages=[]; let lastD=T.flowD;
+  bTracks.forEach((tr,j)=>{
+    const gx0=num(tr,'x'), gw=num(tr,'width'), fill=bFills.find(f=>Math.abs(num(f,'x')-gx0)<.5), Wb=fill?num(fill,'width'):0;
+    const yB=fill?num(fill,'y')+num(fill,'height')/2:num(tr,'y')+num(tr,'height')/2, dep=T.flowD+j*F.stage;
+    const cs=[]; for(const r of G.rows) for(const m of r.marks){ const x=num(m,'x'); if(kindOf(m)>=0&&x>=gx0-1&&x<gx0+gw) cs.push({m,r,x,w:1,dy:yB-W8/2-num(m,'y'),lag:F.rowLag*(G.rows.length-1-r.aud)}); }
+    for(const c of cs) c.d=Math.hypot(gx0+Wb/2-c.x,c.dy-c.r.off);
+    settle(cs,()=>dep,(it,l)=>{ const dx=Math.max(gx0,gx0+Wb*(l+.5)/cs.length-W8/2)-it.x; return {dx,d:Math.hypot(dx,it.dy-it.r.off)}; });
+    for(const it of cs) flights.push({m:it.m,o:op(it.m),dep:it.dep,travel:it.travel,from:[0,it.r.off],to:[it.dx,it.dy],dir:'y',under:fill});
+    const nums=bNums.filter(t=>{ const x=num(t,'x'); return x>=gx0-1&&x<gx0+gw; });
+    stages.push({fill,arr:cs.map(it=>({t:it.arr,w:1})),cnt:nums.find(t=>!t.classList.contains('mut')),sh:nums.find(t=>t.classList.contains('mut'))});
+    for(const it of cs) lastD=Math.max(lastD,it.arr);
+  });
+  T.sort=Math.ceil(Math.max(lastL,lastD)+T.grow+T.rest);
+
+  // 5. sort plan; every row follows its sampled path, and each lifted row rides on an opaque copy of its own slice of the figure
+  const P=plan(G.rows);
+  T.end=Math.ceil(Math.max(T.sort,...P.steps.map(s=>s.a+s.d)))+40;
+  const track=(r,t0,t1)=>samp(t=>(P.pos(r,t)-r.fin)*G.RH,t0,t1);
+
+  // 3. evidence: every mark starts looking untouched; coloured ones fill in by wave (related, bounded, executed), left to right
+  const span=Math.max(1,G.xmax-G.xmin);
+  for(const r of G.rows){
+    const moves=[{t:r.s0,translate:`0 ${r.off-T.dropH}px`,easing:EO},{t:r.s1,translate:`0 ${r.off}px`},...track(r,T.sort,T.end).map(p=>({t:p.t,translate:`0 ${p.v}px`}))];
+    for(const el of r.els){
+      const o=op(el), k=el.classList.contains('cellmark')?kindOf(el):-1;
+      if(k>=0){
+        const fin=fillOf(el), x=num(el,'x'), c0=Math.max(r.s1+20,T.ev[k]+(x-G.xmin)/span*T.evSweep), c1=c0+T.evDur;
+        life(el,[...moves.map(m=>({...m})),{t:r.s0,opacity:0,fill:gFill},{t:r.s1,opacity:gOp,fill:gFill},{t:c0,opacity:gOp,fill:gFill,easing:EO},{t:c1,opacity:o,fill:fin}].reduce(merge,[]));
+        box(el,'center');
+        if(k===2) anims.push(el.animate([{scale:'1'},{scale:'1.45'},{scale:'1'}],{delay:c0,duration:440,easing:EO}));
+      } else if(el===r.pct){
+        life(el,[...moves.map(m=>({...m})),{t:r.s0,opacity:0},{t:r.flow.d0,opacity:0,easing:EO},{t:r.flow.d0+260,opacity:o}].reduce(merge,[]));
+        counters.push({el,arr:r.flow.all,tot:r.flow.nM+r.flow.WP});
+      } else {
+        life(el,[...moves.map(m=>({...m})),{t:r.s0,opacity:0},{t:r.s1,opacity:o}].reduce(merge,[]));
+      }
+    }
+    // 4a. the bars fill as the copies land
+    if(r.flow.f3) grow(r.flow.f3,r.flow.a3,r.flow.nM,T.flowL);
+    if(r.flow.f2) grow(r.flow.f2,r.flow.a2,r.flow.WP,T.flowL);
+  }
+  // 4b. bottom row: frame fades in just before the flow; bars and counts follow the arrivals, and the share keeps
+  //     its usual distance from the count while the count has fewer digits than it will end with
+  for(const el of G.bottom) if(!(el.tagName==='rect'&&el.classList.contains('ev3'))) add(el,[{opacity:0},{opacity:op(el)}],{delay:T.flowD-280,duration:360});
+  for(const s of stages){
+    if(s.fill) grow(s.fill,s.arr,s.arr.length,T.flowD);
+    if(s.cnt) counters.push({el:s.cnt,arr:s.arr,tot:s.arr.length,share:s.sh||null,shareX:s.sh?s.sh.getAttribute('x'):null,gx:num(s.cnt,'x')});
+    if(s.sh) counters.push({el:s.sh,arr:s.arr,tot:s.arr.length});
+  }
+
+  // the copies in flight: each leaves its mark (which gives a small recoil), stretches along its path and arrives fully
+  // opaque at the tip. It flies just under the bar it feeds, so the growing bar covers it while it is absorbed.
+  const fx=mk('g',{class:'joint-flow','aria-hidden':'true'}), groups=new Map();
+  const holder=u=>{ if(!u||!u.parentNode) return fx; let g=groups.get(u); if(!g){ g=mk('g',{class:'joint-flow','aria-hidden':'true'}); u.parentNode.insertBefore(g,u); groups.set(u,g); } return g; };
+  for(const f of flights){
+    const p=f.m.cloneNode(false); ['tabindex','role','aria-label','data-tt','data-bm','data-stage','data-layer','style'].forEach(a=>p.removeAttribute(a));
+    p.style.opacity='0'; p.style.transformBox='fill-box'; p.style.transformOrigin='center'; holder(f.under).append(p);
+    const D=f.travel+F.absorb, k=f.travel/D, st=f.dir==='x'?'1.4 .72':'.72 1.4';
+    anims.push(p.animate([{translate:`${f.from[0].toFixed(2)}px ${f.from[1].toFixed(2)}px`},{translate:`${f.to[0].toFixed(2)}px ${f.to[1].toFixed(2)}px`}],{delay:f.dep,duration:f.travel,easing:FLY,fill:'forwards'}));
+    anims.push(p.animate([{offset:0,scale:'1 1',opacity:f.o},{offset:.2*k,scale:st,opacity:f.o},{offset:.85*k,scale:st,opacity:f.o},{offset:k,scale:'1 1',opacity:f.o,easing:'ease-in'},{offset:1,scale:'.4 .4',opacity:0}],{delay:f.dep,duration:D,easing:'linear',fill:'none'}));
+    anims.push(f.m.animate([{scale:'1'},{scale:'.78'},{scale:'1'}],{delay:f.dep,duration:260,easing:'ease-out'}));
+  }
+  if(fx.childNodes.length) G.svg.append(fx); G.flows=[fx,...groups.values()];
+  // the bottom-row label stays above the copies falling through it; its place is restored at the end
+  const label=G.bottom.find(e=>e.tagName==='text'&&e.classList.contains('lg'));
+  const raised=[label].filter(Boolean).map(el=>({el,next:el.nextSibling}));
+  for(const q of raised) G.svg.append(q.el);
+
+  // 5. the lifted cards
+  const ov=mk('g',{class:'joint-lift','aria-hidden':'true'}), card='rgb('+surf.join(',')+')', dark=surf[0]+surf[1]+surf[2]<384, lift='rgb('+surf.map(v=>Math.round(v+(255-v)*.05)).join(',')+')';
+  const flt=mk('filter',{id:'joint-lift-shadow',x:'-5%',y:'-80%',width:'110%',height:'260%'});
+  flt.append(mk('feDropShadow',{dx:0,dy:2,stdDeviation:4,'flood-color':dark?'#000':'#1c2330','flood-opacity':dark?.4:.16}));
+  const defs=mk('defs',{}); defs.append(flt); ov.append(defs);
+  const vx=G.vlines.map(l=>num(l,'x1')), xL=Math.max(0,G.nameX-12), xR=Math.min(+G.svg.viewBox.baseVal.width||1e4,Math.max(...vx,G.xmax+8)+4)-1;
+  for(const s of P.steps){
+    const y=s.r.y0, c=mk('g',{}), sh=mk('rect',{x:xL,y:y+1,width:xR-xL,height:G.RH-2,rx:5,fill:card,filter:'url(#joint-lift-shadow)'});
+    const face=mk('rect',{x:xL,y,width:xR-xL,height:G.RH,rx:5,fill:card}); c.style.opacity='0'; c.append(sh,face);
+    G.vlines.forEach(l=>{ const n=l.cloneNode(false); n.setAttribute('y1',y); n.setAttribute('y2',y+G.RH); c.append(n); });
+    s.r.clones.forEach(n=>c.append(n)); ov.append(c);
+    anims.push(c.animate(track(s.r,s.a,s.a+s.d).map(p=>({offset:(p.t-s.a)/s.d,translate:`0 ${p.v}px`,opacity:1})),{delay:s.a,duration:s.d,fill:'none',easing:'linear'}));
+    anims.push(sh.animate([{opacity:0},{opacity:1,offset:.25},{opacity:1,offset:.75},{opacity:0}],{delay:s.a,duration:s.d,fill:'none'}));
+    // on a dark page a lifted surface reads as slightly lighter rather than shadowed
+    if(dark) anims.push(face.animate([{fill:card},{fill:lift,offset:.25},{fill:lift,offset:.75},{fill:card}],{delay:s.a,duration:s.d,fill:'none'}));
+  }
+  G.svg.append(ov); G.overlay=ov;
+
+  for(const c of counters){ c.final=c.el.textContent; const m=c.final.match(/^(\D*)(\d+)(.*)$/); c.pre=m?m[1]:''; c.n=m?+m[2]:0; c.post=m?m[3]:''; c.live=!!m&&c.tot>0; }
+  const clock=G.svg.animate([{opacity:1},{opacity:1}],{duration:T.end,fill:'none'}); anims.push(clock);
+  return {anims,counters:counters.filter(c=>c.live),clock,G,P,styles,raised,started:false,seeked:false};
+}
+// merge stops that share a time into one keyframe; carry each property forward so every keyframe is complete
+function merge(acc,st){ const e=acc.find(a=>a.t===st.t); if(e) Object.assign(e,st); else acc.push({...st}); return acc; }
+// counters show the weight that has landed so far, on the same curve as their bars
+function draw(){
+  if(!run) return; const t=run.clock.currentTime||0;
+  for(const c of run.counters){ const v=Math.round(c.n*Math.min(1,landed(c.arr,t)/c.tot)), s=c.pre+v+c.post;
+    if(s!==c.last){ c.el.textContent=s; c.last=s; if(c.share) c.share.setAttribute('x',String(c.gx+String(v).length*7+3)); } }
+}
+function tick(){ if(!run) return; draw(); if(run.clock.playState==='running') run.raf=requestAnimationFrame(tick); }
+function finish(){
+  if(!run) return; const R=run; run=null; cancelAnimationFrame(R.raf); clearTimeout(R.timer); clearTimeout(R.kick);
+  for(const c of R.counters){ c.el.textContent=c.final; if(c.share&&c.shareX!==null) c.share.setAttribute('x',c.shareX); }
+  R.anims.forEach(a=>a.cancel());
+  for(const g of [...(R.G.flows||[]),R.G.overlay]) if(g) g.remove();
+  for(const q of R.raised) if(q.el.parentNode) q.el.parentNode.insertBefore(q.el,q.next&&q.next.parentNode===q.el.parentNode?q.next:null);
+  // (a style written only through CSSOM is made a real attribute first, or removing it leaves style="")
+  for(const [el,s] of R.styles){ if(s===null){ el.setAttribute('style',''); el.removeAttribute('style'); } else el.setAttribute('style',s); }
+}
+function prepare(){
+  finish(); const G=collect(); if(!G) return null; const R=build(G); run=R;
+  R.anims.forEach(a=>{ a.pause(); a.currentTime=0; });
+  if(!R.styles.has(G.svg)) R.styles.set(G.svg,G.svg.getAttribute('style')); G.svg.style.pointerEvents='none';
+  draw(); R.clock.onfinish=()=>{ R.timer=setTimeout(()=>{ if(run===R) finish(); },40); };
+  return R;
+}
+// resumes each effect from where it stands (a.play() would rewind effects that have already ended)
+function play(){
+  if(!run&&!prepare()) return; if(run.started) return; run.started=true;
+  // the clock is started on the next frame, so time spent building is not cut from the start of the build-up;
+  // if no frame comes (a page that is not being rendered), it starts from the timeline instead of staying blank
+  const R=run, begin=ts=>{ if(run!==R||R.begun) return; R.begun=true; clearTimeout(R.kick); R.anims.forEach(a=>{ a.startTime=ts-(a.currentTime||0); }); tick(); };
+  R.begun=false; cancelAnimationFrame(R.raf); clearTimeout(R.kick); R.raf=requestAnimationFrame(begin); R.kick=setTimeout(()=>begin(document.timeline.currentTime),300);
+}
+// triggers: build when the figure comes within a screen of the viewport, play once 35% of it is visible
+let io=null, pre=null, played=false;
+const near=()=>{ const r=fig.getBoundingClientRect(); return r.bottom>-innerHeight&&r.top<innerHeight*2; };
+// an instant jump (not a smooth scroll) can land on the figure before the observer reports it: build on the scroll event, before paint
+const onScroll=()=>{ if(run||played||!near()) return; removeEventListener('scroll',onScroll); prepare(); };
+const stopWatching=()=>{ if(io){ io.disconnect(); io=null; } if(pre){ pre.disconnect(); pre=null; } removeEventListener('scroll',onScroll); };
+// replay control in the figure header
+const ft=fig.querySelector('.fig-title');
+if(ft&&!RM&&!ft.querySelector('.replay')){ const b=document.createElement('button'); b.type='button'; b.className='replay'; b.setAttribute('aria-label','Replay the figure build-up');
+  b.innerHTML='<span aria-hidden="true">↻</span> replay'; b.addEventListener('click',()=>{ played=true; stopWatching(); prepare(); play(); }); ft.append(b); }
+// frame inspection hooks, only on pages that ask for them (seek(ms) freezes the build-up at that moment)
+if(document.documentElement.hasAttribute('data-anim-debug')) window.__jointAnim={
+  info(){ if(!run) prepare(); return {T:{...T},flights:run.G.flows.reduce((a,g)=>a+g.childElementCount,0),steps:run.P.steps.map(s=>({bm:s.r.bm,from:s.p,to:s.k,a:Math.round(s.a),d:s.d}))}; },
+  seek(t){ if(!run) prepare(); run.started=false; run.seeked=true; cancelAnimationFrame(run.raf); clearTimeout(run.kick); run.anims.forEach(a=>{ a.pause(); a.currentTime=Math.min(t,T.end-1); }); draw(); return run.clock.currentTime; },
+  play, finish, T};
+if(RM) return;
+// the figure is re-rendered (a stage header toggled): drop the run, the new drawing is static
+new MutationObserver(()=>{ if(run&&!host.contains(run.G.svg)) finish(); }).observe(host,{childList:true});
+// theme changed: colours were read when the run was built, so rebuild it at the same moment
+function retheme(){ if(!run) return; if(run.started&&run.clock.playState==='finished'){ finish(); return; }
+  const t=run.clock.currentTime||0, going=run.started, seeked=run.seeked;
+  prepare(); if(t>0){ run.anims.forEach(a=>{ a.currentTime=Math.min(t,T.end-1); }); draw(); } run.seeked=seeked; if(going) play(); }
+new MutationObserver(retheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+const mq=matchMedia('(prefers-color-scheme: dark)'); if(mq.addEventListener) mq.addEventListener('change',retheme);
+// print the finished figure, never a frame of the build-up
+addEventListener('beforeprint',()=>finish());
+addEventListener('afterprint',()=>{ if(!played&&near()) prepare(); });
+if(near()) prepare();
+else{ addEventListener('scroll',onScroll,{passive:true}); pre=new IntersectionObserver(es=>{ if(es.some(e=>e.isIntersecting)){ pre.disconnect(); pre=null; if(!run&&!played) prepare(); } },{rootMargin:'100% 0px'}); pre.observe(fig); }
+io=new IntersectionObserver(es=>{ if(es.some(e=>e.isIntersecting)){ played=true; stopWatching(); play(); } },{threshold:.35}); io.observe(fig);
+// text measured before web fonts arrive can be a pixel or two off: rebuild once they are in, if the run has not started
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{ if(run&&!run.started&&!run.seeked) prepare(); });
+})();
 
 // ---------- figure 1: life cycles
 let selModel=null, showStageSubs=false;
