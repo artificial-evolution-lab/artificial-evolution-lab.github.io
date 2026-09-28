@@ -368,7 +368,7 @@ svg .hdrbtn{cursor:pointer} svg .hdrbtn:hover text.lg{fill:var(--accent)} svg .h
 <section class="block" id="lifecycle">
   <span class="section-no">03</span>
   <h2>Where could new task environments come from?</h2>
-  <p>Where could we find the materials to build task environments that fill these gaps? Public training reports and run records describe the work involved in developing LLMs, while widely used open-source frameworks provide implementations across the lifecycle. Together, they offer a starting point for extending existing benchmarks with tasks grounded in real training and deployment workflows. The open side is further along than it may seem. Several open models now compete with frontier proprietary ones and were trained on open-source frameworks, GLM-5 on <a href="https://github.com/THUDM/slime" target="_blank" rel="noreferrer">slime</a> and Nemotron 3 on <a href="https://github.com/NVIDIA-NeMo/RL" target="_blank" rel="noreferrer">NeMo RL</a>; Xiaomi even streamed MiMo-V2.6's RL run to a <a href="https://mimo.xiaomi.com/rl/mimo-v26" target="_blank" rel="noreferrer">public dashboard</a>. Reviewing these materials, the full cycle falls into the same five stages we audit against, from data through pretraining and post-training to agent post-training and deployment.</p>
+  <p>Public training reports and run records describe the work involved in developing LLMs, while widely used open-source frameworks provide implementations across the lifecycle. Together, they offer a starting point for extending existing benchmarks with tasks grounded in real training and deployment workflows. The open side is further along than it may seem. Several open models now compete with frontier proprietary ones and were trained on open-source frameworks, GLM-5 on <a href="https://github.com/THUDM/slime" target="_blank" rel="noreferrer">slime</a> and Nemotron 3 on <a href="https://github.com/NVIDIA-NeMo/RL" target="_blank" rel="noreferrer">NeMo RL</a>; Xiaomi even streamed MiMo-V2.6's RL run to a <a href="https://mimo.xiaomi.com/rl/mimo-v26" target="_blank" rel="noreferrer">public dashboard</a>. Reviewing these materials, the full cycle falls into the same five stages we audit against, from data through pretraining and post-training to agent post-training and deployment.</p>
   <figure id="fig-life" aria-label="Documented lifecycles of models and recipes across five stages">
     <div class="fig-title"><strong>Documented lifecycles</strong><span id="life-meta"></span></div>
     <div class="legend"><span class="k"><i class="dot ev2"></i> public code or released recipe for that stage</span><span class="k"><i class="dot ring"></i> described in a report only</span></div>
@@ -406,7 +406,8 @@ svg .hdrbtn{cursor:pointer} svg .hdrbtn:hover text.lg{fill:var(--accent)} svg .h
   <pre class="bibtex">@article{aelab2026benchmarkrsi,
   title   = {How to benchmark RSI},
   author  = {Zhu, Jiacheng and Wang, Yichuan and Li, Zhifei},
-  journal = {artificialevolution.org},
+  journal = {Artificial Evolution Lab},
+  volume  = {1},
   year    = {2026},
   month   = {Sep},
   url     = {https://artificialevolution.org/vol/1/}
@@ -427,31 +428,31 @@ svg .hdrbtn{cursor:pointer} svg .hdrbtn:hover text.lg{fill:var(--accent)} svg .h
   <li id="ref-8">John Yang, et al. <a href="https://arxiv.org/abs/2605.03546" target="_blank" rel="noreferrer">“ProgramBench: Can Language Models Rebuild Programs From Scratch?”</a> arXiv:2605.03546 (2026).</li>
   <li id="ref-9">Harbor. <a href="https://docs.harborframework.com/" target="_blank" rel="noreferrer">“Harbor documentation: datasets, sandboxes and the task format.”</a> docs.harborframework.com (2026).</li>
   <li id="ref-10">OpenAI. <a href="https://openai.com/index/hugging-face-model-evaluation-security-incident/" target="_blank" rel="noreferrer">“OpenAI and Hugging Face partner to address security incident during model evaluation.”</a> OpenAI (Jul 2026).</li>
-  <li id="ref-11">Hjalmar Wijk, et al. <a href="https://arxiv.org/abs/2411.15114" target="_blank" rel="noreferrer">“RE-Bench: Evaluating frontier AI R&amp;D capabilities of language model agents against human experts.”</a> arXiv:2411.15114 (2024). <span class="pin">tasks read at METR/RE-Bench@93b9806</span></li>
-  <li id="ref-12">MLS-Bench team. <a href="https://mls-bench.com/" target="_blank" rel="noreferrer">“MLS-Bench: A Holistic and Rigorous Assessment of AI Systems on Building Better AI.”</a> mls-bench.com (2026). <span class="pin">tasks read at Imbernoulli/MLS-Bench@4b1fd67</span></li>
-  <li id="ref-13">RSI-Exam team. <a href="https://rsi-exam.ai/blog.html" target="_blank" rel="noreferrer">“RSI-Exam: Benchmarking Recursive Self-Improvement through Executable Research.”</a> rsi-exam.ai (2026). <span class="pin">tasks read at huggingface.co/datasets/RSI-Exam/RSI-Exam@23ab61b</span></li>
-  <li id="ref-14">NVIDIA. <a href="https://github.com/NVIDIA/swe-serve" target="_blank" rel="noreferrer">“SWE-Serve: an agentic benchmark of 53 production inference-engineering tasks.”</a> GitHub (2026). <span class="pin">tasks read at NVIDIA/swe-serve@e4286ec</span></li>
-  <li id="ref-15">Jehyeok Yeon, et al. <a href="https://arxiv.org/abs/2607.20468" target="_blank" rel="noreferrer">“InferenceBench: A Benchmark for Open-Ended LLM Inference Optimization by AI Agents.”</a> arXiv:2607.20468 (2026).</li>
-  <li id="ref-16">Ben Rank, et al. <a href="https://arxiv.org/abs/2603.08640" target="_blank" rel="noreferrer">“PostTrainBench: Can LLM Agents Automate LLM Post-Training?”</a> arXiv:2603.08640 (2026).</li>
-  <li id="ref-17">Deyao Zhu, et al. <a href="https://arxiv.org/abs/2607.05155" target="_blank" rel="noreferrer">“EdgeBench: Unveiling Scaling Laws of Learning from Real-World Environments.”</a> arXiv:2607.05155 (2026).</li>
-  <li id="ref-18">Håvard Tveit Ihle. <a href="https://htihle.github.io/weirdml.html" target="_blank" rel="noreferrer">“WeirdML v3.”</a> htihle.github.io (2026).</li>
-  <li id="ref-19">THUDM. <a href="https://github.com/THUDM/slime" target="_blank" rel="noreferrer">“slime: an LLM post-training framework for RL scaling.”</a> GitHub (2025).</li>
-  <li id="ref-20">NVIDIA. <a href="https://github.com/NVIDIA-NeMo/RL" target="_blank" rel="noreferrer">“NeMo RL: a scalable toolkit for efficient model reinforcement learning.”</a> GitHub (2025).</li>
-  <li id="ref-21">Xiaomi LLM-Core. <a href="https://mimo.xiaomi.com/rl/mimo-v26" target="_blank" rel="noreferrer">“MiMo-V2.6 RL training dashboard.”</a> mimo.xiaomi.com (Sep 2026).</li>
-  <li id="ref-22">An Yang, et al. <a href="https://arxiv.org/abs/2505.09388" target="_blank" rel="noreferrer">“Qwen3 Technical Report.”</a> arXiv:2505.09388 (2025).</li>
-  <li id="ref-23">Kimi Team. <a href="https://arxiv.org/abs/2507.20534" target="_blank" rel="noreferrer">“Kimi K2: Open Agentic Intelligence.”</a> arXiv:2507.20534 (2025).</li>
-  <li id="ref-24">GLM-4.5 Team. <a href="https://arxiv.org/abs/2508.06471" target="_blank" rel="noreferrer">“GLM-4.5: Agentic, Reasoning, and Coding (ARC) Foundation Models.”</a> arXiv:2508.06471 (2025).</li>
-  <li id="ref-25">GLM-5 Team. <a href="https://arxiv.org/abs/2602.15763" target="_blank" rel="noreferrer">“GLM-5: from Vibe Coding to Agentic Engineering.”</a> arXiv:2602.15763 (2026).</li>
-  <li id="ref-26">DeepSeek-AI. <a href="https://arxiv.org/abs/2606.19348" target="_blank" rel="noreferrer">“DeepSeek-V4: Towards Highly Efficient Million-Token Context Intelligence.”</a> arXiv:2606.19348 (2026).</li>
-  <li id="ref-27">Aili Chen, et al. <a href="https://arxiv.org/abs/2605.26494" target="_blank" rel="noreferrer">“The MiniMax-M2 Series: Mini Activations Unleashing Max Real-World Intelligence.”</a> arXiv:2605.26494 (2026).</li>
-  <li id="ref-28">Xiaomi LLM-Core. <a href="https://huggingface.co/XiaomiMiMo/MiMo-V2.6-Pro-RL/blob/main/MiMo_V2_6_technical_report.pdf" target="_blank" rel="noreferrer">“MiMo-V2.6 Technical Report.”</a> Hugging Face (2026).</li>
-  <li id="ref-29">NVIDIA. <a href="https://arxiv.org/abs/2604.12374" target="_blank" rel="noreferrer">“Nemotron 3 Super: Open, Efficient Mixture-of-Experts Hybrid Mamba-Transformer Model for Agentic Reasoning.”</a> arXiv:2604.12374 (2026).</li>
-  <li id="ref-30">Ai2. <a href="https://allenai.org/blog/olmo3" target="_blank" rel="noreferrer">“Olmo 3: Charting a path through the model flow to lead open-source AI.”</a> Ai2 blog (Nov 2025).</li>
-  <li id="ref-31">Hugging Face. <a href="https://huggingface.co/blog/smollm3" target="_blank" rel="noreferrer">“SmolLM3: smol, multilingual, long-context reasoner.”</a> Hugging Face blog (Jul 2025).</li>
+  <li id="ref-11">An Yang, et al. <a href="https://arxiv.org/abs/2505.09388" target="_blank" rel="noreferrer">“Qwen3 Technical Report.”</a> arXiv:2505.09388 (2025).</li>
+  <li id="ref-12">Kimi Team. <a href="https://arxiv.org/abs/2507.20534" target="_blank" rel="noreferrer">“Kimi K2: Open Agentic Intelligence.”</a> arXiv:2507.20534 (2025).</li>
+  <li id="ref-13">GLM-5 Team. <a href="https://arxiv.org/abs/2602.15763" target="_blank" rel="noreferrer">“GLM-5: from Vibe Coding to Agentic Engineering.”</a> arXiv:2602.15763 (2026).</li>
+  <li id="ref-14">Ai2. <a href="https://allenai.org/blog/olmo3" target="_blank" rel="noreferrer">“Olmo 3: Charting a path through the model flow to lead open-source AI.”</a> Ai2 blog (Nov 2025).</li>
+  <li id="ref-15">Hugging Face. <a href="https://huggingface.co/blog/smollm3" target="_blank" rel="noreferrer">“SmolLM3: smol, multilingual, long-context reasoner.”</a> Hugging Face blog (Jul 2025).</li>
+  <li id="ref-16">MLS-Bench team. <a href="https://mls-bench.com/" target="_blank" rel="noreferrer">“MLS-Bench: A Holistic and Rigorous Assessment of AI Systems on Building Better AI.”</a> mls-bench.com (2026). <span class="pin">tasks read at Imbernoulli/MLS-Bench@4b1fd67</span></li>
+  <li id="ref-17">Hjalmar Wijk, et al. <a href="https://arxiv.org/abs/2411.15114" target="_blank" rel="noreferrer">“RE-Bench: Evaluating frontier AI R&amp;D capabilities of language model agents against human experts.”</a> arXiv:2411.15114 (2024). <span class="pin">tasks read at METR/RE-Bench@93b9806</span></li>
+  <li id="ref-18">RSI-Exam team. <a href="https://rsi-exam.ai/blog.html" target="_blank" rel="noreferrer">“RSI-Exam: Benchmarking Recursive Self-Improvement through Executable Research.”</a> rsi-exam.ai (2026). <span class="pin">tasks read at huggingface.co/datasets/RSI-Exam/RSI-Exam@23ab61b</span></li>
+  <li id="ref-19">NVIDIA. <a href="https://github.com/NVIDIA/swe-serve" target="_blank" rel="noreferrer">“SWE-Serve: an agentic benchmark of 53 production inference-engineering tasks.”</a> GitHub (2026). <span class="pin">tasks read at NVIDIA/swe-serve@e4286ec</span></li>
+  <li id="ref-20">Jehyeok Yeon, et al. <a href="https://arxiv.org/abs/2607.20468" target="_blank" rel="noreferrer">“InferenceBench: A Benchmark for Open-Ended LLM Inference Optimization by AI Agents.”</a> arXiv:2607.20468 (2026).</li>
+  <li id="ref-21">Ben Rank, et al. <a href="https://arxiv.org/abs/2603.08640" target="_blank" rel="noreferrer">“PostTrainBench: Can LLM Agents Automate LLM Post-Training?”</a> arXiv:2603.08640 (2026).</li>
+  <li id="ref-22">Deyao Zhu, et al. <a href="https://arxiv.org/abs/2607.05155" target="_blank" rel="noreferrer">“EdgeBench: Unveiling Scaling Laws of Learning from Real-World Environments.”</a> arXiv:2607.05155 (2026).</li>
+  <li id="ref-23">Håvard Tveit Ihle. <a href="https://htihle.github.io/weirdml.html" target="_blank" rel="noreferrer">“WeirdML v3.”</a> htihle.github.io (2026).</li>
+  <li id="ref-24">THUDM. <a href="https://github.com/THUDM/slime" target="_blank" rel="noreferrer">“slime: an LLM post-training framework for RL scaling.”</a> GitHub (2025).</li>
+  <li id="ref-25">NVIDIA. <a href="https://github.com/NVIDIA-NeMo/RL" target="_blank" rel="noreferrer">“NeMo RL: a scalable toolkit for efficient model reinforcement learning.”</a> GitHub (2025).</li>
+  <li id="ref-26">Xiaomi LLM-Core. <a href="https://mimo.xiaomi.com/rl/mimo-v26" target="_blank" rel="noreferrer">“MiMo-V2.6 RL training dashboard.”</a> mimo.xiaomi.com (Sep 2026).</li>
+  <li id="ref-27">GLM-4.5 Team. <a href="https://arxiv.org/abs/2508.06471" target="_blank" rel="noreferrer">“GLM-4.5: Agentic, Reasoning, and Coding (ARC) Foundation Models.”</a> arXiv:2508.06471 (2025).</li>
+  <li id="ref-28">DeepSeek-AI. <a href="https://arxiv.org/abs/2606.19348" target="_blank" rel="noreferrer">“DeepSeek-V4: Towards Highly Efficient Million-Token Context Intelligence.”</a> arXiv:2606.19348 (2026).</li>
+  <li id="ref-29">Aili Chen, et al. <a href="https://arxiv.org/abs/2605.26494" target="_blank" rel="noreferrer">“The MiniMax-M2 Series: Mini Activations Unleashing Max Real-World Intelligence.”</a> arXiv:2605.26494 (2026).</li>
+  <li id="ref-30">Xiaomi LLM-Core. <a href="https://huggingface.co/XiaomiMiMo/MiMo-V2.6-Pro-RL/blob/main/MiMo_V2_6_technical_report.pdf" target="_blank" rel="noreferrer">“MiMo-V2.6 Technical Report.”</a> Hugging Face (2026).</li>
+  <li id="ref-31">NVIDIA. <a href="https://arxiv.org/abs/2604.12374" target="_blank" rel="noreferrer">“Nemotron 3 Super: Open, Efficient Mixture-of-Experts Hybrid Mamba-Transformer Model for Agentic Reasoning.”</a> arXiv:2604.12374 (2026).</li>
   <li id="ref-32">Open Athena. <a href="https://openathena.ai/blog/marin-535b-launch-note/" target="_blank" rel="noreferrer">“Marin 535B-A23B launch note.”</a> openathena.ai (Sep 2026).</li>
   <li id="ref-33">Mercor. <a href="https://www.mercor.com/blog/training-frontier-knowledge-work-agents-a-397b-rl-training-guide-with-skyrl/" target="_blank" rel="noreferrer">“Training frontier knowledge work agents: A 397B RL training guide with SkyRL.”</a> Mercor blog (Sep 2026).</li>
-  <li id="ref-34">Terminal-Bench team. <a href="https://github.com/harbor-framework/terminal-bench-science" target="_blank" rel="noreferrer">“Terminal-Bench-Science: Evaluating AI agents on research workflows across scientific domains.”</a> GitHub (2026).</li>
-  <li id="ref-35">NovaSky. <a href="https://github.com/NovaSky-AI/SkyRL" target="_blank" rel="noreferrer">“SkyRL: A modular full-stack RL library for LLMs.”</a> GitHub (2025).</li>
+  <li id="ref-34">NovaSky. <a href="https://github.com/NovaSky-AI/SkyRL" target="_blank" rel="noreferrer">“SkyRL: A modular full-stack RL library for LLMs.”</a> GitHub (2025).</li>
+  <li id="ref-35">Terminal-Bench team. <a href="https://github.com/harbor-framework/terminal-bench-science" target="_blank" rel="noreferrer">“Terminal-Bench-Science: Evaluating AI agents on research workflows across scientific domains.”</a> GitHub (2026).</li>
 </ol>
 </section>
 
