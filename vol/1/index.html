@@ -890,7 +890,7 @@ function renderJoint(){
   s+='</svg>'; $('#joint-svg').innerHTML=s;
   const best=rows[0];
   const NWORD={10:'ten',11:'eleven',12:'twelve'}; $('#joint-title').textContent=`No benchmark covers more than ${best.pct}% of LLM training; all ${NWORD[prim.length]||prim.length} together cover ${union.pct}%`;
-  $('#joint-cap').textContent=`Marks are the ${NCELL} stage × layer cells, grouped by stage; the bar weights them 1, ½ and ¼ as a share of ${NCELL}, its first segment counting executed cells alone. The bottom row counts the ${NT} task environments touching each stage at any depth (one spanning two stages counts in both); hover a benchmark name for its share of public task environments that touch the LLM life cycle.`;
+  $('#joint-cap').textContent=`Bar: cells weighted 1, ½ and ¼, out of ${NCELL}. Bottom row: out of ${NT} task environments; one spanning two stages counts in both.`;
   const cn=$('#cov-n'); if(cn) cn.textContent=String(A.meta.task_entries); if(CEN&&CEN.totals){ const a=$('#cov-screened'), b=$('#cov-L'); if(a) a.textContent=String(CEN.totals.screened); if(b) b.textContent=String(CEN.totals.L); }
 }
 renderJoint();
