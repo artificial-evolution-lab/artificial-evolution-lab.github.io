@@ -889,7 +889,7 @@ function renderJoint(){
     STAGES.forEach((st,si)=>{ const n=stageEntries(st.id).length, gx0=sx(si,0), gw=sx(si,NL-1)+SLOT-gx0, bw=gw*n/NT; s+=`<rect x="${gx0}" y="${yb+22}" width="${gw}" height="10" rx="2" class="ev0"/><rect x="${gx0}" y="${yb+22}" width="${Math.max(2,bw)}" height="10" rx="2" class="ev3"/><text x="${gx0}" y="${yb+47}" class="sm mono" style="font-weight:600">${n}</text><text x="${gx0+String(n).length*7+3}" y="${yb+47}" class="sm mono mut">· ${Math.round(100*n/NT)}%</text>`; }); }
   s+='</svg>'; $('#joint-svg').innerHTML=s;
   const best=rows[0];
-  const NWORD={10:'ten',11:'eleven',12:'twelve'}; $('#joint-title').textContent=`No benchmark covers more than ${best.pct}% of LLM training; all ${NWORD[prim.length]||prim.length} together cover ${union.pct}%`;
+  const NWORD={10:'ten',11:'eleven',12:'twelve'}; $('#joint-title').textContent=`No benchmark scores above ${best.pct}% on the LLM lifecycle`;
   $('#joint-cap').textContent=`Bar: cells weighted 1, ½ and ¼, out of ${NCELL}. Bottom row: out of ${NT} task environments; one spanning two stages counts in both.`;
   const cn=$('#cov-n'); if(cn) cn.textContent=String(A.meta.task_entries); if(CEN&&CEN.totals){ const a=$('#cov-screened'), b=$('#cov-L'); if(a) a.textContent=String(CEN.totals.screened); if(b) b.textContent=String(CEN.totals.L); }
 }
