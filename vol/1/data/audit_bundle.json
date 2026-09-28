@@ -1,6 +1,6 @@
 {
  "meta": {
-  "built": "2026-09-26",
+  "built": "2026-09-28",
   "snapshot_v1": "2026-09-05",
   "snapshot_v2": "2026-09-22",
   "task_entries": 127,
@@ -4511,7 +4511,7 @@
   }
  ],
  "pipelines": {
-  "note": "Production lifecycle sources for the life-cycle figure. 'ev' per stage is 'code' (public code or released recipe for that stage) or 'report' (described in a technical report or engineering article only). 'tag' records verification: 'spot-checked' = re-read on the primary page in this session; 'note-2026-09-21' = fetched live by the companion notes production_lifecycle_sources_v2.md / rl_pipeline_sources_v2.md; 'prior-note' = from ASYNC_RL_STALENESS.md or infra_sources.md; 'agent-reported' = delegated sweep, re-read before quoting in a paper.",
+  "note": "Production lifecycle sources for the lifecycle figure. 'ev' per stage is 'code' (public code or released recipe for that stage) or 'report' (described in a technical report or engineering article only). 'tag' records verification: 'spot-checked' = re-read on the primary page in this session; 'note-2026-09-21' = fetched live by the companion notes production_lifecycle_sources_v2.md / rl_pipeline_sources_v2.md; 'prior-note' = from ASYNC_RL_STALENESS.md or infra_sources.md; 'agent-reported' = delegated sweep, re-read before quoting in a paper.",
   "stages": [
    {
     "id": "data",
@@ -7373,7 +7373,7 @@
  },
  "census": {
   "snapshot": "2026-09-23",
-  "rule": "A task counts as touching the LLM life cycle (L) when the work its verifier checks is part of how language models are built, trained, post-trained, evaluated, served or run as agents; public tasks only, read at the pinned commit (instruction, manifest and, for every L task, the verifier).",
+  "rule": "A task counts as touching the LLM lifecycle (L) when the work its verifier checks is part of how language models are built, trained, post-trained, evaluated, served or run as agents; public tasks only, read at the pinned commit (instruction, manifest and, for every L task, the verifier).",
   "benchmarks": {
    "tb4": {
     "public": 66,
