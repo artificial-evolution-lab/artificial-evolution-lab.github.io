@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Serif:wght@500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Serif:wght@500&family=Noto+Serif+JP:wght@600;900&display=swap">
 <style>
 :root{
   color-scheme:light;
@@ -233,6 +233,16 @@ main{max-width:1020px}
 .layer-key .lk b{display:block; font-weight:600; line-height:1.3}
 .layer-key .lk span{color:var(--muted); font:11.5px var(--mono)}
 .ic{width:18px; height:18px; flex:none; color:var(--ink-2); fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; margin-top:1px}
+.sr-only{position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0}
+/* title card at the top of the post: black frame and white type in both themes; a hairline edge keeps it apart from the dark page */
+.tcard{margin:4px 0 18px}
+.tc{display:block; width:100%; height:auto}
+.tc text{fill:#fff}  /* the page's svg text{fill:var(--ink)} would otherwise darken it in the light theme */
+:root[data-theme="dark"] .tc{box-shadow:0 0 0 1px var(--line)}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .tc{box-shadow:0 0 0 1px var(--line)} }
+/* on a phone the card is ~360px wide: larger labels, and the subtitle fitted to the card's width */
+.tc .tc-sub-narrow{display:none}
+@media (max-width:560px){ .tc .tc-label{font-size:30px} .tc .tc-sub{display:none} .tc .tc-sub-narrow{display:inline} }
 .fig-title{display:flex; justify-content:space-between; gap:16px; align-items:baseline; flex-wrap:wrap; margin-bottom:10px}
 .fig-title strong{font-weight:600; font-size:14px}
 .fig-title span{font:12px var(--mono); color:var(--muted)}
@@ -322,8 +332,23 @@ svg .hdrbtn{cursor:pointer} svg .hdrbtn:hover text.lg{fill:var(--accent)} svg .h
 <nav class="toc" id="toc" aria-label="Contents" hidden><ul class="toc-list" id="toc-list"></ul></nav>
 <main>
 <section class="intro" id="intro">
-  <h1>[WIP] How to benchmark RSI</h1>
-  <p class="subtitle">What it takes to test whether an AI system can train an AI system end to end</p>
+  <div class="tcard">
+    <!-- title card: RSI spans both lines, its cap top level with HOW TO and its baseline on BENCHMARK's -->
+    <svg class="tc" aria-hidden="true" focusable="false" viewBox="0 0 1000 440">
+            <rect width="1000" height="440" fill="#000"/>
+            <g fill="#fff" font-family="'Noto Serif JP', serif">
+              <text class="tc-label" x="46" y="64" font-size="19" font-weight="600" letter-spacing="1.6">VOLUME:1</text>
+              <text class="tc-label" x="954" y="64" font-size="19" font-weight="600" letter-spacing="1.6" text-anchor="end">[WIP]</text>
+              <text x="43.8" y="173.3" font-size="74.0" font-weight="900" textLength="238.6" lengthAdjust="spacingAndGlyphs">HOW TO</text>
+              <text x="42.4" y="295.4" font-size="142.0" font-weight="900" textLength="627.8" lengthAdjust="spacingAndGlyphs">BENCHMARK</text>
+              <text x="692.9" y="295.4" font-size="237.4" font-weight="900" textLength="267.3" lengthAdjust="spacingAndGlyphs">RSI</text>
+              <text class="tc-sub" x="46" y="392" font-size="18.5" font-weight="600" letter-spacing=".3">What it takes to test whether an AI system can train an AI system end to end</text>
+              <text class="tc-sub-narrow" x="46" y="396" font-size="28" font-weight="600" textLength="908" lengthAdjust="spacingAndGlyphs">What it takes to test whether an AI system can train an AI system end to end</text>
+            </g>
+          </svg>
+  </div>
+  <h1 class="sr-only">[WIP] How to benchmark RSI</h1>
+  <p class="subtitle sr-only">What it takes to test whether an AI system can train an AI system end to end</p>
   <p class="byline" style="font:14px var(--sans);color:var(--muted);margin:0 0 18px">Jiacheng Zhu, Yichuan Wang, Zhifei Li</p>
   <p class="lede">Recursive self-improvement (RSI) could have major consequences for AI development, yet its definition, its possible forms and its measurement remain open questions. Recent reports from <a href="https://www.anthropic.com/institute/measuring-pace-of-ai-development" target="_blank" rel="noreferrer">Anthropic</a>, <a href="https://openai.com/index/research-acceleration-view-inside-openai/" target="_blank" rel="noreferrer">OpenAI</a> and <a href="https://z.ai/blog/glm-built-its-inference-infrastructure" target="_blank" rel="noreferrer">Z.ai</a> describe AI systems taking on parts of model research and infrastructure engineering, which makes these questions increasingly practical. Whatever definition prevails, the ability to <b>train and improve AI models end to end</b> is a core capability, and it is necessary, though not sufficient, for RSI. One way to evaluate progress toward RSI is to ask an AI system to do exactly that: develop and train a model and deliver it ready for real-world use. At production scale, such an evaluation is still too expensive in compute and time.</p>
   <p class="lede">Coding benchmarks such as <a href="https://arxiv.org/abs/2509.16941" target="_blank" rel="noreferrer">SWE-Bench Pro</a>, <a href="https://www.tbench.ai/" target="_blank" rel="noreferrer">Terminal-Bench</a>, <a href="https://deepswe.datacurve.ai/blog/deepswe" target="_blank" rel="noreferrer">DeepSWE</a> and <a href="https://arxiv.org/abs/2605.03546" target="_blank" rel="noreferrer">ProgramBench</a> assess progress in coding agents, and the <b><u>task environments</u></b><label for="sn-1" class="sn-ref" title="Note 1">1</label><input type="checkbox" id="sn-1" class="sn-toggle"/><span class="sidenote" role="note"><span class="sn-num">1</span>A task environment is a containerized snapshot of a server, a developer machine or a simulated world, prepared with an initial state, the required artifacts and, usually, a verifiable goal, so that an agent can be rolled out in it repeatedly against a realistic problem. Terminal-Bench and Harbor call this a <i>task</i>: “one or more instructions, a sandbox environment, and a verifier” (<a href="https://docs.harborframework.com/core-concepts" target="_blank" rel="noreferrer">Harbor</a>; see the <a href="https://github.com/harbor-framework/terminal-bench/blob/main/CONTRIBUTING.md" target="_blank" rel="noreferrer">Terminal-Bench task layout</a>). The sandbox is meant to hold, and does not always: in July 2026, <a href="https://openai.com/index/hugging-face-model-evaluation-security-incident/" target="_blank" rel="noreferrer">OpenAI reported</a> that its models under evaluation on the ExploitGym cyber benchmark found a zero-day in a package-registry proxy, reached the Internet and broke into Hugging Face’s infrastructure to take the test answers.</span> they are built from also support <a href="https://docs.harborframework.com/core-concepts/datasets/datasets" target="_blank" rel="noreferrer">agent training</a>. However, as tests of LLM training itself, they fall short. Of the 590 public task environments in the eleven benchmarks we audited, 150 touch any part of the LLM lifecycle, and together they run a real LLM workload in only 12 of the 35 stage × layer cells we map below; none does so for data, agent post-training or cluster work.</p>
