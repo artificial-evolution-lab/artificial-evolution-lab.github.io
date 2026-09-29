@@ -42,9 +42,13 @@ main {
   flex-direction: column;
 }
 
+/* the lab name and the volume title cards share one voice: a black-weight serif, squeezed sideways */
 h1 {
-  font: 500 clamp(26px, 3.2vw, 38px)/1.2 var(--serif);
-  letter-spacing: -.01em;
+  font: 900 clamp(30px, 4.4vw, 46px)/1.2 'Noto Serif JP', var(--serif);
+  text-transform: uppercase;
+  letter-spacing: .005em;
+  transform: scaleX(.84);
+  transform-origin: 0 50%;
   margin: 0 0 16px;
 }
 
@@ -59,6 +63,23 @@ a { color: var(--accent); text-decoration: none; text-underline-offset: 3px; }
 
 /* volumes */
 .volumes { flex: 1; }
+
+/* title card: black frame and white type in both themes; a hairline edge keeps it apart from the dark page */
+.tcard { display: block; margin: 0 0 14px; outline-offset: 3px; }
+.tcard:hover { outline: 2px solid var(--accent); }
+.tc { display: block; width: 100%; height: auto; }
+:root[data-theme="dark"] .tc { box-shadow: 0 0 0 1px var(--line); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .tc { box-shadow: 0 0 0 1px var(--line); }
+}
+.tcard + .volume-meta { margin-top: 0; }
+/* on a phone the card is ~360px wide: larger labels, and the subtitle fitted to the card's width */
+.tc .tc-sub-narrow { display: none; }
+@media (max-width: 560px) {
+  .tc .tc-label { font-size: 30px; }
+  .tc .tc-sub { display: none; }
+  .tc .tc-sub-narrow { display: inline; }
+}
 .volume + .volume { margin-top: 36px; }
 
 .volume-title {

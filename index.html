@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Artificial Evolution Lab</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Serif:wght@500&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Serif:wght@500&family=Noto+Serif+JP:wght@600;900&display=swap">
   <link rel="stylesheet" href="style.css">
   <script>try{var t=localStorage.getItem('aiec-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;}catch(e){}</script>
 </head>
@@ -15,7 +15,21 @@
     <hr>
     <section class="volumes" aria-label="Volumes">
       <article class="volume">
-        <a class="volume-title" href="/vol/1/"><span class="volume-no">Vol. 1</span>[WIP] How to benchmark RSI</a>
+        <a class="tcard" href="/vol/1/">
+          <!-- title card: RSI spans both lines, its cap top level with HOW TO and its baseline on BENCHMARK's -->
+          <svg class="tc" viewBox="0 0 1000 440" role="img" aria-label="Volume 1: How to benchmark RSI (work in progress). What it takes to test whether an AI system can train an AI system end to end.">
+            <rect width="1000" height="440" fill="#000"/>
+            <g fill="#fff" font-family="'Noto Serif JP', serif">
+              <text class="tc-label" x="46" y="64" font-size="19" font-weight="600" letter-spacing="1.6">VOLUME:1</text>
+              <text class="tc-label" x="954" y="64" font-size="19" font-weight="600" letter-spacing="1.6" text-anchor="end">[WIP]</text>
+              <text x="43.8" y="173.3" font-size="74.0" font-weight="900" textLength="238.6" lengthAdjust="spacingAndGlyphs">HOW TO</text>
+              <text x="42.4" y="295.4" font-size="142.0" font-weight="900" textLength="627.8" lengthAdjust="spacingAndGlyphs">BENCHMARK</text>
+              <text x="692.9" y="295.4" font-size="237.4" font-weight="900" textLength="267.3" lengthAdjust="spacingAndGlyphs">RSI</text>
+              <text class="tc-sub" x="46" y="392" font-size="18.5" font-weight="600" letter-spacing=".3">What it takes to test whether an AI system can train an AI system end to end</text>
+              <text class="tc-sub-narrow" x="46" y="396" font-size="28" font-weight="600" textLength="908" lengthAdjust="spacingAndGlyphs">What it takes to test whether an AI system can train an AI system end to end</text>
+            </g>
+          </svg>
+        </a>
         <p class="volume-meta">September 2026 · draft for review</p>
         <p class="volume-excerpt">Recursive self-improvement is now something frontier labs try to measure, but what it is, and how to benchmark it, remain open questions. Whatever the definition, training an AI model end to end on real infrastructure sits at its core. This volume audits all 590 public task environments in eleven benchmarks against the lifecycle of production LLMs and maps what they actually exercise.</p>
       </article>
