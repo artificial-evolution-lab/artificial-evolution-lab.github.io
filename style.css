@@ -40,15 +40,23 @@ main {
   padding: clamp(48px, 12vh, 120px) 0 40px;
   display: flex;
   flex-direction: column;
+  container-type: inline-size;
 }
 
-/* the lab name and the volume title cards share one voice: a black-weight serif, squeezed sideways */
-h1 {
-  font: 900 clamp(40px, 7vw, 68px)/1 'Noto Serif JP', var(--serif);
+/* the lab name and the volume titles share one voice: a black-weight serif, uppercase, squeezed sideways */
+h1, .volume-name {
+  font-family: 'Noto Serif JP', var(--serif);
+  font-weight: 900;
   text-transform: uppercase;
-  letter-spacing: .005em;
+  letter-spacing: 0;
   transform: scaleX(.84);
-  transform-origin: 0 50%;
+  transform-origin: 0 0;
+}
+/* the lab name fills the column on one line: "ARTIFICIAL EVOLUTION LAB" is 15.19em wide in this face, x .84 */
+h1 {
+  font-size: calc(100cqw / 12.76);
+  line-height: 1;
+  white-space: nowrap;
   margin: 0 0 22px;
 }
 
@@ -72,10 +80,8 @@ a { color: var(--accent); text-decoration: none; text-underline-offset: 3px; }
 }
 .volume-name {
   display: block;
-  font: 900 clamp(24px, 3.6vw, 34px)/1.1 'Noto Serif JP', var(--serif);
-  text-transform: uppercase;
-  transform: scaleX(.84);
-  transform-origin: 0 0;
+  font-size: clamp(24px, 3.6vw, 34px);
+  line-height: 1.1;
 }
 .volume-title:hover { color: var(--accent); }
 
