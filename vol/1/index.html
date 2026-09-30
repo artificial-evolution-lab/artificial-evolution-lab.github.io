@@ -99,7 +99,7 @@ svg .rowbtn:hover text, svg .rowbtn:focus text{fill:var(--accent)}
 svg .warmbox{fill:var(--warm-bg); stroke:var(--warm-line); stroke-width:1}
 svg .warmtext{fill:var(--warm); font-family:var(--mono); font-size:10.5px; letter-spacing:.06em}
 svg .node{fill:var(--surface-2); stroke:var(--line-2); stroke-width:1; cursor:pointer}
-svg .node-g:hover .node, svg .node-g:focus .node, svg .node-g.sel .node{stroke:var(--accent); stroke-width:1.6}
+svg .node-g:hover .node, svg .node-g:focus .node, svg .node-g.sel .node, svg .node-g.sel .rail{stroke:var(--accent); stroke-width:1.6}
 svg .rail{fill:var(--surface-2); stroke:var(--line); stroke-width:1; cursor:pointer}
 svg .arrow{stroke:var(--ink-2); stroke-width:1.4; fill:none}
 svg .arrowlab{font-size:10.5px; fill:var(--muted); font-family:var(--mono)}
@@ -159,6 +159,21 @@ table.src{border-collapse:collapse; width:100%; font-size:13px; margin-top:10px}
 table.src th,table.src td{text-align:left; padding:7px 9px; border-bottom:1px solid var(--line); vertical-align:top}
 table.src th{font-weight:600; color:var(--ink-2); font-size:11px; letter-spacing:.05em; text-transform:uppercase}
 table.src td.n{white-space:nowrap}
+/* phones: each table row becomes a card with every cell under its column name (cells are labelled in script); the header keeps to three short rows with the section links on one sliding line */
+@media (max-width:640px){
+  table.src, .tableview table, table.src tbody, .tableview tbody, table.src tr, .tableview tr{display:block}
+  table.src thead, .tableview thead{display:none}
+  table.src tr, .tableview tr{padding:9px 0; border-bottom:1px solid var(--line)}
+  table.src td, .tableview td{display:block; border:0; padding:2px 0; white-space:normal; overflow-wrap:anywhere}
+  table.src td:first-child, .tableview td:first-child{font-weight:600}
+  table.src td[data-label]:not(:first-child)::before, .tableview td[data-label]:not(:first-child)::before{content:attr(data-label); display:block; margin-top:4px; font:600 10.5px var(--mono); letter-spacing:.05em; text-transform:uppercase; color:var(--muted)}
+  .top{gap:4px 12px; padding-block:6px}
+  .top .spacer{order:1} .top .theme{order:2} .top .brand{order:3; flex-basis:100%}
+  .top nav{order:4; flex-basis:100%; flex-wrap:nowrap; overflow-x:auto; white-space:nowrap; scrollbar-width:none}
+  .top nav::-webkit-scrollbar{display:none}
+  .top nav{-webkit-mask-image:linear-gradient(to right,#000 85%,transparent); mask-image:linear-gradient(to right,#000 85%,transparent); padding-right:24px}
+  .maplist .depth{white-space:normal}
+}
 .tip{position:fixed; z-index:50; max-width:360px; background:var(--surface); color:var(--ink); border:1px solid var(--line-2); border-radius:8px; padding:10px 12px; font-size:12.5px; line-height:1.45; box-shadow:0 6px 24px rgba(0,0,0,.18); pointer-events:none}
 .tip b{display:block; font-weight:600; margin-bottom:2px} .tip .m{font:11px var(--mono); color:var(--muted); margin-bottom:4px} .tip p{margin:4px 0 0; color:var(--ink-2)}
 footer{margin-top:40px; padding-top:14px; border-top:1px solid var(--line); font:12px var(--mono); color:var(--muted); display:flex; flex-wrap:wrap; gap:8px 24px}
@@ -261,7 +276,7 @@ main{max-width:1020px}
 .verdicts{margin:4px 0 8px; padding-left:18px; color:var(--ink-2)}
 .verdicts li{margin:3px 0}
 .verdicts small{font:11px var(--mono); color:var(--muted)}
-@media (max-width:820px){.def-grid{grid-template-columns:1fr}}
+@media (max-width:820px){.def-grid{grid-template-columns:minmax(0,1fr)}}
 .card{border:1px solid var(--line); border-radius:10px; background:var(--surface); padding:14px 16px; font-size:13.5px}
 .card h3{margin:0 0 4px; font-size:15px}
 .card .meta{font:12px var(--mono); color:var(--muted); margin-bottom:8px; display:flex; flex-wrap:wrap; gap:6px 14px}
@@ -811,9 +826,29 @@ function nodeTasks(c){ return (c.tasks||[]).map(x=>({t:TASK[x.id], kind:x.kind, 
 function renderLoop(opts){
   const {svgEl, drawerEl, compact, linkTo} = opts; let sel = opts.selected || 'publish';
   const comps=A.rl_loop.components, rails=A.rl_loop.rails; const NW=168, GAP=(W-20-NW*comps.length)/(comps.length-1), NY=58, NH=62; const H=300;
+  const ARIA='RL post-training loop: prompts and environments, rollout, score and admit, learn, publish weights; with checkpoint and placement rails', DEFS='<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink-2)"/><\/marker><\/defs>';
+  const labels=['sandboxes · prompts','trajectories · log-probs','admitted groups','updated weights'];
+  const badge=(tks,bx,by,r)=>{ const k=strongest(tks.map(x=>x.kind)); return `<circle cx="${bx}" cy="${by}" r="${r+1.5}" fill="var(--surface)"/><circle cx="${bx}" cy="${by}" r="${r}" class="${k?KIND[k].cls:''}" ${k?'':'fill="var(--surface)" stroke="var(--line-2)"'}/><text x="${bx}" y="${by+3.5}" text-anchor="middle" class="badge" style="fill:${k&&KIND[k].rank>=2?'var(--surface)':'var(--muted)'}">${tks.length}<\/text>`; };
+  // narrow: the components stack top to bottom, the new weights return up the right edge, the rails follow at full width
+  function drawNarrow(JW){
+    // text wraps to at most two lines (a third is cut); the arrows run down the left so their labels clear the return path on the right
+    const X=10, BW=JW-X-44, NH=64, VG=36, n=comps.length, xm=X+34, xr=JW-18;
+    const wrap=(t,w,cw)=>{ const k=Math.floor(w/cw), ws=String(t).split(' '), ls=['']; for(const x of ws){ const c=ls[ls.length-1]; if(c && (c+' '+x).length>k) ls.push(x); else ls[ls.length-1]=c?c+' '+x:x; } if(ls.length>2){ ls.length=2; ls[1]=ls[1].slice(0,k-1)+'…'; } return ls; };
+    const top=i=>10+i*(NH+VG), RY=top(n)-VG+24, RW=JW-2*X-60, RL=rails.map(r=>({nm:wrap(r.name,RW,6.8), dt:wrap(r.detail,RW,5.6)})), RH=RL.map(l=>14+l.nm.length*15+l.dt.length*13), H=RY+RH.reduce((a,b)=>a+b+8,0);
+    let s=`<svg viewBox="0 0 ${JW} ${H}" class="narrow" role="img" aria-label="${ARIA}">${DEFS}`;
+    comps.forEach((c,i)=>{ const y=top(i), tks=nodeTasks(c), isSel=!compact && c.id===sel;
+      if(i<n-1) s+=`<line x1="${xm}" y1="${y+NH}" x2="${xm}" y2="${y+NH+VG-2}" class="arrow" marker-end="url(#ah)"/><text x="${xm+8}" y="${y+NH+VG/2+4}" class="arrowlab">${esc(labels[i])}<\/text>`;
+      s+=`<g class="node-g ${isSel?'sel':''}" tabindex="0" role="button" data-node="${c.id}" aria-label="${esc(c.name)}: ${tks.length} audited tasks"><rect x="${X}" y="${y}" width="${BW}" height="${NH}" rx="7" class="node"/><text x="${X+12}" y="${y+21}" class="lg">${esc(c.name)}<\/text>${wrap(c.verb,BW-24,5.6).map((ln,k)=>`<text x="${X+12}" y="${y+38+k*13}" class="sm mut">${esc(ln)}<\/text>`).join('')}${badge(tks,X+BW-4,y+2,8.5)}<\/g>`; });
+    const y1=top(1)+NH/2, yl=top(n-1)+NH/2, ym=(y1+yl)/2;
+    s+=`<path d="M${X+BW},${yl} L${xr},${yl} L${xr},${y1} L${X+BW+3},${y1}" class="arrow" marker-end="url(#ah)"/>`;
+    s+=`<text x="${xr-5}" y="${ym}" transform="rotate(-90 ${xr-5} ${ym})" text-anchor="middle" class="arrowlab" style="font-size:9.5px">new policy version → every rollout replica<\/text><text x="${xr+13}" y="${ym}" transform="rotate(-90 ${xr+13} ${ym})" text-anchor="middle" class="arrowlab" style="font-size:9.5px">(in-flight or between steps)<\/text>`;
+    let ry=RY; rails.forEach((r,i)=>{ const y=ry, h=RH[i], {nm,dt}=RL[i], tks=nodeTasks(r), isSel=!compact && r.id===sel; ry+=h+8;
+      s+=`<g class="node-g ${isSel?'sel':''}" tabindex="0" role="button" data-node="${r.id}" aria-label="${esc(r.name)}: ${tks.length} audited tasks"><rect x="${X}" y="${y}" width="${JW-2*X}" height="${h}" rx="6" class="rail"/>${nm.map((ln,k)=>`<text x="${X+14}" y="${y+18+k*15}" class="md" style="font-weight:600">${esc(ln)}<\/text>`).join('')}${dt.map((ln,k)=>`<text x="${X+14}" y="${y+20+nm.length*15+k*13}" class="sm mut">${esc(ln)}<\/text>`).join('')}${badge(tks,JW-32,y+h/2,9)}<\/g>`; });
+    s+='<\/svg>'; svgEl.innerHTML=s; if(drawerEl) renderLoopDrawer(drawerEl, sel);
+  }
   function draw(){
-    let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="RL post-training loop: prompts and environments, rollout, score and admit, learn, publish weights; with checkpoint and placement rails"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink-2)"/><\/marker><\/defs>`;
-    const labels=['sandboxes · prompts','trajectories · log-probs','admitted groups','updated weights'];
+    const host=svgEl.parentElement; if(host && isNarrow(host)) return drawNarrow(Math.max(300,Math.round(host.clientWidth)));
+    let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${ARIA}">${DEFS}`;
     comps.forEach((c,i)=>{ const x=10+i*(NW+GAP); const tks=nodeTasks(c); const k=strongest(tks.map(x=>x.kind)); const isSel=!compact && c.id===sel;
       if(i<comps.length-1) s+=`<line x1="${x+NW}" y1="${NY+NH/2}" x2="${x+NW+GAP-2}" y2="${NY+NH/2}" class="arrow" marker-end="url(#ah)"/><text x="${x+NW+GAP/2}" y="${NY+NH/2-8}" text-anchor="middle" class="arrowlab">${esc(labels[i])}<\/text>`;
       s+=`<g class="node-g ${isSel?'sel':''}" tabindex="0" role="button" data-node="${c.id}" aria-label="${esc(c.name)}: ${tks.length} audited tasks"><rect x="${x}" y="${NY}" width="${NW}" height="${NH}" rx="7" class="node"/><text x="${x+12}" y="${NY+24}" class="lg">${esc(c.name)}<\/text><text x="${x+12}" y="${NY+42}" class="sm mut">${esc(c.verb.length>34?c.verb.slice(0,33)+'…':c.verb)}<\/text>`;
@@ -826,7 +861,7 @@ function renderLoop(opts){
   function pick(id){ if(compact){ if(linkTo) location.href=linkTo+'#'+id; return; } sel=id; draw(); }
   svgEl.addEventListener('click', e=>{ const n=e.target.closest('[data-node]'); if(n) pick(n.dataset.node); });
   svgEl.addEventListener('keydown', e=>{ if(e.key!=='Enter'&&e.key!==' ') return; const n=e.target.closest('[data-node]'); if(!n) return; e.preventDefault(); pick(n.dataset.node); });
-  draw(); return {select:pick};
+  draw(); if(svgEl.parentElement) redrawOnWidth(svgEl.parentElement, draw); return {select:pick};
 }
 function renderLoopDrawer(d, id){ const all=[...A.rl_loop.components,...A.rl_loop.rails]; const c=all.find(x=>x.id===id)||all[0]; const tks=nodeTasks(c);
   d.replaceChildren(h('h3',{text:c.name}), h('div',{class:'meta'},h('span',{text:c.verb||'shared rail'})), h('p',{text:c.detail}),
@@ -837,7 +872,14 @@ function sourcesTable(rows, subhead){ const order={'spot-checked':0,'note-2026-0
   const t=h('table',{class:'src'}); t.append(h('thead',null,h('tr',null,h('th',{text:'Source'}),h('th',{text:'Used for'}),h('th',{text:'What it establishes'}),h('th',{text:'Tag'}))));
   const tb=h('tbody'); for(const r of rows) tb.append(h('tr',null,h('td',{class:'n'},link(r.url,r.name)),h('td',{text:r.kind}),h('td',{text:r.what}),h('td',null,tagEl(r.tag)))); t.append(tb);
   const wrap=h('div'); wrap.append(h('p',{class:'subhead',text:`${rows.length} distinct sources · `+Object.entries(counts).map(([k,v])=>`${v} ${TAGTXT[k]}`).join(' · ')}), t); return wrap; }
-return {A, STAGES, SIDX, LAYERS, KIND, BM, TASK, TAGTXT, $, esc, h, tagEl, link, W, L, RPAD, COLW, cx, stageKind, strongest, cellEntries, stageEntries, showTip, hideTip, positionTip, tipForTask, tipForModel, bindTips, svgHeader, colLines, initTheme, renderFooter, nodeTasks, renderLoop, renderLoopDrawer, coverageList, sourcesTable};
+// below this width a figure is drawn for the screen instead of scrolling a 760px drawing sideways
+function isNarrow(host){ const w=host.clientWidth; return w>0 && w<700; }
+// redraw when a figure crosses the narrow threshold, or changes width while narrow (the narrow drawing is sized to it)
+function redrawOnWidth(host, render){ let w0=host.clientWidth; new ResizeObserver(()=>{ const w=host.clientWidth; if(Math.abs(w-w0)<1) return; const was=w0>0&&w0<700; w0=w; if(was||isNarrow(host)) render(); }).observe(host); }
+// phones show each table row as a card, so every cell carries its column name; tables are (re)drawn into the *-table boxes
+function labelCells(t){ const hs=[...t.querySelectorAll('thead th')].map(th=>th.textContent); for(const tr of t.querySelectorAll('tbody tr')) [...tr.cells].forEach((c,i)=>{ c.dataset.label=hs[i]||''; }); }
+for(const box of document.querySelectorAll('[id$="-table"]')) new MutationObserver(()=>box.querySelectorAll('table').forEach(labelCells)).observe(box,{childList:true,subtree:true});
+return {A, STAGES, SIDX, LAYERS, KIND, BM, TASK, TAGTXT, $, esc, h, tagEl, link, W, L, RPAD, COLW, cx, stageKind, strongest, cellEntries, stageEntries, showTip, hideTip, positionTip, tipForTask, tipForModel, bindTips, svgHeader, colLines, initTheme, renderFooter, nodeTasks, renderLoop, renderLoopDrawer, coverageList, sourcesTable, isNarrow, redrawOnWidth};
 })();
 
 </script>
@@ -895,8 +937,8 @@ function nameLines(nm,max=14){ if(nm.length>max && !nm.includes(' ') && nm.inclu
 function scoreRow(b){ const c=bmCells(b?b.id:null); let meas=0, wtd=0; for(const k of c.values()){ if(k==='measured') meas++; wtd+=WT[k]||0; } const cen=CEN?(b?CEN.benchmarks[b.id]:CEN.totals):null; return {b, cells:c, meas, any:c.size, wtd, pct:Math.round(100*wtd/NCELL), cen}; }
 function cellName(k){ const [s,l]=k.split('|'); return `${STAGES[SIDX[s]].name} / ${LAYERS.find(x=>x.id===l).name}`; }
 let showStageSubs2=false;
-// below this width the figure is drawn for the screen instead of scrolling a 760px drawing sideways
-const jointHost=()=>$('#fig-joint .scroll'), jointNarrow=()=>{ const w=jointHost().clientWidth; return w>0 && w<700; };
+const {isNarrow, redrawOnWidth}=U;
+const jointHost=()=>$('#fig-joint .scroll'), jointNarrow=()=>isNarrow(jointHost());
 function renderJoint(){
   const prim=A.benchmarks.filter(b=>b.group==='primary');
   const rows=prim.map(scoreRow).sort((a,b)=>(b.wtd-a.wtd)||(b.meas-a.meas)||(b.any-a.any)||a.b.short.localeCompare(b.b.short));
@@ -905,15 +947,15 @@ function renderJoint(){
   const nar=jointNarrow(), JW=nar?Math.max(320,Math.round(jointHost().clientWidth)):W;
   const NS=STAGES.length, NL=LAYERS.length, NAMEX=nar?100:148, BX0=nar?108:160, BW=nar?JW-BX0-42:150, BX1=BX0+BW, X0=nar?2:376, X1=nar?JW-2:W-14, GAP=nar?10:16, HL=nar?12:14;
   const SLOT=(X1-X0-GAP*(NS-1))/NCELL, MK=nar?Math.min(8, SLOT-2):Math.min(8, SLOT-6), IC=nar?Math.min(10, SLOT-1):10, RH=nar?44:26;
-  const SUBH=nar?34:36, TOP=nar?62+(showStageSubs2?SUBH:0):(showStageSubs2?106:70)+HL, ROWY=nar?10:RH/2, MARKY=nar?27:RH/2;
+  const SUBH=nar?34:36, TOP=nar?50+(showStageSubs2?SUBH:0):(showStageSubs2?106:70)+HL, ROWY=nar?10:RH/2, MARKY=nar?27:RH/2;
   const sx=(si,li)=>X0+si*(NL*SLOT+GAP)+li*SLOT;
   const NT=A.tasks.filter(t=>BM[t.benchmark]&&BM[t.benchmark].group==='primary').length;
   const H=TOP+rows.length*RH+84; let s='';
   s+=`<svg viewBox="0 0 ${JW} ${H}"${nar?' class="narrow"':''} role="img" aria-label="Per benchmark: coverage score on the left, the ${NCELL} stage by layer cells as marks, tasks per stage along the bottom">`;
   // headers
   STAGES.forEach((st,si)=>{ const gx0=sx(si,0), gx1=sx(si,NL-1)+SLOT, gm=(gx0+gx1)/2;
-    const lines=showStageSubs2?(nar?wrapSub(st.short,10):wrapSub(st.sub,18)):[], nl=nameLines(st.name,nar?9:14), hy=TOP-(nar?38:46)-(lines.length?SUBH:0), SL=nar?10:11, nst=nar?' style="font-size:10.5px"':''; s+=`<g class="hdrbtn" tabindex="0" role="button" data-hdr="1" aria-label="${esc(st.name)}: ${showStageSubs2?'hide':'show'} what this stage covers"><rect x="${gx0}" y="${hy-12-(nl.length-1)*HL}" width="${gx1-gx0}" height="${18+(nl.length-1)*HL+lines.length*SL}" fill="transparent"/>${nl.map((ln,k)=>`<text x="${gm}" y="${hy-(nl.length-1-k)*HL}" text-anchor="middle" class="lg"${nst}>${esc(ln)}</text>`).join('')}${lines.map((ln,k)=>`<text x="${gm}" y="${hy+(nar?12:13)+k*SL}" text-anchor="middle" class="sm mono mut" style="font-size:${nar?8:8.5}px">${esc(ln)}</text>`).join('')}</g>`;
-    LAYERS.forEach((ly,li)=>{ const x=sx(si,li)+(SLOT-IC)/2; s+=`<use href="#ic-${ly.id}" x="${x}" y="${TOP-(nar?26:27)}" width="${IC}" height="${IC}" class="hic" data-tt="layer" data-layer="${ly.id}" tabindex="0" aria-label="${esc(ly.name)}"/>`; });
+    const lines=showStageSubs2?(nar?wrapSub(st.short,10):wrapSub(st.sub,18)):[], nl=nameLines(st.name,nar?9:14), hy=TOP-(nar?26:46)-(lines.length?SUBH:0), SL=nar?10:11, nst=nar?' style="font-size:10.5px"':''; s+=`<g class="hdrbtn" tabindex="0" role="button" data-hdr="1" aria-label="${esc(st.name)}: ${showStageSubs2?'hide':'show'} what this stage covers"><rect x="${gx0}" y="${hy-12-(nl.length-1)*HL}" width="${gx1-gx0}" height="${18+(nl.length-1)*HL+lines.length*SL}" fill="transparent"/>${nl.map((ln,k)=>`<text x="${gm}" y="${hy-(nl.length-1-k)*HL}" text-anchor="middle" class="lg"${nst}>${esc(ln)}</text>`).join('')}${lines.map((ln,k)=>`<text x="${gm}" y="${hy+(nar?12:13)+k*SL}" text-anchor="middle" class="sm mono mut" style="font-size:${nar?8:8.5}px">${esc(ln)}</text>`).join('')}</g>`;
+    if(!nar) LAYERS.forEach((ly,li)=>{ const x=sx(si,li)+(SLOT-IC)/2; s+=`<use href="#ic-${ly.id}" x="${x}" y="${TOP-(nar?26:27)}" width="${IC}" height="${IC}" class="hic" data-tt="layer" data-layer="${ly.id}" tabindex="0" aria-label="${esc(ly.name)}"/>`; });
     s+=`<line x1="${gx0}" y1="${TOP-10}" x2="${gx1}" y2="${TOP-10}" class="hair2"/>`; });
   // light column lines between stage groups, as in the life-cycle figure; drawn to the end of the bottom row
   // (narrow: the lines would cut through each row's name line, and the bar column has no header above the marks' headers)
@@ -934,8 +976,7 @@ function renderJoint(){
   const cn=$('#cov-n'); if(cn) cn.textContent=String(A.meta.task_entries); if(CEN&&CEN.totals){ const a=$('#cov-screened'), b=$('#cov-L'); if(a) a.textContent=String(CEN.totals.screened); if(b) b.textContent=String(CEN.totals.L); }
 }
 renderJoint();
-// redraw when the figure crosses the narrow threshold, or changes width while narrow (the narrow drawing is sized to it)
-{ let jw=jointHost().clientWidth; new ResizeObserver(()=>{ const w=jointHost().clientWidth; if(Math.abs(w-jw)<1) return; const was=jw>0&&jw<700; jw=w; if(was||jointNarrow()) renderJoint(); }).observe(jointHost()); }
+redrawOnWidth(jointHost(), renderJoint);
 $('#joint-svg').addEventListener('click', e=>{ if(e.target.closest('[data-hdr]')){ showStageSubs2=!showStageSubs2; renderJoint(); } });
 $('#joint-svg').addEventListener('keydown', e=>{ if((e.key==='Enter'||e.key===' ') && e.target.closest('[data-hdr]')){ e.preventDefault(); showStageSubs2=!showStageSubs2; renderJoint(); } });
 bindTips($('#joint-svg'), el=>{
@@ -1259,24 +1300,29 @@ if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{ if(run&
 
 // ---------- figure 1: life cycles
 let selModel=null, showStageSubs=false;
-const LL=312, COLW2=(W-LL-(U.RPAD||14))/STAGES.length, cx2=i=>LL+COLW2*i+COLW2/2;
+// narrow: each row puts name and date on one line and the five stage marks across the full width on the line below
+let lifeNar=false, LL=312, COLW2=(W-LL-(U.RPAD||14))/STAGES.length; const cx2=i=>LL+COLW2*i+COLW2/2;
+const lifeHost=()=>$('#fig-life .scroll');
 function wrapSub(sub, maxChars){ const parts=String(sub||'').split(' · '); const lines=[]; let cur=''; for(const p of parts){ const cand=cur?cur+' · '+p:p; if(cand.length>maxChars && cur){ lines.push(cur); cur=p; } else cur=cand; } if(cur) lines.push(cur); return lines.slice(0,3); }
-function lifeHeader(y){ let s=''; STAGES.forEach((st,i)=>{ const lines=showStageSubs?wrapSub(st.sub,24):[], nl=nameLines(st.name); s+=`<g class="hdrbtn" tabindex="0" role="button" data-hdr="1" aria-label="${esc(st.name)}: ${showStageSubs?'hide':'show'} what this stage covers"><rect x="${cx2(i)-COLW2/2}" y="${y-14-(nl.length-1)*14}" width="${COLW2}" height="${18+(nl.length-1)*14+lines.length*11}" fill="transparent"/>${nl.map((ln,k)=>`<text x="${cx2(i)}" y="${y-(nl.length-1-k)*14}" text-anchor="middle" class="lg">${esc(ln)}</text>`).join('')}${lines.map((ln,k)=>`<text x="${cx2(i)}" y="${y+13+k*11}" text-anchor="middle" class="sm mono mut" style="font-size:8.5px">${esc(ln)}</text>`).join('')}</g>`; }); return s; }
+function lifeHeader(y){ let s=''; const HL=lifeNar?12:14, SL=lifeNar?10:11, nst=lifeNar?' style="font-size:10.5px"':''; STAGES.forEach((st,i)=>{ const lines=showStageSubs?(lifeNar?wrapSub(st.short,10):wrapSub(st.sub,24)):[], nl=nameLines(st.name,lifeNar?9:14); s+=`<g class="hdrbtn" tabindex="0" role="button" data-hdr="1" aria-label="${esc(st.name)}: ${showStageSubs?'hide':'show'} what this stage covers"><rect x="${cx2(i)-COLW2/2}" y="${y-14-(nl.length-1)*HL}" width="${COLW2}" height="${18+(nl.length-1)*HL+lines.length*SL}" fill="transparent"/>${nl.map((ln,k)=>`<text x="${cx2(i)}" y="${y-(nl.length-1-k)*HL}" text-anchor="middle" class="lg"${nst}>${esc(ln)}</text>`).join('')}${lines.map((ln,k)=>`<text x="${cx2(i)}" y="${y+(lifeNar?12:13)+k*SL}" text-anchor="middle" class="sm mono mut" style="font-size:${lifeNar?8:8.5}px">${esc(ln)}</text>`).join('')}</g>`; }); return s; }
 function colLines2(y0,y1){ let s=''; for(let i=0;i<=STAGES.length;i++){ const x=LL+COLW2*i; s+=`<line x1="${x}" y1="${y0}" x2="${x}" y2="${y1}" class="hair"/>`; } return s; }
 function renderLife(){
   const all=A.pipelines.models.filter(m=>!m.dim); const models=all; const groups=A.pipelines.model_groups;
   if(selModel && !models.find(m=>m.id===selModel)) selModel=null;
-  const ROW=26, TOP=(showStageSubs?92:54)+14, GH=30, GGAP=14; let y=TOP; let s=''; const rows=[], spans=[];
+  lifeNar=isNarrow(lifeHost()); const LW=lifeNar?Math.max(320,Math.round(lifeHost().clientWidth)):W, RP=lifeNar?0:(U.RPAD||14);
+  LL=lifeNar?0:312; COLW2=(LW-LL-RP)/STAGES.length;
+  const ROW=lifeNar?40:26, TOP=lifeNar?(showStageSubs?88:54):(showStageSubs?92:54)+14, GH=30, GGAP=14; let y=TOP; let s=''; const rows=[], spans=[];
   for(const g of groups){ const gm=models.filter(x=>x.group===g.id); if(!gm.length) continue; rows.push({group:g, y}); y+=GH; const y0=y; for(const m of gm){ rows.push({m, y}); y+=ROW; } spans.push([y0, y]); y+=GGAP; }
   const H=y-GGAP+8;
-  s+=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Documented life cycles of ${models.length} models and recipes across five stages">`;
-  for(const [y0,y1] of spans) s+=colLines2(y0, y1); s+=lifeHeader(36);
+  s+=`<svg viewBox="0 0 ${LW} ${H}"${lifeNar?' class="narrow"':''} role="img" aria-label="Documented life cycles of ${models.length} models and recipes across five stages">`;
+  // (narrow: the column lines would cut through each row's name line)
+  if(!lifeNar) for(const [y0,y1] of spans) s+=colLines2(y0, y1); s+=lifeHeader(36);
   for(const r of rows){
     // group header: full-width rule, then the group name above the grid (column lines stop short of it); the mark legend carries what the groups' notes said
-    if(r.group){ s+=`<line x1="0" y1="${r.y}" x2="${W-(U.RPAD||14)}" y2="${r.y}" class="hair2"/><text x="0" y="${r.y+20}" class="sm mono" style="letter-spacing:.08em;font-weight:600">${esc(r.group.name.toUpperCase())}</text>`; continue; }
-    const m=r.m; const ym=r.y+ROW/2; const present=STAGES.map((st,i)=>m.stages[st.id]?i:-1).filter(i=>i>=0); const sel=m.id===selModel;
+    if(r.group){ s+=`<line x1="0" y1="${r.y}" x2="${LW-RP}" y2="${r.y}" class="hair2"/><text x="0" y="${r.y+20}" class="sm mono" style="letter-spacing:.08em;font-weight:600">${esc(r.group.name.toUpperCase())}</text>`; continue; }
+    const m=r.m; const ym=r.y+(lifeNar?28:ROW/2), yn=lifeNar?r.y+14:ym+4; const present=STAGES.map((st,i)=>m.stages[st.id]?i:-1).filter(i=>i>=0); const sel=m.id===selModel;
     s+=`<g class="${sel?'row-sel':''}">`;
-    s+=`<g class="rowbtn" tabindex="0" role="button" data-tt="row" data-model="${esc(m.id)}" aria-label="${sel?'Deselect':'Select'} ${esc(m.name)}, ${esc(m.org)}"><rect x="0" y="${r.y}" width="${LL-8}" height="${ROW}" fill="transparent"/><text x="0" y="${ym+4}" class="md" style="font-weight:${sel?600:500}">${esc(m.name)}</text><text x="${LL-14}" y="${ym+4}" text-anchor="end" class="sm mono mut">${esc(m.date)}</text></g>`;
+    s+=`<g class="rowbtn" tabindex="0" role="button" data-tt="row" data-model="${esc(m.id)}" aria-label="${sel?'Deselect':'Select'} ${esc(m.name)}, ${esc(m.org)}"><rect x="0" y="${r.y}" width="${lifeNar?LW:LL-8}" height="${lifeNar?19:ROW}" fill="transparent"/><text x="0" y="${yn}" class="md" style="font-weight:${sel?600:500}">${esc(m.name)}</text><text x="${lifeNar?LW-2:LL-14}" y="${yn}" text-anchor="end" class="sm mono mut">${esc(m.date)}</text></g>`;
     if(present.length>1) s+=`<line x1="${cx2(present[0])}" y1="${ym}" x2="${cx2(present[present.length-1])}" y2="${ym}" class="lifeline"/>`;
     for(const i of present){ const st=STAGES[i]; const e=m.stages[st.id]; const hollow=e.ev!=='code';
       s+=`<g class="mark ${hollow?'hollow':''}" tabindex="0" role="button" data-tt="model" data-model="${esc(m.id)}" data-stage="${st.id}" aria-label="${esc(m.name)}, ${esc(st.name)}: ${hollow?'report only':'public code'}, ${esc(e.label)}"><circle cx="${cx2(i)}" cy="${ym}" r="5.5" class="${hollow?'':'ev2'}"/><rect x="${cx2(i)-12}" y="${ym-12}" width="24" height="24" fill="transparent"/></g>`; }
@@ -1321,7 +1367,7 @@ function openCode(c, st, btn){ document.querySelectorAll('.chipbtn.sel').forEach
   ['Supplemental benchmarks are visible but not counted.', 'ISO-Bench, FlashInfer-Bench, CommBench, ATE-Bench and KernelBench appear as benchmark-level rings; they were not task-audited and do not enter the counts.'],
   ['Unchanged conclusions.', 'Real GPU pretraining and RL-method tasks exist (MLS-Bench, RE-Bench, RSI-Exam); serving repairs are CPU-verified slices; no audited task trains a policy through tools or exercises weight publication, staleness control or recovery inside an RL loop.']
  ]; for(const [b,t] of items) ul.append(h('li',null,h('b',{text:b+' '}),t)); })();
-renderLife(); renderCode();
+renderLife(); renderCode(); redrawOnWidth(lifeHost(), renderLife);
 // ---------- side index
 (function(){ const nav=$('#toc'), list=$('#toc-list'); if(!nav||!list) return;
   const main=document.querySelector('main'); const secs=[...main.querySelectorAll('section')].filter(s=>s.id && !s.hasAttribute('data-internal') && !s.hidden);
