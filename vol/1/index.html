@@ -81,6 +81,7 @@ figure .fig-title span{font:12px var(--mono); color:var(--muted)}
 .toggle input{accent-color:var(--accent)}
 .scroll{overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch}
 figure svg{display:block; width:100%; height:auto; min-width:760px; font-family:var(--sans)}
+figure svg.narrow{min-width:0}
 figcaption{font-size:13.5px; line-height:1.55; color:var(--ink-2); margin-top:12px}
 svg text{fill:var(--ink)} svg .mut{fill:var(--muted)} svg .mono{font-family:var(--mono)} svg .sm{font-size:10.5px} svg .md{font-size:12px} svg .lg{font-size:13px; font-weight:600}
 svg .hair{stroke:var(--line); stroke-width:1} svg .hair2{stroke:var(--line-2); stroke-width:1}
@@ -890,33 +891,39 @@ renderChips(); renderExample();
 function bmCells(bmId){ const c=new Map(); for(const t of A.tasks){ if(bmId && t.benchmark!==bmId) continue; const b=BM[t.benchmark]; if(!b || b.group!=='primary') continue; for(const m of t.mappings){ const k=m.stage+'|'+m.layer; const prev=c.get(k); if(!prev || KIND[m.kind].rank>KIND[prev].rank) c.set(k,m.kind); } } return c; }
 const WT={measured:1,bounded:.5,adjacent:.25};
 // stage names too wide for one column break at the most balanced space: "Agent / post-training", "Serve & / deployment"
-function nameLines(nm){ if(nm.length<=14 || !nm.includes(' ')) return [nm]; const w=nm.split(' '); let best=null; for(let i=1;i<w.length;i++){ const a=w.slice(0,i).join(' '), b=w.slice(i).join(' '), m=Math.max(a.length,b.length); if(!best || m<=best.m) best={a,b,m}; } return [best.a, best.b]; }
+function nameLines(nm,max=14){ if(nm.length>max && !nm.includes(' ') && nm.includes('-')){ const i=nm.indexOf('-')+1; return [nm.slice(0,i), nm.slice(i)]; } if(nm.length<=max || !nm.includes(' ')) return [nm]; const w=nm.split(' '); let best=null; for(let i=1;i<w.length;i++){ const a=w.slice(0,i).join(' '), b=w.slice(i).join(' '), m=Math.max(a.length,b.length); if(!best || m<=best.m) best={a,b,m}; } return [best.a, best.b]; }
 function scoreRow(b){ const c=bmCells(b?b.id:null); let meas=0, wtd=0; for(const k of c.values()){ if(k==='measured') meas++; wtd+=WT[k]||0; } const cen=CEN?(b?CEN.benchmarks[b.id]:CEN.totals):null; return {b, cells:c, meas, any:c.size, wtd, pct:Math.round(100*wtd/NCELL), cen}; }
 function cellName(k){ const [s,l]=k.split('|'); return `${STAGES[SIDX[s]].name} / ${LAYERS.find(x=>x.id===l).name}`; }
 let showStageSubs2=false;
+// below this width the figure is drawn for the screen instead of scrolling a 760px drawing sideways
+const jointHost=()=>$('#fig-joint .scroll'), jointNarrow=()=>{ const w=jointHost().clientWidth; return w>0 && w<700; };
 function renderJoint(){
   const prim=A.benchmarks.filter(b=>b.group==='primary');
   const rows=prim.map(scoreRow).sort((a,b)=>(b.wtd-a.wtd)||(b.meas-a.meas)||(b.any-a.any)||a.b.short.localeCompare(b.b.short));
   const union=scoreRow(null);
-  const NS=STAGES.length, NL=LAYERS.length, NAMEX=148, BX0=160, BW=150, BX1=BX0+BW, X0=376, X1=W-14, GAP=16, HL=14;
-  const SLOT=(X1-X0-GAP*(NS-1))/NCELL, MK=Math.min(8, SLOT-6), IC=10, RH=26, TOP=(showStageSubs2?106:70)+HL;
+  // narrow: each row puts name, bar and score on one line and its 35 marks across the full width on the line below
+  const nar=jointNarrow(), JW=nar?Math.max(320,Math.round(jointHost().clientWidth)):W;
+  const NS=STAGES.length, NL=LAYERS.length, NAMEX=nar?100:148, BX0=nar?108:160, BW=nar?JW-BX0-42:150, BX1=BX0+BW, X0=nar?2:376, X1=nar?JW-2:W-14, GAP=nar?10:16, HL=nar?12:14;
+  const SLOT=(X1-X0-GAP*(NS-1))/NCELL, MK=nar?Math.min(8, SLOT-2):Math.min(8, SLOT-6), IC=nar?Math.min(10, SLOT-1):10, RH=nar?44:26;
+  const SUBH=nar?34:36, TOP=nar?62+(showStageSubs2?SUBH:0):(showStageSubs2?106:70)+HL, ROWY=nar?10:RH/2, MARKY=nar?27:RH/2;
   const sx=(si,li)=>X0+si*(NL*SLOT+GAP)+li*SLOT;
   const NT=A.tasks.filter(t=>BM[t.benchmark]&&BM[t.benchmark].group==='primary').length;
   const H=TOP+rows.length*RH+84; let s='';
-  s+=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Per benchmark: coverage score on the left, the ${NCELL} stage by layer cells as marks, tasks per stage along the bottom">`;
+  s+=`<svg viewBox="0 0 ${JW} ${H}"${nar?' class="narrow"':''} role="img" aria-label="Per benchmark: coverage score on the left, the ${NCELL} stage by layer cells as marks, tasks per stage along the bottom">`;
   // headers
   STAGES.forEach((st,si)=>{ const gx0=sx(si,0), gx1=sx(si,NL-1)+SLOT, gm=(gx0+gx1)/2;
-    const lines=showStageSubs2?wrapSub(st.sub,18):[], nl=nameLines(st.name), hy=TOP-46-(lines.length?36:0); s+=`<g class="hdrbtn" tabindex="0" role="button" data-hdr="1" aria-label="${esc(st.name)}: ${showStageSubs2?'hide':'show'} what this stage covers"><rect x="${gx0}" y="${hy-12-(nl.length-1)*HL}" width="${gx1-gx0}" height="${18+(nl.length-1)*HL+lines.length*11}" fill="transparent"/>${nl.map((ln,k)=>`<text x="${gm}" y="${hy-(nl.length-1-k)*HL}" text-anchor="middle" class="lg">${esc(ln)}</text>`).join('')}${lines.map((ln,k)=>`<text x="${gm}" y="${TOP-46-36+13+k*11}" text-anchor="middle" class="sm mono mut" style="font-size:8.5px">${esc(ln)}</text>`).join('')}</g>`;
-    LAYERS.forEach((ly,li)=>{ const x=sx(si,li)+(SLOT-IC)/2; s+=`<use href="#ic-${ly.id}" x="${x}" y="${TOP-27}" width="${IC}" height="${IC}" class="hic" data-tt="layer" data-layer="${ly.id}" tabindex="0" aria-label="${esc(ly.name)}"/>`; });
+    const lines=showStageSubs2?(nar?wrapSub(st.short,10):wrapSub(st.sub,18)):[], nl=nameLines(st.name,nar?9:14), hy=TOP-(nar?38:46)-(lines.length?SUBH:0), SL=nar?10:11, nst=nar?' style="font-size:10.5px"':''; s+=`<g class="hdrbtn" tabindex="0" role="button" data-hdr="1" aria-label="${esc(st.name)}: ${showStageSubs2?'hide':'show'} what this stage covers"><rect x="${gx0}" y="${hy-12-(nl.length-1)*HL}" width="${gx1-gx0}" height="${18+(nl.length-1)*HL+lines.length*SL}" fill="transparent"/>${nl.map((ln,k)=>`<text x="${gm}" y="${hy-(nl.length-1-k)*HL}" text-anchor="middle" class="lg"${nst}>${esc(ln)}</text>`).join('')}${lines.map((ln,k)=>`<text x="${gm}" y="${hy+(nar?12:13)+k*SL}" text-anchor="middle" class="sm mono mut" style="font-size:${nar?8:8.5}px">${esc(ln)}</text>`).join('')}</g>`;
+    LAYERS.forEach((ly,li)=>{ const x=sx(si,li)+(SLOT-IC)/2; s+=`<use href="#ic-${ly.id}" x="${x}" y="${TOP-(nar?26:27)}" width="${IC}" height="${IC}" class="hic" data-tt="layer" data-layer="${ly.id}" tabindex="0" aria-label="${esc(ly.name)}"/>`; });
     s+=`<line x1="${gx0}" y1="${TOP-10}" x2="${gx1}" y2="${TOP-10}" class="hair2"/>`; });
   // light column lines between stage groups, as in the life-cycle figure; drawn to the end of the bottom row
-  const YEND=TOP+rows.length*RH+48; for(let si=0;si<=NS;si++){ const x=si<NS?sx(si,0)-GAP/2:sx(NS-1,NL-1)+SLOT+GAP/2; s+=`<line x1="${x}" y1="${TOP-4}" x2="${x}" y2="${YEND}" class="hair"/>`; }
-  s+=`<text x="${BX0}" y="${TOP-22}" class="lg">LLM lifecycle coverage</text><line x1="${BX0}" y1="${TOP-10}" x2="${BX1}" y2="${TOP-10}" class="hair2"/>`;
+  // (narrow: the lines would cut through each row's name line, and the bar column has no header above the marks' headers)
+  if(!nar){ const YEND=TOP+rows.length*RH+48; for(let si=0;si<=NS;si++){ const x=si<NS?sx(si,0)-GAP/2:sx(NS-1,NL-1)+SLOT+GAP/2; s+=`<line x1="${x}" y1="${TOP-4}" x2="${x}" y2="${YEND}" class="hair"/>`; }
+    s+=`<text x="${BX0}" y="${TOP-22}" class="lg">LLM lifecycle coverage</text><line x1="${BX0}" y1="${TOP-10}" x2="${BX1}" y2="${TOP-10}" class="hair2"/>`; }
   function marks(r, ym, bmId){ STAGES.forEach((st,si)=>{ LAYERS.forEach((ly,li)=>{ const kind=r.cells.get(st.id+'|'+ly.id); const x=sx(si,li)+(SLOT-MK)/2; const cls=kind==='measured'?'ev3 cellmark':kind==='bounded'?'ev2 cellmark':kind?'ev1 cellmark':'cellmark none'; s+=`<rect x="${x}" y="${ym-MK/2}" width="${MK}" height="${MK}" rx="1.5" class="${cls}" tabindex="0" role="img" data-tt="cell" data-bm="${bmId}" data-stage="${st.id}" data-layer="${ly.id}" aria-label="${esc(st.name)} / ${esc(ly.name)}: ${kind?KIND[kind].label:'no task'}"/>`; }); }); }
   function bar(r, ym){ const wM=BW*r.meas/NCELL, wA=BW*r.wtd/NCELL; s+=`<rect x="${BX0}" y="${ym-6}" width="${BW}" height="12" rx="3" class="ev0"/>`; if(wA>wM+2) s+=`<rect x="${BX0+wM+(wM>0?2:0)}" y="${ym-6}" width="${wA-wM-(wM>0?2:0)}" height="12" rx="3" class="ev2"/>`; if(wM>0) s+=`<rect x="${BX0}" y="${ym-6}" width="${wM}" height="12" rx="3" class="ev3"/>`; s+=`<text x="${BX1+8}" y="${ym+4}" class="md mono" style="font-weight:600">${r.pct}%</text>`; }
   // union row (column marginal)
   let y=TOP;
-  for(const r of rows){ const ym=y+RH/2; s+=`<g class="namebtn" tabindex="0" data-tt="score" data-bm="${esc(r.b.id)}"><rect x="0" y="${y}" width="${NAMEX}" height="${RH}" fill="transparent"/><text x="${NAMEX-8}" y="${ym+4}" text-anchor="end" class="md">${esc(r.b.short)}</text></g>`; bar(r, ym); marks(r, ym, r.b.id); y+=RH; }
+  for(const r of rows){ const ym=y+ROWY; s+=`<g class="namebtn" tabindex="0" data-tt="score" data-bm="${esc(r.b.id)}"><rect x="0" y="${y}" width="${NAMEX}" height="${RH}" fill="transparent"/><text x="${NAMEX-8}" y="${ym+4}" text-anchor="end" class="md">${esc(r.b.short)}</text></g>`; bar(r, ym); marks(r, y+MARKY, r.b.id); y+=RH; }
   // bottom marginal
   { const yb=y+12; s+=`<line x1="${X0}" y1="${y+4}" x2="${X1}" y2="${y+4}" class="hair2"/><rect x="${X0-4}" y="${yb-3}" width="196" height="20" fill="var(--surface)"/><text x="${X0}" y="${yb+12}" class="lg">Task environments per stage</text>`;
     STAGES.forEach((st,si)=>{ const n=stageEntries(st.id).length, gx0=sx(si,0), gw=sx(si,NL-1)+SLOT-gx0, bw=gw*n/NT; s+=`<rect x="${gx0}" y="${yb+22}" width="${gw}" height="10" rx="2" class="ev0"/><rect x="${gx0}" y="${yb+22}" width="${Math.max(2,bw)}" height="10" rx="2" class="ev3"/><text x="${gx0}" y="${yb+47}" class="sm mono" style="font-weight:600">${n}</text><text x="${gx0+String(n).length*7+3}" y="${yb+47}" class="sm mono mut">· ${Math.round(100*n/NT)}%</text>`; }); }
@@ -927,6 +934,8 @@ function renderJoint(){
   const cn=$('#cov-n'); if(cn) cn.textContent=String(A.meta.task_entries); if(CEN&&CEN.totals){ const a=$('#cov-screened'), b=$('#cov-L'); if(a) a.textContent=String(CEN.totals.screened); if(b) b.textContent=String(CEN.totals.L); }
 }
 renderJoint();
+// redraw when the figure crosses the narrow threshold, or changes width while narrow (the narrow drawing is sized to it)
+{ let jw=jointHost().clientWidth; new ResizeObserver(()=>{ const w=jointHost().clientWidth; if(Math.abs(w-jw)<1) return; const was=jw>0&&jw<700; jw=w; if(was||jointNarrow()) renderJoint(); }).observe(jointHost()); }
 $('#joint-svg').addEventListener('click', e=>{ if(e.target.closest('[data-hdr]')){ showStageSubs2=!showStageSubs2; renderJoint(); } });
 $('#joint-svg').addEventListener('keydown', e=>{ if((e.key==='Enter'||e.key===' ') && e.target.closest('[data-hdr]')){ e.preventDefault(); showStageSubs2=!showStageSubs2; renderJoint(); } });
 bindTips($('#joint-svg'), el=>{
@@ -1001,7 +1010,7 @@ function collect(){
   const mx=marks.map(m=>num(m,'x')), xmin=Math.min(...mx), xmax=Math.max(...mx);
   for(const el of svg.querySelectorAll('rect,text')){
     if(el.closest('g.namebtn,g.hdrbtn')||el.classList.contains('cellmark')) continue;
-    const x=num(el,'x'), y=num(el,'y'); if(x>=xmin-6) continue;
+    const x=num(el,'x'), y=num(el,'y'); if(x>=xmin-6&&!svg.classList.contains('narrow')) continue;
     const r=rows.find(r=>y>=r.y0&&y<r.y0+RH); if(!r) continue;
     r.els.push(el);
     if(el.tagName==='text') r.pct=el; else if(el.classList.contains('ev0')) r.track=el; else r.fills.push(el);
@@ -1071,14 +1080,16 @@ function build(G){
   for(const r of G.rows){
     const x0=r.track?num(r.track,'x'):0, f3=r.fills.find(f=>f.classList.contains('ev3')), f2=r.fills.find(f=>f.classList.contains('ev2'));
     const W3=f3?num(f3,'width'):0, W2=f2?num(f2,'width'):0, x2=f2?num(f2,'x'):x0+W3+1;
-    const cells=r.marks.map(m=>({m,k:kindOf(m),x:num(m,'x')})).filter(c=>c.k>=0);
-    const meas=cells.filter(c=>c.k===2).map(c=>({...c,w:1,d:Math.abs(x0+W3-c.x)})), part=cells.filter(c=>c.k<2).map(c=>({...c,w:KW[c.k],d:Math.abs(x2-c.x)}));
+    // dy: how far the bar's centre line sits above the marks (0 when they share a line)
+    const yBar=r.track?num(r.track,'y')+num(r.track,'height')/2:0;
+    const cells=r.marks.map(m=>({m,k:kindOf(m),x:num(m,'x'),dy:r.track?yBar-num(m,'y')-W8/2:0})).filter(c=>c.k>=0);
+    const meas=cells.filter(c=>c.k===2).map(c=>({...c,w:1,d:Math.hypot(x0+W3-c.x,c.dy)})), part=cells.filter(c=>c.k<2).map(c=>({...c,w:KW[c.k],d:Math.hypot(x2-c.x,c.dy)}));
     const nM=meas.length, WP=part.reduce((a,c)=>a+c.w,0), d0=T.flowL+r.aud*F.row;
-    settle(meas,()=>d0,(it,l)=>{ const dx=Math.max(x0,x0+W3*(l+it.w/2)/nM-W8/2)-it.x; return {dx,d:Math.abs(dx)}; });
+    settle(meas,()=>d0,(it,l)=>{ const dx=Math.max(x0,x0+W3*(l+it.w/2)/nM-W8/2)-it.x; return {dx,d:Math.hypot(dx,it.dy)}; });
     const lastM=meas.length?meas[meas.length-1].arr:d0;
-    settle(part,its=>Math.max(d0+(nM?160:0),lastM+F.partAfter-Math.min(...its.map(it=>it.travel))),(it,l)=>{ const dx=Math.max(x0,(f2?x2+W2*(l+it.w/2)/WP:x2)-W8/2)-it.x; return {dx,d:Math.abs(dx)}; });
+    settle(part,its=>Math.max(d0+(nM?160:0),lastM+F.partAfter-Math.min(...its.map(it=>it.travel))),(it,l)=>{ const dx=Math.max(x0,(f2?x2+W2*(l+it.w/2)/WP:x2)-W8/2)-it.x; return {dx,d:Math.hypot(dx,it.dy)}; });
     const under=f2&&f3?(f2.compareDocumentPosition(f3)&Node.DOCUMENT_POSITION_FOLLOWING?f2:f3):(f2||f3);
-    for(const it of [...meas,...part]) flights.push({m:it.m,o:op(it.m),dep:it.dep,travel:it.travel,from:[0,r.off],to:[it.dx,r.off],dir:'x',under});
+    for(const it of [...meas,...part]) flights.push({m:it.m,o:op(it.m),dep:it.dep,travel:it.travel,from:[0,r.off],to:[it.dx,r.off+it.dy],dir:'x',under});
     const a3=meas.map(it=>({t:it.arr,w:1})), a2=part.map(it=>({t:it.arr,w:it.w}));
     r.flow={d0,a3,a2,all:[...a3,...a2].sort((a,b)=>a.t-b.t),f3,f2,nM,WP};
     for(const a of r.flow.all) lastL=Math.max(lastL,a.t);
