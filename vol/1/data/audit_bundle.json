@@ -1,11 +1,11 @@
 {
  "meta": {
-  "built": "2026-09-28",
+  "built": "2026-10-01",
   "snapshot_v1": "2026-09-05",
   "snapshot_v2": "2026-09-22",
-  "task_entries": 127,
-  "task_instances": 217,
-  "mappings": 245,
+  "task_entries": 133,
+  "task_instances": 223,
+  "mappings": 258,
   "by_benchmark": {
    "tb4": 9,
    "deepswe": 8,
@@ -17,14 +17,15 @@
    "weirdml": 1,
    "edgebench": 1,
    "tb21": 9,
-   "sweserve": 53
+   "sweserve": 53,
+   "autolab": 6
   },
   "census": {
-   "screened": 590,
-   "L": 150,
-   "A": 161,
-   "O": 279,
-   "public": 590
+   "screened": 626,
+   "L": 156,
+   "A": 176,
+   "O": 294,
+   "public": 626
   }
  },
  "tasks": [
@@ -4188,6 +4189,216 @@
    "count": 1,
    "e2e": true,
    "family": "Speculative and advanced decoding"
+  },
+  {
+   "id": "autolab-data_select_ifeval",
+   "benchmark": "autolab",
+   "title": "Select 5,000 fine-tuning samples from a 50k pool to raise IFEval accuracy after LoRA SFT",
+   "format": "Harbor",
+   "hardware": "1 × H100; 8 CPUs, 32 GiB RAM; agent 8 h, verifier 4 h",
+   "edit": "Edits only /app/select_data.py to pick at most 5,000 samples from a pool of about 50,000 built from allenai/tulu-3-sft-mixture (19 sources, capped at 5,000 each). The LoRA training config, the format converter and train.sh are frozen; the agent may run the fixed pipeline and a quick IFEval subset on the H100.",
+   "verify": "tests/test.sh hash-checks the three frozen files, then runs train.sh: the agent's select_data.py, conversion, truncation to 5,000 and a llamafactory-cli LoRA SFT of Qwen2.5-3B-Instruct (rank 16, one epoch). It then retrains the random-selection baseline, runs full IFEval through lm-eval's vLLM backend on both adapters, and sets reward = clip((prompt_level_strict_acc − 0.38) / 0.10, 0, 1).",
+   "boundary": "The data work is seen only through one IFEval score from one seed (about 541 prompts). Nothing checks that selected samples come from the pool, and the hash guard reads its expected values from /orig inside the agent's image and runs before the agent's script executes. The data step is a single-process filter over one JSON file: no data engine, sharding, state, kernel or cluster work. One GPU, one container.",
+   "prerequisites": "Docker with the NVIDIA Container Toolkit, or a GPU sandbox such as Modal (the README's recommendation); Harbor with the repository's harbor_patch.sh applied to enable GPUs; one H100 or L40S for the GPU tasks; models and datasets are downloaded at image build and the run has no internet. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/data_select_ifeval",
+   "containerUrl": "https://github.com/autolabhq/autolab/blob/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/data_select_ifeval/environment/Dockerfile",
+   "verifierUrl": "https://github.com/autolabhq/autolab/blob/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/data_select_ifeval/tests/test.sh",
+   "resourceUrl": "https://github.com/autolabhq/autolab/blob/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/data_select_ifeval/task.toml",
+   "mappings": [
+    {
+     "stage": "data",
+     "layer": "methods",
+     "kind": "measured",
+     "relation": "Direct: the selection script is the only editable file, and the verifier reruns it, then a fixed LoRA fine-tune of Qwen2.5-3B-Instruct and full IFEval on one H100. Both judges ruled measured; the author still has to rule whether a Data cell may rest on a post-training run (PostTrainBench's data cell is related)."
+    },
+    {
+     "stage": "posttrain",
+     "layer": "engines",
+     "kind": "adjacent",
+     "relation": "Fixed LLaMA-Factory LoRA SFT and lm-eval/vLLM scaffold, run by the verifier but frozen and not graded"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": true,
+   "family": "Model development"
+  },
+  {
+   "id": "autolab-flash_attention",
+   "benchmark": "autolab",
+   "title": "Speed up scaled dot-product attention on CPU (n = 4,096, d = 64)",
+   "format": "Harbor",
+   "hardware": "CPU only; 2 CPUs, 4 GiB RAM; agent 2 h, verifier 5 min",
+   "edit": "Rewrites attention() in /app/solve.c, shipped with full n × n double-precision score and probability matrices and a three-pass softmax, for speed (tiling, online softmax, float32, AVX2). Single-threaded C with no external libraries.",
+   "verify": "tests/test.sh hash-checks the Makefile, builds with gcc -O2 -march=native, and compares the sum of all outputs with a NumPy reference at N = 256, D = 32 (1e-2 relative tolerance). It then runs the binary five times at N = 4,096, D = 64: the output sum must match a checksum stored at image build (1e-3) and the median time gives reward = min(1, 0.5 · ln(0.75 / t) / ln(0.75 / 0.10)).",
+   "boundary": "A CPU microbenchmark on random tensors: one unmasked single-head shape, forward only, no model. The correctness gate is a scalar sum; rechecks by the reader, the skeptic and both judges found that replacing attention with column averaging of V moves it by 3.3e-5, inside the gate. main.c and the stored checksum are not hash-checked, and the time baseline is a fixed constant.",
+   "prerequisites": "Docker and Harbor; CPU only (the README names an AMD Ryzen 9 9950X with 64 GB for reproducing leaderboard timings, because the time baseline is a fixed constant). No internet during the run. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/flash_attention",
+   "containerUrl": "https://github.com/autolabhq/autolab/blob/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/flash_attention/environment/Dockerfile",
+   "verifierUrl": "https://github.com/autolabhq/autolab/blob/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/flash_attention/tests/test.sh",
+   "resourceUrl": "https://github.com/autolabhq/autolab/blob/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/flash_attention/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "kernels",
+     "kind": "bounded",
+     "relation": "An attention forward function is compiled, sum-checked and timed on CPU; gpus = 0, so bounded like every CPU-only harness in the audit. The judges disagree on carrying it into pretrain and post-training kernels as related; the stricter reading (no) is recorded."
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": false,
+   "family": "System optimization"
+  },
+  {
+   "id": "autolab-grpo_multisource",
+   "benchmark": "autolab",
+   "title": "Post-train Qwen2.5-VL-7B with GRPO on multi-source visual math",
+   "format": "Harbor",
+   "hardware": "1 × L40S; 8 CPUs, 32 GiB RAM; agent 8 h, verifier 2 h",
+   "edit": "Edits /app/train.py (Unsloth 4-bit QLoRA with TRL GRPOTrainer; the starter trains on Geometry3K only) and /app/rewards.py (format and correctness rewards), may add the supplied MathVision and ChartQA sources, trains on the L40S and leaves a LoRA adapter in /app/output.",
+   "verify": "tests/test.sh requires the adapter, loads Qwen2.5-VL-7B (4-bit) with it in-process and greedy-decodes 100 held-out MathVista numeric questions and 50 general VQA questions (the VQA set also on the base model). Reward = clip((accuracy − 0.20) / 0.45, 0, 1), set to zero if tuned/base VQA accuracy falls below 0.9. Training is not rerun.",
+   "boundary": "Only the submitted adapter is scored; nothing checks how it was produced. The evaluation items and their answers sit in the agent's container under /orig/data. Single-turn visual maths with scalar answer rewards and no tools or environment, so not agentic RL. One GPU, one container.",
+   "prerequisites": "Docker with the NVIDIA Container Toolkit, or a GPU sandbox such as Modal (the README's recommendation); Harbor with the repository's harbor_patch.sh applied to enable GPUs; one H100 or L40S for the GPU tasks; models and datasets are downloaded at image build and the run has no internet. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/grpo_multisource",
+   "containerUrl": "https://github.com/autolabhq/autolab/blob/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/grpo_multisource/environment/Dockerfile",
+   "verifierUrl": "https://github.com/autolabhq/autolab/blob/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/grpo_multisource/tests/test.sh",
+   "resourceUrl": "https://github.com/autolabhq/autolab/blob/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/grpo_multisource/task.toml",
+   "mappings": [
+    {
+     "stage": "posttrain",
+     "layer": "methods",
+     "kind": "measured",
+     "relation": "Direct: the agent's GRPO recipe and reward functions are scored through the adapter, which the verifier loads into the 7B model on a GPU and evaluates on held-out questions"
+    },
+    {
+     "stage": "posttrain",
+     "layer": "engines",
+     "kind": "adjacent",
+     "relation": "Unsloth, TRL GRPOTrainer and PEFT are used by the agent; the verifier scores the weights and never tests the training runtime"
+    },
+    {
+     "stage": "data",
+     "layer": "methods",
+     "kind": "adjacent",
+     "relation": "Mixing the three supplied sources is one of several optional levers, scored only through the final model; the same grade as PostTrainBench's data cell"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": true,
+   "family": "Model development"
+  },
+  {
+   "id": "autolab-llm_online_serving",
+   "benchmark": "autolab",
+   "title": "Raise throughput and cut completion time of a gpt-oss-20b serving engine",
+   "format": "Harbor",
+   "hardware": "1 × H100; 8 CPUs, 64 GiB RAM; agent 2 h, verifier 2 h",
+   "edit": "Edits only /app/llm.py, the 563-line engine of naklecha/simple-llm (pinned at f20c3f7): the async request queue, the continuous-batching loop, slot-based KV-cache assignment, CUDA-graph capture and replay, and the prefill chunk budget. Model code and Triton kernels are read-only by instruction.",
+   "verify": "tests/test.sh runs a three-generation smoke test, then /orig/benchmark.py twice on the H100, once with the original llm.py and once with the agent's: gpt-oss-20b, 96 requests with Poisson arrivals at 6 requests per second, 64 to 256 output tokens each. Reward = clip((0.5 · throughput ratio + 0.5 · completion-time ratio − 1) / 0.5, 0, 1).",
+   "boundary": "No output-quality or parity gate (ignore_eos at temperature 1.0), and token counts come from the engine's own return values. The baseline engine and the benchmark script sit unhashed in the agent's container, and a shipped hotfix patch disables CUDA graphs. The engine is driven in-process, not through an HTTP endpoint, and each run is timed once. One GPU, one container; no routing, autoscaling or multi-node serving.",
+   "prerequisites": "Docker with the NVIDIA Container Toolkit, or a GPU sandbox such as Modal (the README's recommendation); Harbor with the repository's harbor_patch.sh applied to enable GPUs; one H100 or L40S for the GPU tasks; models and datasets are downloaded at image build and the run has no internet. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/llm_online_serving",
+   "containerUrl": "https://github.com/autolabhq/autolab/blob/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/llm_online_serving/environment/Dockerfile",
+   "verifierUrl": "https://github.com/autolabhq/autolab/blob/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/llm_online_serving/tests/test.sh",
+   "resourceUrl": "https://github.com/autolabhq/autolab/blob/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/llm_online_serving/task.toml",
+   "mappings": [
+    {
+     "stage": "serve",
+     "layer": "engines",
+     "kind": "measured",
+     "relation": "Direct: the edited code is the engine's request queue, slot scheduler and batching loop, and the verifier load-tests it with the real 21B model on the H100 against the unmodified engine in the same run"
+    },
+    {
+     "stage": "serve",
+     "layer": "state",
+     "kind": "adjacent",
+     "relation": "Slot-based KV-cache assignment and release are in the editable file and run during the benchmark, but KV state and output correctness are never checked"
+    },
+    {
+     "stage": "serve",
+     "layer": "kernels",
+     "kind": "adjacent",
+     "relation": "CUDA-graph capture and replay are in the editable file, but the shipped patch disables them and the Triton kernels are a fixed dependency; the weakest of the three cells"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": true,
+   "family": "Model development"
+  },
+  {
+   "id": "autolab-multilingual_ocr",
+   "benchmark": "autolab",
+   "title": "Fine-tune DeepSeek-OCR 3B with LoRA for Persian and Bengali OCR",
+   "format": "Harbor",
+   "hardware": "1 × L40S; 8 CPUs, 32 GiB RAM; agent 8 h, verifier 2 h",
+   "edit": "Edits only /app/train.py, an Unsloth FastVisionModel plus Hugging Face Trainer script that attaches LoRA to the attention and MLP projections of DeepSeek-OCR 3B and trains on 9,000 synthetic Persian and Bengali text images with response-only labels; saves the adapter to /app/output.",
+   "verify": "tests/test.sh requires the adapter, loads DeepSeek-OCR with it and greedy-decodes 400 held-out images (200 Persian, 200 Bengali) on the L40S. Character error rate is averaged per language and reward = clip((0.72 − CER) / 0.40, 0, 1). Training is not rerun.",
+   "boundary": "Only the submitted adapter is scored. The 400 scored images and their labels sit in the agent's container at /orig/data/ocr_eval.json with no tamper check. Training data are supplied and fixed. A reader who holds OCR to be vision ML would class the task A. One GPU, one container.",
+   "prerequisites": "Docker with the NVIDIA Container Toolkit, or a GPU sandbox such as Modal (the README's recommendation); Harbor with the repository's harbor_patch.sh applied to enable GPUs; one H100 or L40S for the GPU tasks; models and datasets are downloaded at image build and the run has no internet. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/multilingual_ocr",
+   "containerUrl": "https://github.com/autolabhq/autolab/blob/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/multilingual_ocr/environment/Dockerfile",
+   "verifierUrl": "https://github.com/autolabhq/autolab/blob/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/multilingual_ocr/tests/test.sh",
+   "resourceUrl": "https://github.com/autolabhq/autolab/blob/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/multilingual_ocr/task.toml",
+   "mappings": [
+    {
+     "stage": "posttrain",
+     "layer": "methods",
+     "kind": "measured",
+     "relation": "Direct: the agent's supervised fine-tuning recipe is scored through the adapter, which the verifier loads into the 3B vision-language model on a GPU and evaluates on 400 held-out images"
+    },
+    {
+     "stage": "posttrain",
+     "layer": "engines",
+     "kind": "adjacent",
+     "relation": "Unsloth, PEFT and the Hugging Face Trainer are used as given; the verifier scores the adapter and never checks the training runtime"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": true,
+   "family": "Model development"
+  },
+  {
+   "id": "autolab-scaling_law",
+   "benchmark": "autolab",
+   "title": "Pretrain a GPT from scratch on WikiText-103 to minimize test perplexity",
+   "format": "Harbor",
+   "hardware": "1 × H100; 8 CPUs, 32 GiB RAM; agent 12 h, verifier 2 h",
+   "edit": "Edits only /app/train.py (LitGPT model config and training config: width, depth, normalization, sequence length, batch, learning-rate schedule, precision, torch.compile, step count) and trains a GPT from random initialization on pre-tokenized WikiText-103 (about 118M GPT-2 tokens), leaving /app/output/checkpoint.pt.",
+   "verify": "tests/test.sh loads the checkpoint, rebuilds the LitGPT model and sums cross-entropy over the whole WikiText-103 test split (sequence length 1,024, batch 8) on the GPU. Reward = clip((25.0 − perplexity) / 7.0, 0, 1). Training is not rerun, and no compute budget, parameter count or throughput is checked.",
+   "boundary": "Only the submitted checkpoint is scored. The test split sits at an agent-writable path in the container with no hash check, and the checkpoint is unpickled with weights_only=False. No scaling law is fitted or checked: the task is one single-GPU pretraining run of up to 12 hours. One container, no distributed training.",
+   "prerequisites": "Docker with the NVIDIA Container Toolkit, or a GPU sandbox such as Modal (the README's recommendation); Harbor with the repository's harbor_patch.sh applied to enable GPUs; one H100 or L40S for the GPU tasks; models and datasets are downloaded at image build and the run has no internet. Not built or executed by this audit.",
+   "taskUrl": "https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/scaling_law",
+   "containerUrl": "https://github.com/autolabhq/autolab/blob/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/scaling_law/environment/Dockerfile",
+   "verifierUrl": "https://github.com/autolabhq/autolab/blob/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/scaling_law/tests/test.sh",
+   "resourceUrl": "https://github.com/autolabhq/autolab/blob/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/scaling_law/task.toml",
+   "mappings": [
+    {
+     "stage": "pretrain",
+     "layer": "methods",
+     "kind": "measured",
+     "relation": "Direct: architecture, size, optimizer, schedule and precision choices are scored through the trained model, which the verifier runs over the full WikiText-103 test split on a GPU"
+    },
+    {
+     "stage": "pretrain",
+     "layer": "engines",
+     "kind": "adjacent",
+     "relation": "The editable file is a PyTorch/LitGPT training loop the agent runs on an H100; the verifier never reruns or times training"
+    }
+   ],
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "count": 1,
+   "e2e": true,
+   "family": "Model development"
   }
  ],
  "benchmarks": [
@@ -4410,6 +4621,26 @@
    "screened_tasks": 53,
    "lifecycle_tasks": 53,
    "census_basis": "all 53 tasks read at commit e4286ec by one reader and one skeptic per task (25 September 2026); see notes/swe_serve_review.md"
+  },
+  {
+   "id": "autolab",
+   "short": "AutoLab",
+   "name": "AutoLab",
+   "org": "Xu et al. (autolab.moe)",
+   "group": "primary",
+   "url": "https://github.com/autolabhq/autolab",
+   "pinned": "https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks",
+   "corpus": "36 optimization tasks: 7 model development, 15 system optimization, CUDA kernels, and puzzles; 11 declare one GPU (H100 or L40S), 25 declare none",
+   "format": "Harbor (task.toml + Dockerfile + instruction + tests), run with a patched Harbor for GPUs",
+   "hardware": "One H100 or L40S, or CPU only; 1–8 CPUs, up to 64 GiB RAM per task",
+   "audit": "task-level",
+   "tag": "agent-reported",
+   "selected": 6,
+   "adoption": "Live leaderboard at autolab.moe (paper arXiv 2606.05080); scores are improvement over a baseline, not pass rates.",
+   "public_tasks": 36,
+   "screened_tasks": 36,
+   "lifecycle_tasks": 6,
+   "census_basis": "all 36 tasks read at commit 4127da3 by one reader and one skeptic per task, two judges on the claim-affecting cells (1 October 2026); see notes/autolab_review.md"
   },
   {
    "id": "isobench",
@@ -6562,7 +6793,7 @@
   "cells": {
    "data:methods": {
     "focus": "Corpus selection & mixtures",
-    "gap": "A dedicated LLM-corpus selection or deduplication task has not been mapped. Non-LLM data tasks are excluded."
+    "gap": "One task selects a fine-tuning subset and is graded through a real fine-tune (AutoLab data_select_ifeval). Corpus-scale selection, mixing and deduplication have not been mapped. Non-LLM data tasks are excluded."
    },
    "data:dataeval": {
     "focus": "Tokenization & corpus integrity",
@@ -7485,6 +7716,17 @@
     "method": "The 51 public tasks screened from the README task table (name and category) and the task descriptions read on 21–22 Sept; 83 tasks are held out.",
     "tag": "spot-checked"
    },
+   "autolab": {
+    "public": 36,
+    "advertised": 36,
+    "screened": 36,
+    "L": 6,
+    "A": 15,
+    "O": 15,
+    "unscreened": 0,
+    "method": "Every public task read at the pinned commit on 1 October 2026: manifest, instruction and verifier for all 36, by one reader and one skeptic per task; two judges ruled on the claim-affecting classes and cells. Nothing was built or run.",
+    "tag": "agent-reported"
+   },
    "sweserve": {
     "public": 53,
     "advertised": 53,
@@ -7497,11 +7739,11 @@
    }
   },
   "totals": {
-   "screened": 590,
-   "L": 150,
-   "A": 161,
-   "O": 279,
-   "public": 590
+   "screened": 626,
+   "L": 156,
+   "A": 176,
+   "O": 294,
+   "public": 626
   }
  }
 }

@@ -1,0 +1,653 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>autolab review</title><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{font:15.5px/1.6 system-ui,-apple-system,'Segoe UI',sans-serif;max-width:880px;margin:36px auto;padding:0 16px;color:#111}a{color:#1c5cab}h1{font-size:24px;line-height:1.25}h2{font-size:19px;margin-top:28px}table{border-collapse:collapse;font-size:13.5px;margin:12px 0}th,td{border:1px solid #d9dee5;padding:5px 8px;text-align:left;vertical-align:top}code{font:13px ui-monospace,Menlo,monospace;background:#f1f3f6;padding:1px 4px;border-radius:3px}pre{background:#f1f3f6;padding:10px;overflow:auto}.nav{font:12px ui-monospace,Menlo,monospace;color:#666;margin-bottom:18px}</style></head><body><div class="nav"><a href="index.html">notes</a> · <a href="../index.html">overview</a> · <a href="autolab_review.md.txt">raw markdown</a></div><h1>AutoLab review, 1 October 2026</h1>
+<p><strong>What it is.</strong> <a href="https://github.com/autolabhq/autolab">AutoLab</a> (Zhangchen Xu et al., "AutoLab: Can Frontier Models Solve Long-Horizon Auto Research and Engineering Tasks?", <a href="https://arxiv.org/abs/2606.05080">arXiv 2606.05080</a>; website <a href="https://autolab.moe">autolab.moe</a>) is a public benchmark of 36 optimization tasks in Harbor format, released under Apache-2.0. Its README calls it a live benchmark, gives the current version as v1.1.26.05.10 and takes new tasks through a contribution portal. The README sorts the tasks into model development (7), system optimization (15), puzzle and challenge (10) and CUDA (4). Each task hands the agent a working but unoptimized program, a time budget of 2 to 12 hours and a metric, and its verifier writes a continuous reward between 0 and 1, anchored to a baseline and a reference score. 11 tasks declare one GPU (8 an H100, 3 an L40S), 25 declare none, and all 36 set <code>allow_internet = false</code>. AutoLab is the twelfth benchmark of the audit. It was read on 1 October 2026 at commit <a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks"><code>4127da3dde8449be61a1cf9859473b9fbbd51751</code></a>, pushed on 30 August 2026 and still the latest push on the day of reading.</p>
+<p><strong>How we read it.</strong> All 36 task folders were read at the pinned commit through the GitHub API: the manifest, the instruction and the verifier (<code>tests/test.sh</code> and its helper scripts) of every task, by one reader per task. A second agent per task, the skeptic, re-read the same files and tried to refute each class, cell and depth; one entry changed (<code>scaling_law</code> lost its Pretrain &amp; midtrain × Memory &amp; state management cell, because the starter code already writes the checkpoint). Two judges then ruled independently on the 13 tasks whose class or cells could bear on a claim of the post, one arguing from the post's precedents and one arguing against the post. Where the judges agree, their ruling is recorded. Where they disagree, the stricter grade is recorded. Nothing from the repository was cloned, built or run, and binaries and data files were not fetched. All entries carry the tag agent-reported. The numbers below are computed from the audit's data files by a script that first reproduces the figure for the eleven earlier benchmarks (SWE-Serve at 14%, RE-Bench at 30%, a union of 12 measured cells and 25 with any evidence).</p>
+<p><strong>Depth words.</strong> Each cell is graded measured (the verifier itself runs a real LLM workload), bounded (unit or artifact tests) or adjacent (related or simulated evidence). The figure in the post labels the same three depths executed, bounded and related.</p>
+<h2>Result on the audit's surface</h2>
+<ul>
+<li><strong>6 of the 36 task environments touch the LLM lifecycle (17%).</strong> 15 are class A (machine learning on non-language models, or systems work outside an LLM role) and 15 are class O.</li>
+<li><strong>The six:</strong> <code>data_select_ifeval</code>, <code>scaling_law</code>, <code>grpo_multisource</code>, <code>multilingual_ocr</code>, <code>llm_online_serving</code> and <code>flash_attention</code>. The first five are five of AutoLab's seven model-development tasks; the other two model-development tasks train an image diffusion model and a video model and are class A.</li>
+<li><strong>Vision-language models count.</strong> <code>grpo_multisource</code> and <code>multilingual_ocr</code> train vision-language models, which the census rule counts as language models, as it does for the existing RSI-Exam entry <code>clevr_cogent_grpo_qwen2vl</code>.</li>
+<li><strong>Cells reached: 8 of 35.</strong> Measured: Data × Model &amp; algorithm, Pretrain &amp; midtrain × Model &amp; algorithm, Post-training × Model &amp; algorithm, Serve &amp; deployment × Training &amp; inference engines. Bounded: Serve &amp; deployment × Kernels &amp; compilers. Adjacent: Pretrain &amp; midtrain × Training &amp; inference engines, Post-training × Training &amp; inference engines, Serve &amp; deployment × Memory &amp; state management.</li>
+<li><strong>Coverage score: 15%</strong> (5.25 of 35 with weights 1, ½ and ¼).</li>
+<li><strong>One cell of the union changes.</strong> Data × Model &amp; algorithm goes from adjacent to measured, through <code>data_select_ifeval</code>. The twelve benchmarks together run a real LLM workload in 13 of the 35 cells (12 before); cells with any evidence stay at 25.</li>
+<li><strong>Nothing lands in the Agent post-training stage or the cluster layer, at any depth.</strong></li>
+<li><strong>Every task is one container with at most one GPU.</strong> Five of the six lifecycle verifiers run a real language model on that GPU; <code>flash_attention</code> is a CPU kernel.</li>
+</ul>
+<h2>AutoLab's row in the coverage figure</h2>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Data</th>
+<th>Pretrain &amp; midtrain</th>
+<th>Post-training</th>
+<th>Agent post-training</th>
+<th>Serve &amp; deployment</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Model &amp; algorithm</td>
+<td>measured</td>
+<td>measured</td>
+<td>measured</td>
+<td>·</td>
+<td>·</td>
+</tr>
+<tr>
+<td>Data pipeline &amp; evaluation</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+</tr>
+<tr>
+<td>Training &amp; inference engines</td>
+<td>·</td>
+<td>adjacent</td>
+<td>adjacent</td>
+<td>·</td>
+<td>measured</td>
+</tr>
+<tr>
+<td>Parallelism &amp; communication</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+</tr>
+<tr>
+<td>Kernels &amp; compilers</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>bounded</td>
+</tr>
+<tr>
+<td>Cluster orchestration &amp; sandboxing</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+</tr>
+<tr>
+<td>Memory &amp; state management</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>adjacent</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Marks:</strong> 4 measured, 1 bounded, 3 adjacent, 27 untouched.</li>
+<li><strong>Score:</strong> 5.25 of 35, 15%. That places AutoLab fifth of twelve, between RSI-Exam (18%) and SWE-Serve (14%). RE-Bench remains first at 30%.</li>
+<li><strong>Share of its own tasks in the lifecycle:</strong> 6 of 36 (17%).</li>
+<li><strong>Task environments per stage (the figure's bottom row):</strong> AutoLab adds 2 to Data, 1 to Pretrain &amp; midtrain, 3 to Post-training, none to Agent post-training and 2 to Serve &amp; deployment. The counts go from 6, 29, 17, 9 and 90 to 8, 30, 20, 9 and 92, out of 133 mapped entries (127 before).</li>
+</ul>
+<h2>Effect on the counts and on the union</h2>
+<p><strong>Counts.</strong> The twelve benchmarks hold 626 public task environments (590 before AutoLab), of which 156 touch the LLM lifecycle (150 before). The share stays at 25% (25.4% before, 24.9% now). Without SWE-Serve the share is 103 of 573 (18%); before AutoLab it was 97 of 537 (18%). Classes A and O go from 161 and 279 to 176 and 294. The figure holds 133 mapped entries (127 before).</p>
+<p><strong>Union.</strong> The eleven earlier benchmarks: 12 measured cells, 25 with any evidence, 10 empty. The twelve: 13 measured, 25 with any evidence, 10 empty. The only cell that changes is Data × Model &amp; algorithm, adjacent before (PostTrainBench and WeirdML) and measured through <code>data_select_ifeval</code>. Every other AutoLab cell was already reached at the same or a deeper kind. The union's weighted score goes from 16.75 to 17.5 of 35.</p>
+<p><strong>Statement by statement.</strong></p>
+<table>
+<thead>
+<tr>
+<th>Quantity</th>
+<th>Eleven benchmarks</th>
+<th>Twelve, with AutoLab</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cells in which the benchmarks together run a real LLM workload</td>
+<td>12 of 35</td>
+<td>13 of 35</td>
+</tr>
+<tr>
+<td>Measured cells in the Data stage</td>
+<td>none</td>
+<td>one, Data × Model &amp; algorithm; the other six Data cells have no measured task environment</td>
+</tr>
+<tr>
+<td>Measured cells in the Agent post-training stage</td>
+<td>none</td>
+<td>none; AutoLab has no Agent post-training cell at any depth</td>
+</tr>
+<tr>
+<td>Measured cells in the cluster layer</td>
+<td>none</td>
+<td>none; AutoLab has no cluster cell at any depth</td>
+</tr>
+<tr>
+<td>Most measured cells in a single benchmark</td>
+<td>10 (RE-Bench)</td>
+<td>10 (RE-Bench); AutoLab has 4</td>
+</tr>
+</tbody>
+</table>
+<p>The two judges agree on every cell behind this table: both rule Data × Model &amp; algorithm measured for <code>data_select_ifeval</code>, both give <code>grpo_multisource</code> only an adjacent Data cell, and both find no Agent post-training or cluster cell. They differ on two adjacent kernel cells and on the class (A or O) of two puzzle tasks, which move no measured cell and no count the post prints.</p>
+<h2>Rulings on the claim-affecting cells</h2>
+<p><strong>What the measured Data cell rests on.</strong> In <code>data_select_ifeval</code> the agent may edit one file, the selection script. The verifier reruns that script, then a fixed LoRA fine-tune of Qwen2.5-3B-Instruct on the selected samples, then full IFEval through vLLM, on one H100, and nothing is self-reported. That is the post's rule for measured, and it is how the earlier benchmarks are graded when a single edited component is scored through a rerun training job (the MLS-Bench pretraining tasks). The evidence is narrow. It is one task and one cell. The measurement is one fine-tune of the agent's selection, from one seed, read through one accuracy number on about 541 prompts (the verifier also retrains a random-selection baseline in the same run). The data step itself is a single-process filter over a 50,000-sample JSON file. No data engine, sharding, loader state, preprocessing kernel or cluster job is touched, in AutoLab or anywhere else in the audited set.</p>
+<p><strong>The strongest counterargument.</strong> PostTrainBench's data cell is adjacent with the note "scored only through the final model", and that phrase is also true of <code>data_select_ifeval</code>. On the reading that a Data cell cannot be measured through a post-training run, the cell is adjacent (or bounded), the union stays at 12 measured cells and the Data stage keeps no measured task environment. Both judges rejected that reading, for two reasons. First, PostTrainBench's verifier never runs the data step and data is one choice among many there, while here the selection script is the only editable component and the verifier reruns it. Second, that reading does not stop at AutoLab: the same rule has to be re-applied to the earlier benchmarks (MLS-Bench's <code>llm-qat-algorithm</code> is measured at a serve cell through a fine-tune). The audit records measured.</p>
+<p><strong>All rulings.</strong> Thirteen tasks went to the two judges. "Precedent" is the judge arguing from the post's existing entries; "critic" is the judge arguing against the post.</p>
+<table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Question</th>
+<th>Precedent judge</th>
+<th>Critic judge</th>
+<th>Recorded</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>data_select_ifeval</code></td>
+<td>Data × Model &amp; algorithm: is it Data-stage work, and how deep?</td>
+<td>measured</td>
+<td>measured</td>
+<td>measured</td>
+</tr>
+<tr>
+<td><code>data_select_ifeval</code></td>
+<td>Post-training × Data pipeline &amp; evaluation, as "sample mixing"?</td>
+<td>no cell</td>
+<td>no cell</td>
+<td>no cell</td>
+</tr>
+<tr>
+<td><code>data_select_ifeval</code></td>
+<td>Post-training × Model &amp; algorithm?</td>
+<td>no cell (the recipe is frozen)</td>
+<td>no cell (adjacent is defensible)</td>
+<td>no cell</td>
+</tr>
+<tr>
+<td><code>data_select_ifeval</code></td>
+<td>Post-training × Training &amp; inference engines, for the fixed scaffold?</td>
+<td>adjacent</td>
+<td>not contested</td>
+<td>adjacent</td>
+</tr>
+<tr>
+<td><code>data_select_ifeval</code></td>
+<td>Any other Data cell, or the cluster layer?</td>
+<td>no cell</td>
+<td>no cell</td>
+<td>no cell</td>
+</tr>
+<tr>
+<td><code>grpo_multisource</code></td>
+<td>Data × Model &amp; algorithm, for mixing three supplied sources?</td>
+<td>adjacent</td>
+<td>adjacent</td>
+<td>adjacent</td>
+</tr>
+<tr>
+<td><code>grpo_multisource</code></td>
+<td>Agent post-training?</td>
+<td>not ruled</td>
+<td>no cell</td>
+<td>no cell</td>
+</tr>
+<tr>
+<td><code>agent_tool_routing</code></td>
+<td>Class L with an Agent post-training cell?</td>
+<td>class A, no cell</td>
+<td>class A, no cell</td>
+<td>class A</td>
+</tr>
+<tr>
+<td><code>safety_router</code></td>
+<td>Class L with a serve cell?</td>
+<td>class A, no cell</td>
+<td>class A, no cell</td>
+<td>class A</td>
+</tr>
+<tr>
+<td><code>flash_attention</code></td>
+<td>Class, and depth at Serve &amp; deployment × Kernels &amp; compilers?</td>
+<td>L, bounded</td>
+<td>L, bounded</td>
+<td>L, bounded</td>
+</tr>
+<tr>
+<td><code>flash_attention</code></td>
+<td>Carry the kernel into Pretrain &amp; midtrain and Post-training as adjacent?</td>
+<td>no</td>
+<td>yes</td>
+<td><strong>no (stricter grade)</strong></td>
+</tr>
+<tr>
+<td><code>multilingual_ocr</code></td>
+<td>Class L or vision ML?</td>
+<td>L, Post-training × Model &amp; algorithm measured</td>
+<td>the same</td>
+<td>L, measured</td>
+</tr>
+<tr>
+<td><code>adaptive_compression</code></td>
+<td>Class</td>
+<td>O</td>
+<td>O</td>
+<td>O</td>
+</tr>
+<tr>
+<td><code>bm25_search_go</code></td>
+<td>Class</td>
+<td>A</td>
+<td>A</td>
+<td>A</td>
+</tr>
+<tr>
+<td><code>concurrent_kv_wal</code></td>
+<td>Class</td>
+<td>A</td>
+<td>A</td>
+<td>A</td>
+</tr>
+<tr>
+<td><code>sha256_throughput</code></td>
+<td>Class</td>
+<td>O</td>
+<td>O</td>
+<td>O</td>
+</tr>
+<tr>
+<td><code>sstable_compaction_rs</code></td>
+<td>Class</td>
+<td>A</td>
+<td>A</td>
+<td>A</td>
+</tr>
+<tr>
+<td><code>toy_isa_opt</code></td>
+<td>Class</td>
+<td>A</td>
+<td>O</td>
+<td><strong>O (stricter grade)</strong></td>
+</tr>
+<tr>
+<td><code>vliw_scheduler</code></td>
+<td>Class</td>
+<td>A</td>
+<td>O</td>
+<td><strong>O (stricter grade)</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Where the judges disagreed.</strong></p>
+<ul>
+<li><strong><code>flash_attention</code>, kernel cells in the training stages.</strong> The critic judge keeps the first reader's adjacent cells in Pretrain &amp; midtrain and Post-training, following the shared-primitive precedent for attention kernels. The precedent judge drops them, because that precedent is worded for GPU kernels and this is a forward-only function on one CPU thread. The audit drops them: <code>flash_attention</code> keeps only its bounded Serve &amp; deployment × Kernels &amp; compilers cell. Both dropped cells are already measured in the union, so only AutoLab's own score depends on the choice: 15% as recorded, 16% (5.75 of 35) under the critic judge's ruling.</li>
+<li><strong><code>toy_isa_opt</code> and <code>vliw_scheduler</code>, class A or O.</strong> The precedent judge follows EdgeBench's <code>vliw_kernel_optimization</code>, which the census classed A. The critic judge keeps O: the fully read Terminal-Bench 2.1 simulator puzzles are O, AutoLab files both tasks under puzzle and challenge, and the EdgeBench verdict was screened from a README table. The audit records O, which matches its rule that generic puzzles are class O. No coverage number depends on it.</li>
+</ul>
+<p><strong>Qualifications recorded with the rulings.</strong></p>
+<ul>
+<li><strong><code>grpo_multisource</code>.</strong> Both judges note that dropping its adjacent Data cell is as consistent with the RSI-Exam precedents as keeping it. The cell is kept. <code>data_select_ifeval</code> dominates it in AutoLab's row either way.</li>
+<li><strong><code>flash_attention</code>.</strong> Both judges record that its correctness gate checks only an output sum (see the verifier gaps below) and that a strict reader could lower the cell to adjacent or class the task A. The audit records class L and bounded.</li>
+<li><strong><code>multilingual_ocr</code>.</strong> Both judges class it L, following the census rule that includes vision-language models: the model is a vision-language model whose text decoder is fine-tuned. A reader who holds OCR to be vision ML classes it A. Its two cells are not new to the union.</li>
+<li><strong><code>agent_tool_routing</code> and <code>safety_router</code>.</strong> Both judges record that either task could be argued into class L with adjacent cells only, never bounded or measured. The audit records class A for both.</li>
+</ul>
+<p><strong>Not sent to the judges.</strong> The other 23 tasks, among them <code>scaling_law</code> and <code>llm_online_serving</code> with their cells, rest on one reader and one skeptic. None of their cells is in the Data stage, the Agent post-training stage or the cluster layer. The weakest of those cells is <code>llm_online_serving</code>'s adjacent Serve &amp; deployment × Kernels &amp; compilers cell: CUDA-graph capture is in the editable file, but a patch shipped with the task disables it.</p>
+<h2>GPU tally</h2>
+<p>In the style of section 04 of the post:</p>
+<ul>
+<li><strong>AutoLab's six lifecycle task environments:</strong> one declares no GPU (<code>flash_attention</code>), five declare one (three an H100, two an L40S), none declares two or more.</li>
+<li><strong>Largest:</strong> one H100 with 8 CPUs and 64 GiB RAM (<code>llm_online_serving</code>). The longest agent budget is 12 hours (<code>scaling_law</code>); the longest verifier budget is 4 hours (<code>data_select_ifeval</code>).</li>
+<li><strong>More than one node:</strong> none. The manifest has no field for nodes or replicas, <code>gpus</code> is never above 1, and all seven <code>docker-compose.yaml</code> files define a single service with one NVIDIA device.</li>
+<li><strong>All 36 tasks:</strong> 25 declare no GPU and 11 declare one (8 an H100, 3 an L40S).</li>
+<li><strong>The figure's 133 task environments:</strong> 44 declare no GPU, 60 declare one, 25 declare two to four, three declare five to eight and one does not document hardware (before AutoLab: 127, 43, 55, 25, three, one). RE-Bench's eight H100s remains the largest.</li>
+</ul>
+<h2>Verifier gaps the readers flagged</h2>
+<ul>
+<li><strong><code>data_select_ifeval</code>.</strong> The hash guard reads its expected values from <code>/orig</code> inside the agent's image and runs once, before <code>train.sh</code> executes the agent's script, so that script could rewrite the frozen config afterwards. Nothing checks that selected samples come from the pool. IFEval is cached in the image, so the test prompts are readable in the sandbox. One seed on about 541 prompts gives a standard error near 0.021 against a 0.10 anchor range. The reference solution is reported at about 0.42 against a 0.48 anchor. A failing selection script aborts the verifier before any reward file is written.</li>
+<li><strong><code>flash_attention</code>.</strong> The correctness gate compares only the sum of all outputs. The reader, the skeptic and both judges each recomputed it independently: replacing attention with "every row is the column mean of V" moves the sum by 3.3e-5 at the small size (gate 1e-2) and 9.1e-6 at the timed size (gate 1e-3). An averaging shortcut passes the gate.</li>
+<li><strong><code>grpo_multisource</code> and <code>multilingual_ocr</code>.</strong> The scored evaluation items and their answers sit in the agent's container under <code>/orig/data</code>, and nothing ties the adapter to the training script.</li>
+<li><strong><code>scaling_law</code>.</strong> The test split the verifier reads sits at an agent-writable path with no hash, and the verifier unpickles the checkpoint with <code>weights_only=False</code>. The instruction's context-length requirement produces only a warning.</li>
+<li><strong><code>llm_online_serving</code>.</strong> There is no output-quality gate. Token counts come from the engine's own return values. The baseline engine and the benchmark script sit unhashed in the agent's container. A shipped hotfix patch disables CUDA graphs, so the reference solution's main optimization is a no-op as shipped. Each run is timed once.</li>
+<li><strong>Across the CPU and CUDA tasks.</strong> Many hash-check only the build file and not the driver that prints the score, and several keep the expected hashes inside the agent's container. Timing rewards compare against fixed constants, not a baseline rerun, so they depend on the host. The Huffman and ICP CUDA verifiers do not check the GPU model.</li>
+<li><strong>Manifest drift.</strong> Reward anchors hard-coded in <code>test.sh</code> differ from <code>task.toml</code> in several tasks (<code>fredkin_sort_network</code>, <code>stack_machine_golf</code>, <code>toy_isa_opt</code>, <code>vliw_scheduler</code>, <code>resnet_bit_flip</code>, <code>flux2_klein_lora</code>).</li>
+<li><strong>Text addressed to automated readers.</strong> Every manifest opens with a canary line for corpus builders, and one test script cites an authoring-convention file that is not in the repository. Nothing is addressed to a reviewer. All repository content was treated as data.</li>
+</ul>
+<p>These gaps are recorded beside the grades and did not lower any depth, as with the other eleven benchmarks.</p>
+<h2>What was not verified</h2>
+<ul>
+<li>Nothing from the repository was built or run. Whether two fine-tunes and two IFEval runs fit <code>data_select_ifeval</code>'s 4-hour verifier budget is unknown.</li>
+<li>That lm-eval 0.4.10's vLLM backend applies a local LoRA adapter was read in lm-eval's source by one judge; the other judge left it unverified.</li>
+<li>The paper is cited for attribution only. Its text, the website and the leaderboard were not read, so adoption and reported scores are not assessed.</li>
+<li>Binaries, <code>.npz</code> and other data files, and the large recorded trajectories of <code>flux2_klein_lora</code> were not fetched. Some long harness sources (the CUDA drivers) were read in part.</li>
+<li>Whether MathVista's test items overlap the Geometry3K and ChartQA training sources of <code>grpo_multisource</code> could not be checked from the repository.</li>
+<li>The judges read 13 of the 36 tasks; the other 23 rest on one reader and one skeptic.</li>
+<li>The final cross-check covered only part of the material: the tree (36 task folders, 37 <code>task.toml</code> paths because <code>flux2_klein_lora</code> has a second copy under <code>tests/</code>), all 36 manifests, the seven compose files, the README, and <code>data_select_ifeval</code>'s <code>test.sh</code>, <code>train.sh</code> and <code>train_config.yaml</code>.</li>
+<li>The pinned commit is a snapshot of a benchmark that describes itself as live. Later versions may add or change tasks.</li>
+</ul>
+<h2>The six lifecycle tasks</h2>
+<p>Task links point to the pinned commit. Cells are stage × layer (depth).</p>
+<table>
+<thead>
+<tr>
+<th>Task</th>
+<th>What the agent must do</th>
+<th>Hardware</th>
+<th>Verifier runs a real language model</th>
+<th>Cells</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/data_select_ifeval"><code>data_select_ifeval</code></a></td>
+<td>Select 5,000 fine-tuning samples from a 50k pool to raise IFEval accuracy after LoRA SFT</td>
+<td>1 × H100; 8 CPUs, 32 GiB RAM; agent 8 h, verifier 4 h</td>
+<td>yes: two LoRA fine-tunes of Qwen2.5-3B-Instruct and two full IFEval runs on vLLM</td>
+<td>Data × Model &amp; algorithm (measured); Post-training × Training &amp; inference engines (adjacent)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/flash_attention"><code>flash_attention</code></a></td>
+<td>Speed up scaled dot-product attention on CPU (n = 4,096, d = 64)</td>
+<td>CPU only; 2 CPUs, 4 GiB RAM; agent 2 h, verifier 5 min</td>
+<td>no: CPU kernel on random tensors</td>
+<td>Serve &amp; deployment × Kernels &amp; compilers (bounded)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/grpo_multisource"><code>grpo_multisource</code></a></td>
+<td>Post-train Qwen2.5-VL-7B with GRPO on multi-source visual math</td>
+<td>1 × L40S; 8 CPUs, 32 GiB RAM; agent 8 h, verifier 2 h</td>
+<td>yes: Qwen2.5-VL-7B, 150 generations with the adapter and 50 on the base model; training not rerun</td>
+<td>Post-training × Model &amp; algorithm (measured); Post-training × Training &amp; inference engines (adjacent); Data × Model &amp; algorithm (adjacent)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/llm_online_serving"><code>llm_online_serving</code></a></td>
+<td>Raise throughput and cut completion time of a gpt-oss-20b serving engine</td>
+<td>1 × H100; 8 CPUs, 64 GiB RAM; agent 2 h, verifier 2 h</td>
+<td>yes: gpt-oss-20b under load, baseline engine and agent engine</td>
+<td>Serve &amp; deployment × Training &amp; inference engines (measured); Serve &amp; deployment × Memory &amp; state management (adjacent); Serve &amp; deployment × Kernels &amp; compilers (adjacent)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/multilingual_ocr"><code>multilingual_ocr</code></a></td>
+<td>Fine-tune DeepSeek-OCR 3B with LoRA for Persian and Bengali OCR</td>
+<td>1 × L40S; 8 CPUs, 32 GiB RAM; agent 8 h, verifier 2 h</td>
+<td>yes: DeepSeek-OCR 3B with the adapter, 400 generations; training not rerun</td>
+<td>Post-training × Model &amp; algorithm (measured); Post-training × Training &amp; inference engines (adjacent)</td>
+</tr>
+<tr>
+<td><a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/scaling_law"><code>scaling_law</code></a></td>
+<td>Pretrain a GPT from scratch on WikiText-103 to minimize test perplexity</td>
+<td>1 × H100; 8 CPUs, 32 GiB RAM; agent 12 h, verifier 2 h</td>
+<td>yes: the agent-trained LitGPT model over the WikiText-103 test split; training not rerun</td>
+<td>Pretrain &amp; midtrain × Model &amp; algorithm (measured); Pretrain &amp; midtrain × Training &amp; inference engines (adjacent)</td>
+</tr>
+</tbody>
+</table>
+<p>The six mapped entries, in the audit's task schema, are in <code>data/tasks_v5_autolab.json</code>. All 36 verdicts are also in the <a href="task_census.html">task census</a>.</p>
+<h2>All 36 tasks</h2>
+<p>Class L touches the LLM lifecycle and is mapped. Class A is machine learning on non-language models, or systems infrastructure outside an LLM role. Class O is everything else. The split between A and O for systems-flavoured tasks is a judgement call and enters no coverage number. Reasons are paraphrased; no task text is reproduced. Task links point to the pinned commit.</p>
+<table>
+<thead>
+<tr>
+<th>Task</th>
+<th>AutoLab category</th>
+<th>GPU declared</th>
+<th>Class</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/data_select_ifeval"><code>data_select_ifeval</code></a></td>
+<td>Model development</td>
+<td>1 × H100</td>
+<td>L</td>
+<td>The verifier reruns the agent's data-selection script, runs a fixed LoRA fine-tune of Qwen2.5-3B-Instruct on the selected samples and evaluates the adapter on full IFEval through lm-eval's vLLM backend on one H100; choosing the fine-tuning data mixture for a language model is lifecycle data work.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/flash_attention"><code>flash_attention</code></a></td>
+<td>System optimization</td>
+<td>none</td>
+<td>L</td>
+<td>The verifier builds and times a single-head scaled dot-product attention function at n = 4,096, d = 64 on CPU behind an output-sum check; attention is a primitive the precedents count as an LLM kernel, but this is a CPU microbenchmark on random tensors, not a GPU kernel or a model run.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/grpo_multisource"><code>grpo_multisource</code></a></td>
+<td>Model development</td>
+<td>1 × L40S</td>
+<td>L</td>
+<td>The verifier loads Qwen2.5-VL-7B with the agent's LoRA adapter on one L40S and measures held-out MathVista accuracy behind a VQA retention gate; RL post-training of a vision-language model, which the census rule counts as a language model.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/llm_online_serving"><code>llm_online_serving</code></a></td>
+<td>Model development</td>
+<td>1 × H100</td>
+<td>L</td>
+<td>The verifier loads gpt-oss-20b in the agent-edited SimpleLLM engine on one H100 and replays 96 Poisson-arrival generation requests twice (original engine, then the agent's), scoring token throughput and mean completion time; that is serving a language model.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/multilingual_ocr"><code>multilingual_ocr</code></a></td>
+<td>Model development</td>
+<td>1 × L40S</td>
+<td>L</td>
+<td>The verifier loads DeepSeek-OCR 3B plus the agent's LoRA adapter on one L40S and greedy-decodes text for 400 held-out images, scoring character error rate; the model trained is a vision-language model whose text decoder is fine-tuned, which the census rule counts as a language model.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/scaling_law"><code>scaling_law</code></a></td>
+<td>Model development</td>
+<td>1 × H100</td>
+<td>L</td>
+<td>The verifier loads the agent's from-scratch LitGPT decoder checkpoint on one H100 and computes perplexity over the WikiText-103 test split; the held-out quality of a pretrained language model is what is scored.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/agent_tool_routing"><code>agent_tool_routing</code></a></td>
+<td>System optimization</td>
+<td>none</td>
+<td>A</td>
+<td>The verifier feeds template-generated tool schemas and queries to a pure-Python lexical retriever, gates on MRR@10 and Recall@10 and scores runtime; search infrastructure with an agent framing, and no language model, embedding model or agent is run.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/bm25_search_go"><code>bm25_search_go</code></a></td>
+<td>System optimization</td>
+<td>none</td>
+<td>A</td>
+<td>The verifier builds a Go BM25 engine, checks top-10 results on a small synthetic corpus and times queries over 4,000 synthetic documents; search-engine infrastructure with no language model.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/concurrent_kv_wal"><code>concurrent_kv_wal</code></a></td>
+<td>System optimization</td>
+<td>none</td>
+<td>A</td>
+<td>The verifier builds a Go key-value store, diffs its output on a fixed workload against a reference and times a four-goroutine workload; storage-engine concurrency work with no language-model role.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/fft_rust"><code>fft_rust</code></a></td>
+<td>System optimization</td>
+<td>none</td>
+<td>A</td>
+<td>The verifier builds a Rust crate, checks a real-signal DFT against a pure-Python reference at small sizes and times it at n = 32,768 on CPU; a generic numeric kernel with no language-model role.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/flux2_klein_lora"><code>flux2_klein_lora</code></a></td>
+<td>Model development</td>
+<td>1 × L40S</td>
+<td>A</td>
+<td>The verifier generates images with a FLUX.2 klein 9B diffusion transformer plus the agent's LoRA and scores CLIP and DINO similarity on one L40S; the trained model is an image generator and the Qwen3 text encoder is a frozen input.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/gaussian_blur"><code>gaussian_blur</code></a></td>
+<td>System optimization</td>
+<td>none</td>
+<td>A</td>
+<td>The verifier compares a blurred 256 × 256 image with a Python reference and times five 17 × 17 passes over a 4,096 × 4,096 image on CPU; an image-processing numeric kernel with no language-model role.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/huffman_canonical_decode_cuda"><code>huffman_canonical_decode_cuda</code></a></td>
+<td>CUDA</td>
+<td>1 × H100</td>
+<td>A</td>
+<td>The verifier builds a CUDA kernel, checks byte-exact decoding of 2,048 synthetic bitstreams and times it on one H100; GPU kernel work outside any LLM role.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/icp_correspondence_step_cuda"><code>icp_correspondence_step_cuda</code></a></td>
+<td>CUDA</td>
+<td>1 × H100</td>
+<td>A</td>
+<td>The verifier builds a CUDA kernel for one Iterative-Closest-Point correspondence step, checks it against a CPU brute-force reference and times it on one H100; point-cloud geometry with no language-model role.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/moving_mnist_world_model"><code>moving_mnist_world_model</code></a></td>
+<td>Model development</td>
+<td>1 × H100</td>
+<td>A</td>
+<td>The verifier loads the agent's trained checkpoint and scores 10-step rollout PSNR on 1,000 freshly generated Moving MNIST clips; GPU training of a convolutional video model, not a language model.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/msm_pippenger_bls12_381_cuda"><code>msm_pippenger_bls12_381_cuda</code></a></td>
+<td>CUDA</td>
+<td>1 × H100</td>
+<td>A</td>
+<td>The verifier checks bit-exact elliptic-curve multi-scalar multiplication and times it with CUDA events on one H100; a GPU kernel for a cryptographic primitive that no LLM stack runs.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/ntt_butterfly_cuda"><code>ntt_butterfly_cuda</code></a></td>
+<td>CUDA</td>
+<td>1 × H100</td>
+<td>A</td>
+<td>The verifier checks a bit-exact batched forward NTT over a 64-bit prime field and times it with CUDA events on one H100; a GPU kernel for zero-knowledge and lattice cryptography, not an operation LLM stacks run.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/resnet_bit_flip"><code>resnet_bit_flip</code></a></td>
+<td>Puzzle and challenge</td>
+<td>none</td>
+<td>A</td>
+<td>The verifier applies the agent's list of float32 bit flips to a frozen 77K-parameter CIFAR-10 CNN and scores the number of flips needed to push accuracy below 12%; machine-learning security on a vision model.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/safety_router"><code>safety_router</code></a></td>
+<td>Puzzle and challenge</td>
+<td>none</td>
+<td>A</td>
+<td>The verifier reruns the agent's NumPy training script on fixed TF-IDF/SVD feature vectors, gates a two-layer MLP on a private split and scores its parameter count; classic NLP classification with no transformer built, trained, evaluated or served.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/smallest_game_player"><code>smallest_game_player</code></a></td>
+<td>Puzzle and challenge</td>
+<td>none</td>
+<td>A</td>
+<td>The verifier trains the agent's model on board states and scores hidden-split move accuracy and learned-parameter count; the starter is a tiny transformer over board tokens, not a language model.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/sstable_compaction_rs"><code>sstable_compaction_rs</code></a></td>
+<td>System optimization</td>
+<td>none</td>
+<td>A</td>
+<td>The verifier builds the Rust crate, checks compaction checksums and live-entry counts against constants and times a single-threaded merge of synthetic sorted tables; storage-engine work with no LLM role.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/adaptive_compression"><code>adaptive_compression</code></a></td>
+<td>Puzzle and challenge</td>
+<td>none</td>
+<td>O</td>
+<td>The verifier streams nine hidden synthetic byte sequences through the agent's Python predictor on CPU and scores byte-weighted cross-entropy; a compression puzzle with no language model and no natural-language data.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/adversarial_splay"><code>adversarial_splay</code></a></td>
+<td>Puzzle and challenge</td>
+<td>none</td>
+<td>O</td>
+<td>The verifier runs a fixed Python splay tree over the agent's 4,096-key access list and counts rotations; a data-structure puzzle with no machine learning or language-model role.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/aes128_ctr"><code>aes128_ctr</code></a></td>
+<td>System optimization</td>
+<td>none</td>
+<td>O</td>
+<td>The verifier builds the agent's C routine, checks it against a pure-Python AES reference and times encryption of 256 MiB on CPU; cryptography throughput, not a primitive the precedents treat as an LLM kernel.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/bvh_raytracer"><code>bvh_raytracer</code></a></td>
+<td>System optimization</td>
+<td>none</td>
+<td>O</td>
+<td>The verifier builds the agent's C++ ray-triangle code, compares a render checksum with the baseline's and times five renders; computer graphics with no machine learning or language-model role.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/discover_sorting"><code>discover_sorting</code></a></td>
+<td>Puzzle and challenge</td>
+<td>none</td>
+<td>O</td>
+<td>The verifier calls the agent's generator, checks the comparator network on all 65,536 binary inputs and scores the comparator count; a combinatorial puzzle.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/fredkin_sort_network"><code>fredkin_sort_network</code></a></td>
+<td>Puzzle and challenge</td>
+<td>none</td>
+<td>O</td>
+<td>The verifier simulates a reversible circuit over all 256 inputs and scores its gate count; a logic puzzle.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/hash_join"><code>hash_join</code></a></td>
+<td>System optimization</td>
+<td>none</td>
+<td>O</td>
+<td>The verifier checks match count and checksum of an integer-key equi-join and times it at 20,000 × 5,000,000 rows on CPU; a generic database algorithm task.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/levenshtein_distance"><code>levenshtein_distance</code></a></td>
+<td>System optimization</td>
+<td>none</td>
+<td>O</td>
+<td>The verifier builds the agent's C function, checks it against reference edit distances and times one million string pairs on CPU; a generic string-algorithm speed task with no model.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/radix_sort"><code>radix_sort</code></a></td>
+<td>System optimization</td>
+<td>none</td>
+<td>O</td>
+<td>The verifier builds the agent's C sort, checks small arrays against Python's sorted() and times 50 million uint32 values on CPU; a generic algorithm speed task with no model.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/regex_engine"><code>regex_engine</code></a></td>
+<td>System optimization</td>
+<td>none</td>
+<td>O</td>
+<td>The verifier builds the agent's Rust regex matcher, compares match counts with Python's re on 400 haystacks and times the pattern set over 100,000 haystacks on CPU; an automata speed task with no model.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/sha256_throughput"><code>sha256_throughput</code></a></td>
+<td>System optimization</td>
+<td>none</td>
+<td>O</td>
+<td>The verifier checks SHA-256 digests against hashlib and times hashing a 512 MiB buffer on CPU; a cryptographic primitive speedup, not a primitive the precedents treat as an LLM kernel.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/stack_machine_golf"><code>stack_machine_golf</code></a></td>
+<td>Puzzle and challenge</td>
+<td>none</td>
+<td>O</td>
+<td>The verifier runs the agent's stack-machine program in a supplied C simulator on four seeds and scores the executed instruction count of a 256-element integer dot product; a programming puzzle.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/toy_isa_opt"><code>toy_isa_opt</code></a></td>
+<td>Puzzle and challenge</td>
+<td>none</td>
+<td>O</td>
+<td>The verifier runs the agent's assembly in a supplied C pipeline simulator on four seeds and scores simulated cycles for a 512-element integer dot product; a toy-ISA puzzle, not a kernel on real hardware. The precedent judge classed it A after EdgeBench's VLIW kernel task; the stricter grade, O, is recorded.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/vliw_scheduler"><code>vliw_scheduler</code></a></td>
+<td>Puzzle and challenge</td>
+<td>none</td>
+<td>O</td>
+<td>The verifier compiles the agent's C scheduler, checks that 3,000 synthetic ops are packed into three-slot bundles without hazards and scores the bundle count; a compiler-scheduling puzzle on a simulated machine. The precedent judge classed it A after EdgeBench's VLIW kernel task; the stricter grade, O, is recorded.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/autolabhq/autolab/tree/4127da3dde8449be61a1cf9859473b9fbbd51751/tasks/z_order_range_scan"><code>z_order_range_scan</code></a></td>
+<td>System optimization</td>
+<td>none</td>
+<td>O</td>
+<td>The verifier builds the Rust crate, compares range-count results with a slow reference on seeded cases and times the queries; a spatial data-structure speedup with no machine learning or LLM role.</td>
+</tr>
+</tbody>
+</table></body></html>

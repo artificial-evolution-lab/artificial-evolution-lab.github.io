@@ -94,6 +94,14 @@
 <td>83</td>
 </tr>
 <tr>
+<td>AutoLab</td>
+<td>36 of 36</td>
+<td>6</td>
+<td>15</td>
+<td>15</td>
+<td>0</td>
+</tr>
+<tr>
 <td>SWE-Serve</td>
 <td>53 of 53</td>
 <td>53</td>
@@ -103,10 +111,10 @@
 </tr>
 <tr>
 <td><strong>Total</strong></td>
-<td>590</td>
-<td>150</td>
-<td>161</td>
-<td>279</td>
+<td>626</td>
+<td>156</td>
+<td>176</td>
+<td>294</td>
 <td></td>
 </tr>
 </tbody>
@@ -3807,6 +3815,273 @@
 <td>O</td>
 <td>optimization</td>
 <td>Optimization task with no machine-learning-systems or language-model role.</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2>AutoLab</h2>
+<p>Pinned: autolabhq/autolab@4127da3dde8449be61a1cf9859473b9fbbd51751. Every public task read at the pinned commit on 1 October 2026: manifest, instruction and verifier for all 36, by one reader and one skeptic per task; two judges ruled on the claim-affecting classes and cells. Nothing was built or run.</p>
+<table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Class</th>
+<th>Topic</th>
+<th>Why</th>
+<th>Cells</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>data_select_ifeval</code></td>
+<td>L</td>
+<td>Training-data selection for LoRA fine-tuning of Qwen2.5-3B-Instruct, scored on IFEval</td>
+<td>The verifier reruns the agent's data-selection script, runs a fixed LoRA fine-tune of Qwen2.5-3B-Instruct on the selected samples and evaluates the adapter on full IFEval through lm-eval's vLLM backend on one H100; choosing the fine-tuning data mixture for a language model is lifecycle data work.</td>
+<td>Data / Model &amp; algorithm (measured); Post-training / Training &amp; inference engines (adjacent)</td>
+</tr>
+<tr>
+<td><code>flash_attention</code></td>
+<td>L</td>
+<td>CPU scaled dot-product attention kernel (C, AVX2)</td>
+<td>The verifier builds and times a single-head scaled dot-product attention function at n = 4,096, d = 64 on CPU behind an output-sum check; attention is a primitive the precedents count as an LLM kernel, but this is a CPU microbenchmark on random tensors, not a GPU kernel or a model run.</td>
+<td>Serve &amp; deployment / Kernels &amp; compilers (bounded)</td>
+</tr>
+<tr>
+<td><code>grpo_multisource</code></td>
+<td>L</td>
+<td>GRPO post-training of Qwen2.5-VL-7B on visual math</td>
+<td>The verifier loads Qwen2.5-VL-7B with the agent's LoRA adapter on one L40S and measures held-out MathVista accuracy behind a VQA retention gate; RL post-training of a vision-language model, which the census rule counts as a language model.</td>
+<td>Post-training / Model &amp; algorithm (measured); Post-training / Training &amp; inference engines (adjacent); Data / Model &amp; algorithm (adjacent)</td>
+</tr>
+<tr>
+<td><code>llm_online_serving</code></td>
+<td>L</td>
+<td>LLM serving engine throughput and latency (gpt-oss-20b on one H100)</td>
+<td>The verifier loads gpt-oss-20b in the agent-edited SimpleLLM engine on one H100 and replays 96 Poisson-arrival generation requests twice (original engine, then the agent's), scoring token throughput and mean completion time; that is serving a language model.</td>
+<td>Serve &amp; deployment / Training &amp; inference engines (measured); Serve &amp; deployment / Memory &amp; state management (adjacent); Serve &amp; deployment / Kernels &amp; compilers (adjacent)</td>
+</tr>
+<tr>
+<td><code>multilingual_ocr</code></td>
+<td>L</td>
+<td>LoRA fine-tuning of DeepSeek-OCR 3B (vision-language model) for Persian and Bengali OCR</td>
+<td>The verifier loads DeepSeek-OCR 3B plus the agent's LoRA adapter on one L40S and greedy-decodes text for 400 held-out images, scoring character error rate; the model trained is a vision-language model whose text decoder is fine-tuned, which the census rule counts as a language model.</td>
+<td>Post-training / Model &amp; algorithm (measured); Post-training / Training &amp; inference engines (adjacent)</td>
+</tr>
+<tr>
+<td><code>scaling_law</code></td>
+<td>L</td>
+<td>From-scratch LM pretraining on WikiText-103 (LitGPT), scored by test perplexity</td>
+<td>The verifier loads the agent's from-scratch LitGPT decoder checkpoint on one H100 and computes perplexity over the WikiText-103 test split; the held-out quality of a pretrained language model is what is scored.</td>
+<td>Pretrain &amp; midtrain / Model &amp; algorithm (measured); Pretrain &amp; midtrain / Training &amp; inference engines (adjacent)</td>
+</tr>
+<tr>
+<td><code>agent_tool_routing</code></td>
+<td>A</td>
+<td>Lexical tool-schema retrieval speed, framed as agent tool routing</td>
+<td>The verifier feeds template-generated tool schemas and queries to a pure-Python lexical retriever, gates on MRR@10 and Recall@10 and scores runtime; search infrastructure with an agent framing, and no language model, embedding model or agent is run.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>bm25_search_go</code></td>
+<td>A</td>
+<td>BM25 search engine query speed in Go</td>
+<td>The verifier builds a Go BM25 engine, checks top-10 results on a small synthetic corpus and times queries over 4,000 synthetic documents; search-engine infrastructure with no language model.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>concurrent_kv_wal</code></td>
+<td>A</td>
+<td>Concurrent in-memory key-value store with a write-ahead log, throughput in Go</td>
+<td>The verifier builds a Go key-value store, diffs its output on a fixed workload against a reference and times a four-goroutine workload; storage-engine concurrency work with no language-model role.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>fft_rust</code></td>
+<td>A</td>
+<td>CPU FFT kernel in Rust</td>
+<td>The verifier builds a Rust crate, checks a real-signal DFT against a pure-Python reference at small sizes and times it at n = 32,768 on CPU; a generic numeric kernel with no language-model role.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>flux2_klein_lora</code></td>
+<td>A</td>
+<td>LoRA training of FLUX.2 klein image diffusion</td>
+<td>The verifier generates images with a FLUX.2 klein 9B diffusion transformer plus the agent's LoRA and scores CLIP and DINO similarity on one L40S; the trained model is an image generator and the Qwen3 text encoder is a frozen input.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>gaussian_blur</code></td>
+<td>A</td>
+<td>CPU Gaussian blur kernel (C, SIMD)</td>
+<td>The verifier compares a blurred 256 × 256 image with a Python reference and times five 17 × 17 passes over a 4,096 × 4,096 image on CPU; an image-processing numeric kernel with no language-model role.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>huffman_canonical_decode_cuda</code></td>
+<td>A</td>
+<td>CUDA canonical Huffman decode kernel on H100</td>
+<td>The verifier builds a CUDA kernel, checks byte-exact decoding of 2,048 synthetic bitstreams and times it on one H100; GPU kernel work outside any LLM role.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>icp_correspondence_step_cuda</code></td>
+<td>A</td>
+<td>CUDA ICP nearest-neighbour correspondence kernel</td>
+<td>The verifier builds a CUDA kernel for one Iterative-Closest-Point correspondence step, checks it against a CPU brute-force reference and times it on one H100; point-cloud geometry with no language-model role.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>moving_mnist_world_model</code></td>
+<td>A</td>
+<td>Video next-frame prediction on Moving MNIST</td>
+<td>The verifier loads the agent's trained checkpoint and scores 10-step rollout PSNR on 1,000 freshly generated Moving MNIST clips; GPU training of a convolutional video model, not a language model.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>msm_pippenger_bls12_381_cuda</code></td>
+<td>A</td>
+<td>CUDA multi-scalar multiplication on BLS12-381</td>
+<td>The verifier checks bit-exact elliptic-curve multi-scalar multiplication and times it with CUDA events on one H100; a GPU kernel for a cryptographic primitive that no LLM stack runs.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>ntt_butterfly_cuda</code></td>
+<td>A</td>
+<td>CUDA number-theoretic transform over the Goldilocks field</td>
+<td>The verifier checks a bit-exact batched forward NTT over a 64-bit prime field and times it with CUDA events on one H100; a GPU kernel for zero-knowledge and lattice cryptography, not an operation LLM stacks run.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>resnet_bit_flip</code></td>
+<td>A</td>
+<td>Bit-flip weight attack on a CIFAR-10 ResNet</td>
+<td>The verifier applies the agent's list of float32 bit flips to a frozen 77K-parameter CIFAR-10 CNN and scores the number of flips needed to push accuracy below 12%; machine-learning security on a vision model.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>safety_router</code></td>
+<td>A</td>
+<td>Smallest refusal-router MLP on fixed 128-dimensional text features (NumPy)</td>
+<td>The verifier reruns the agent's NumPy training script on fixed TF-IDF/SVD feature vectors, gates a two-layer MLP on a private split and scores its parameter count; classic NLP classification with no transformer built, trained, evaluated or served.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>smallest_game_player</code></td>
+<td>A</td>
+<td>Smallest neural policy for 4 × 4 Connect-3 optimal moves</td>
+<td>The verifier trains the agent's model on board states and scores hidden-split move accuracy and learned-parameter count; the starter is a tiny transformer over board tokens, not a language model.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>sstable_compaction_rs</code></td>
+<td>A</td>
+<td>LSM SSTable compaction speed in Rust</td>
+<td>The verifier builds the Rust crate, checks compaction checksums and live-entry counts against constants and times a single-threaded merge of synthetic sorted tables; storage-engine work with no LLM role.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>adaptive_compression</code></td>
+<td>O</td>
+<td>Online byte-sequence predictor scored in bits per byte</td>
+<td>The verifier streams nine hidden synthetic byte sequences through the agent's Python predictor on CPU and scores byte-weighted cross-entropy; a compression puzzle with no language model and no natural-language data.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>adversarial_splay</code></td>
+<td>O</td>
+<td>Adversarial access sequence for a splay tree</td>
+<td>The verifier runs a fixed Python splay tree over the agent's 4,096-key access list and counts rotations; a data-structure puzzle with no machine learning or language-model role.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>aes128_ctr</code></td>
+<td>O</td>
+<td>AES-128-CTR encryption throughput in C</td>
+<td>The verifier builds the agent's C routine, checks it against a pure-Python AES reference and times encryption of 256 MiB on CPU; cryptography throughput, not a primitive the precedents treat as an LLM kernel.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>bvh_raytracer</code></td>
+<td>O</td>
+<td>BVH acceleration for a CPU ray tracer</td>
+<td>The verifier builds the agent's C++ ray-triangle code, compares a render checksum with the baseline's and times five renders; computer graphics with no machine learning or language-model role.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>discover_sorting</code></td>
+<td>O</td>
+<td>Minimal 16-input sorting network</td>
+<td>The verifier calls the agent's generator, checks the comparator network on all 65,536 binary inputs and scores the comparator count; a combinatorial puzzle.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>fredkin_sort_network</code></td>
+<td>O</td>
+<td>Reversible-gate sorting circuit, gate-count puzzle</td>
+<td>The verifier simulates a reversible circuit over all 256 inputs and scores its gate count; a logic puzzle.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>hash_join</code></td>
+<td>O</td>
+<td>In-memory hash join speedup (C)</td>
+<td>The verifier checks match count and checksum of an integer-key equi-join and times it at 20,000 × 5,000,000 rows on CPU; a generic database algorithm task.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>levenshtein_distance</code></td>
+<td>O</td>
+<td>CPU edit-distance throughput in C</td>
+<td>The verifier builds the agent's C function, checks it against reference edit distances and times one million string pairs on CPU; a generic string-algorithm speed task with no model.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>radix_sort</code></td>
+<td>O</td>
+<td>CPU integer sort throughput in C</td>
+<td>The verifier builds the agent's C sort, checks small arrays against Python's sorted() and times 50 million uint32 values on CPU; a generic algorithm speed task with no model.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>regex_engine</code></td>
+<td>O</td>
+<td>Regex engine speed in Rust</td>
+<td>The verifier builds the agent's Rust regex matcher, compares match counts with Python's re on 400 haystacks and times the pattern set over 100,000 haystacks on CPU; an automata speed task with no model.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>sha256_throughput</code></td>
+<td>O</td>
+<td>SHA-256 hashing throughput in C (SHA-NI / SIMD)</td>
+<td>The verifier checks SHA-256 digests against hashlib and times hashing a 512 MiB buffer on CPU; a cryptographic primitive speedup, not a primitive the precedents treat as an LLM kernel.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>stack_machine_golf</code></td>
+<td>O</td>
+<td>Instruction-count golf on a toy stack machine</td>
+<td>The verifier runs the agent's stack-machine program in a supplied C simulator on four seeds and scores the executed instruction count of a 256-element integer dot product; a programming puzzle.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>toy_isa_opt</code></td>
+<td>O</td>
+<td>Assembly scheduling on a simulated toy pipeline (dot product)</td>
+<td>The verifier runs the agent's assembly in a supplied C pipeline simulator on four seeds and scores simulated cycles for a 512-element integer dot product; a toy-ISA puzzle, not a kernel on real hardware. One judge would class it A after EdgeBench's VLIW kernel task.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>vliw_scheduler</code></td>
+<td>O</td>
+<td>VLIW instruction-scheduling algorithm on a synthetic op stream</td>
+<td>The verifier compiles the agent's C scheduler, checks that 3,000 synthetic ops are packed into three-slot bundles without hazards and scores the bundle count; a compiler-scheduling puzzle on a simulated machine. One judge would class it A after EdgeBench's VLIW kernel task.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>z_order_range_scan</code></td>
+<td>O</td>
+<td>2D rectangular range-count index in Rust</td>
+<td>The verifier builds the Rust crate, compares range-count results with a slow reference on seeded cases and times the queries; a spatial data-structure speedup with no machine learning or LLM role.</td>
 <td></td>
 </tr>
 </tbody>
